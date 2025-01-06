@@ -3,30 +3,30 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { GetTransactionSchema, TransactionSchema } from "@/api/transactions/transactionModel";
+import { BikeSchema, GetBikeSchema } from "@/api/bikes/bikeModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { bikeController } from "./bikesController";
 
-export const transactionRegistry = new OpenAPIRegistry();
-export const transactionRouter: Router = express.Router();
+export const bikeRegistry = new OpenAPIRegistry();
+export const bikesRouter: Router = express.Router();
 
-transactionRegistry.register("Transaction", TransactionSchema);
+bikeRegistry.register("Bike", BikeSchema);
 
-transactionRegistry.registerPath({
+bikeRegistry.registerPath({
   method: "get",
-  path: "/transactions",
-  tags: ["User"],
-  responses: createApiResponse(z.array(TransactionSchema), "Success"),
+  path: "/bikes",
+  tags: ["Bike"],
+  responses: createApiResponse(z.array(BikeSchema), "Success"),
 });
 
-transactionRouter.get("/", bikeController.getUsers);
+bikesRouter.get("/", bikeController.getBikes);
 
-transactionRegistry.registerPath({
+bikeRegistry.registerPath({
   method: "get",
-  path: "/users/{id}",
-  tags: ["User"],
-  request: { params: GetTransactionSchema.shape.params },
-  responses: createApiResponse(TransactionSchema, "Success"),
+  path: "/bikes/{id}",
+  tags: ["Bike"],
+  request: { params: GetBikeSchema.shape.params },
+  responses: createApiResponse(BikeSchema, "Success"),
 });
 
-transactionRouter.get("/:id", validateRequest(GetTransactionSchema), bikeController.getUser);
+bikesRouter.get("/:id", [validateRequest(GetBikeSchema)], bikeController.getBike);

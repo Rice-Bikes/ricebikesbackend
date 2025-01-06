@@ -12,26 +12,26 @@ export class BikesService {
     this.BikesRepository = repository;
   }
 
-  // Retrieves all users from the database
+  // Retrieves all bikes from the database
   async findAll(): Promise<ServiceResponse<Bike[] | null>> {
     try {
-      const users = await this.BikesRepository.findAllAsync();
-      if (!users || users.length === 0) {
-        return ServiceResponse.failure("No Users found", null, StatusCodes.NOT_FOUND);
+      const bikes = await this.BikesRepository.findAllAsync();
+      if (!bikes || bikes.length === 0) {
+        return ServiceResponse.failure("No bikes found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<Bike[]>("Users found", users);
+      return ServiceResponse.success<Bike[]>("bikes found", bikes);
     } catch (ex) {
-      const errorMessage = `Error finding all users: $${(ex as Error).message}`;
+      const errorMessage = `Error finding all bikes: $${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while retrieving users.",
+        "An error occurred while retrieving bikes.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  // Retrieves a single user by their ID
+  // Retrieves a single bike by their ID
   async findById(id: string): Promise<ServiceResponse<Bike | null>> {
     try {
       const bike = await this.BikesRepository.findByIdAsync(id);
@@ -43,6 +43,31 @@ export class BikesService {
       const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure("An error occurred while finding user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // Creates a bike
+  async createBike(
+    make: string,
+    model: string,
+    customer: string,
+    description: string,
+  ): Promise<ServiceResponse<Bike | null>> {
+    try {
+      const bike = {
+        bike_id: crypto.randomUUID(),
+        make: make,
+        model: model,
+        customer: customer,
+        description: description,
+        date_created: new Date(),
+      };
+      const newBike = await this.BikesRepository.create(bike);
+      return ServiceResponse.success<Bike>("Bike created", newBike);
+    } catch (ex) {
+      const errorMessage = `Error creating bike: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while creating bike.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 }

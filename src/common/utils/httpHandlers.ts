@@ -8,6 +8,31 @@ export const handleServiceResponse = (serviceResponse: ServiceResponse<any>, res
   return response.status(serviceResponse.statusCode).send(serviceResponse);
 };
 
+/**
+ * Middleware to validate the request using a Zod schema.
+ *
+ * @param schema - The Zod schema to validate the request against.
+ * @returns A middleware function that validates the request and calls the next middleware if valid,
+ *          or sends an error response if invalid.
+ *
+ * @throws {ZodError} If the request validation fails.
+ *
+ * @example
+ * ```typescript
+ * import { z } from 'zod';
+ * import { validateRequest } from './path/to/httpHandlers';
+ *
+ * const schema = z.object({
+ *   body: z.object({
+ *     name: z.string(),
+ *   }),
+ * });
+ *
+ * app.post('/endpoint', validateRequest(schema), (req, res) => {
+ *   res.send('Request is valid');
+ * });
+ * ```
+ */
 export const validateRequest = (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
   try {
     schema.parse({ body: req.body, query: req.query, params: req.params });

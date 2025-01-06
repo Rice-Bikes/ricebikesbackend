@@ -15,18 +15,18 @@ transactionRegistry.register("Transaction", TransactionSchema);
 transactionRegistry.registerPath({
   method: "get",
   path: "/transactions",
-  tags: ["User"],
+  tags: ["Transactions"],
   responses: createApiResponse(z.array(TransactionSchema), "Success"),
 });
 
-transactionRouter.get("/", transactionsController.getUsers);
+transactionRouter.get("/", transactionsController.getTransactions);
 
 transactionRegistry.registerPath({
   method: "get",
-  path: "/users/{id}",
-  tags: ["User"],
+  path: "/transactions/{id}",
+  tags: ["Transactions"],
   request: { params: GetTransactionSchema.shape.params },
   responses: createApiResponse(TransactionSchema, "Success"),
 });
 
-transactionRouter.get("/:id", validateRequest(GetTransactionSchema), transactionsController.getUser);
+transactionRouter.get("/:id", validateRequest(GetTransactionSchema), transactionsController.getTransaction);

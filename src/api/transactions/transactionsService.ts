@@ -12,37 +12,41 @@ export class TransactionsService {
     this.TransactionRepository = repository;
   }
 
-  // Retrieves all users from the database
+  // Retrieves all Transactions from the database
   async findAll(): Promise<ServiceResponse<Transaction[] | null>> {
     try {
-      const users = await this.TransactionRepository.findAllAsync();
-      if (!users || users.length === 0) {
-        return ServiceResponse.failure("No Users found", null, StatusCodes.NOT_FOUND);
+      const transactions = await this.TransactionRepository.findAllAsync();
+      if (!transactions || transactions.length === 0) {
+        return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<Transaction[]>("Users found", users);
+      return ServiceResponse.success<Transaction[]>("Transactions found", transactions);
     } catch (ex) {
-      const errorMessage = `Error finding all users: $${(ex as Error).message}`;
+      const errorMessage = `Error finding all Transactions: $${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while retrieving users.",
+        "An error occurred while retrieving Transactions.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  // Retrieves a single user by their ID
+  // Retrieves a single Transaction by their ID
   async findById(id: number): Promise<ServiceResponse<Transaction | null>> {
     try {
-      const user = await this.TransactionRepository.findByIdAsync(id);
-      if (!user) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+      const transaction = await this.TransactionRepository.findByIdAsync(id);
+      if (!transaction) {
+        return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<Transaction>("User found", user);
+      return ServiceResponse.success<Transaction>("Transaction found", transaction);
     } catch (ex) {
-      const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error finding Transaction with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
-      return ServiceResponse.failure("An error occurred while finding user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      return ServiceResponse.failure(
+        "An error occurred while finding Transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

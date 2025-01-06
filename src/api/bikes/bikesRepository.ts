@@ -17,4 +17,10 @@ export class BikesRepository {
       }) || null
     );
   }
+
+  async create(bike: Bike): Promise<Bike> {
+    return prisma.bikes.create({
+      data: bike,
+    });
+  }
 }
