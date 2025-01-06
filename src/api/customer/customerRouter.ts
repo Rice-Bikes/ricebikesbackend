@@ -14,7 +14,7 @@ customerRegistry.register("Bike", CustomerSchema);
 
 customerRegistry.registerPath({
   method: "get",
-  path: "/bikes",
+  path: "/customers",
   tags: ["Bike"],
   responses: createApiResponse(z.array(CustomerSchema), "Success"),
 });
@@ -23,7 +23,7 @@ customerRouter.get("/", customerController.getCustomers);
 
 customerRegistry.registerPath({
   method: "get",
-  path: "/bikes/{id}",
+  path: "/customers/{id}",
   tags: ["Bike"],
   request: { params: GetCustomerSchema.shape.params },
   responses: createApiResponse(CustomerSchema, "Success"),

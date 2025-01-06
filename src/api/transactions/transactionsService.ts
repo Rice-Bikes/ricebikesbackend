@@ -34,7 +34,7 @@ export class TransactionsService {
   // Retrieves a single Transaction by their ID
   async findById(id: number): Promise<ServiceResponse<Transaction | null>> {
     try {
-      const transaction = await this.TransactionRepository.findByIdAsync(id);
+      const transaction = await this.TransactionRepository.findByIdAggregate(id);
       if (!transaction) {
         return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
       }

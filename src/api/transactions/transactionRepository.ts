@@ -13,7 +13,17 @@ export class TransactionRepository {
     });
   }
 
-  findByIdAsync(transaction_num: number): Promise<Transaction | null> {
+  // findByIdSingle(transaction_num: number): Promise<Transaction | null> {
+  //   return (
+  //     prisma.transactions.findUnique({
+  //       where: {
+  //         transaction_num: transaction_num,
+  //       },
+  //     }) || null
+  //   );
+  // }
+
+  findByIdAggregate(transaction_num: number): Promise<Transaction | null> {
     return (
       prisma.transactions.findUnique({
         include: {
