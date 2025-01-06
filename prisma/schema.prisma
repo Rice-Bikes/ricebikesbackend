@@ -124,7 +124,7 @@ model Customers {
   first_name   String
   last_name    String
   email        String
-  phone_number String   @db.Char(10)
+  phone        String?   @db.Char(10)
   Transactions Transactions[]
 }
 

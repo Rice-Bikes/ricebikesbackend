@@ -1,6 +1,8 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
+import { BikeSchema } from "@/api/bikes/bikeModel";
+import { CustomerSchema } from "@/api/customer/customerModel";
 import { commonValidations } from "@/common/utils/commonValidation";
 
 extendZodWithOpenApi(z);
@@ -25,6 +27,8 @@ export const TransactionSchema = z.object({
   is_reserved: z.boolean(),
   is_waiting_on_email: z.boolean(),
   date_completed: z.date().nullable(),
+  Bike: BikeSchema.nullable(),
+  Customer: CustomerSchema.nullable(),
 });
 
 // Input Validation for 'GET users/:id' endpoint
