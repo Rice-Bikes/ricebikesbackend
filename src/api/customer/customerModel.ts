@@ -19,3 +19,10 @@ export const CustomerSchema = z.object({
 export const GetCustomerSchema = z.object({
   params: z.object({ id: commonValidations.id }),
 });
+
+export const CreateCustomerSchema = z.object({
+  first_name: z.string(),
+  last_name: z.string(),
+  email: z.string().email(),
+  phone: z.string().nullable(),
+});

@@ -2,6 +2,7 @@ import type { Request, RequestHandler, Response } from "express";
 
 import { customersService } from "@/api/customer/customerService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import type { Customer } from "./customerModel";
 
 class CustomerController {
   public getCustomers: RequestHandler = async (_req: Request, res: Response) => {
@@ -12,6 +13,19 @@ class CustomerController {
   public getCustomer: RequestHandler = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const serviceResponse = await customersService.findById(id);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public createCustomer: RequestHandler = async (req: Request, res: Response) => {
+    const body = req.body;
+    const customer = {
+      customer_id: crypto.randomUUID(),
+      first_name: body.first_name,
+      last_name: body.last_name,
+      email: body.email,
+      phone: body.phone,
+    } as Customer;
+    const serviceResponse = await customersService.createCustomer(customer);
     return handleServiceResponse(serviceResponse, res);
   };
 }

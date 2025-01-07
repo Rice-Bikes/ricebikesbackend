@@ -1,10 +1,10 @@
-import type { Bike } from "@/api/bikes/bikeModel";
+import type { Bike } from "@/api/bikes/bikesModel";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export class BikesRepository {
-  async findAllAsync(): Promise<Bike[]> {
+  async findAll(): Promise<Bike[]> {
     return prisma.bikes.findMany();
   }
 

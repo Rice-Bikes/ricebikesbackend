@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { Bike } from "@/api/bikes/bikeModel";
+import type { Bike } from "@/api/bikes/bikesModel";
 import { BikesRepository } from "@/api/bikes/bikesRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
@@ -15,7 +15,7 @@ export class BikesService {
   // Retrieves all bikes from the database
   async findAll(): Promise<ServiceResponse<Bike[] | null>> {
     try {
-      const bikes = await this.BikesRepository.findAllAsync();
+      const bikes = await this.BikesRepository.findAll();
       if (!bikes || bikes.length === 0) {
         return ServiceResponse.failure("No bikes found", null, StatusCodes.NOT_FOUND);
       }
@@ -47,21 +47,8 @@ export class BikesService {
   }
 
   // Creates a bike
-  async createBike(
-    make: string,
-    model: string,
-    customer: string,
-    description: string,
-  ): Promise<ServiceResponse<Bike | null>> {
+  async createBike(bike: Bike): Promise<ServiceResponse<Bike | null>> {
     try {
-      const bike = {
-        bike_id: crypto.randomUUID(),
-        make: make,
-        model: model,
-        customer: customer,
-        description: description,
-        date_created: new Date(),
-      };
       const newBike = await this.BikesRepository.create(bike);
       return ServiceResponse.success<Bike>("Bike created", newBike);
     } catch (ex) {

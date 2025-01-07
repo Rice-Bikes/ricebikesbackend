@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class TransactionRepository {
-  findAllAsync(): Promise<Transaction[]> {
+  findAll(): Promise<Transaction[]> {
     return prisma.transactions.findMany({
       include: {
         Bike: true,

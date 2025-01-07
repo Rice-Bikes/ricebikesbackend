@@ -47,20 +47,8 @@ export class CustomersService {
   }
 
   // Creates a customer
-  async createCustomer(
-    first_name: string,
-    last_name: string,
-    email: string,
-    phone: string,
-  ): Promise<ServiceResponse<Customer | null>> {
+  async createCustomer(customer: Customer): Promise<ServiceResponse<Customer | null>> {
     try {
-      const customer = {
-        customer_id: crypto.randomUUID(),
-        first_name: first_name,
-        last_name: last_name,
-        email: email,
-        phone: phone,
-      };
       const newCustomer = await this.CustomersRepository.create(customer);
       return ServiceResponse.success<Customer>("Customer created", newCustomer);
     } catch (ex) {
