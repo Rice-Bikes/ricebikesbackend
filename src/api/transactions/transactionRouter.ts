@@ -15,7 +15,10 @@ transactionRegistry.register("Transaction", TransactionSchema);
 transactionRegistry.registerPath({
   method: "get",
   path: "/transactions",
+  summary:
+    "Get all transactions from the database, with optional query parameters for number of transactions and offset",
   tags: ["Transactions"],
+  request: { query: GetTransactionSchema.shape.query },
   responses: createApiResponse(z.array(TransactionSchema), "Success"),
 });
 
@@ -24,6 +27,7 @@ transactionRouter.get("/", transactionsController.getTransactions);
 transactionRegistry.registerPath({
   method: "get",
   path: "/transactions/{id}",
+  summary: "Get a transaction from the database based on it's uuid",
   tags: ["Transactions"],
   request: { params: GetTransactionSchema.shape.params },
   responses: createApiResponse(TransactionSchema, "Success"),

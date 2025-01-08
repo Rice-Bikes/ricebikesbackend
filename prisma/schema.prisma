@@ -10,21 +10,21 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  user_id    String  @id @default(uuid()) @db.Uuid
-  first_name String
-  last_name  String
-  active     Boolean
-  username   String  @unique
-  Role       Role[]
+model Users {
+  user_id   String  @id @default(uuid()) @db.Uuid
+  firstname String
+  lastname  String
+  active    Boolean
+  username  String  @unique
+  Role      Roles[]
 }
 
-model Role {
+model Roles {
   role_id  String  @id @default(uuid()) @db.Uuid
   username String
   role     String
   active   Boolean
-  User     User    @relation(fields: [username], references: [username], onDelete: Cascade, onUpdate: Cascade)
+  User     Users   @relation(fields: [username], references: [username], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([username])
 }
@@ -128,14 +128,14 @@ model Customers {
 
 model TransactionDetails {
   transaction_detail_id String   @id @default(uuid()) @db.Uuid
-  transaction_id        Int
-  item_id               String?  @db.Char(12)
+  transaction_id        String   @default(uuid()) @db.Uuid
+  item_id               String?  @db.Char(12) //upc
   repair_id             String?  @db.Uuid
   changed_by            String?  @db.Uuid
   quantity              Int
   date_modified         DateTime
 
-  Transactions Transactions @relation(fields: [transaction_id], references: [transaction_num])
+  Transactions Transactions @relation(fields: [transaction_id], references: [transaction_id])
   Item         Items?       @relation(fields: [item_id], references: [upc])
   Repair       Repairs?     @relation(fields: [repair_id], references: [repair_id])
 }

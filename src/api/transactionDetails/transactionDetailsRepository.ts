@@ -8,11 +8,11 @@ export class TransactionDetailsRepository {
     return prisma.transactionDetails.findMany();
   }
 
-  findByIdAsync(transaction_num: number): Promise<TransactionDetails[] | null> {
+  findByIdAsync(transaction_id: string): Promise<TransactionDetails[] | null> {
     return (
       prisma.transactionDetails.findMany({
         where: {
-          transaction_id: transaction_num,
+          transaction_id: transaction_id,
         },
       }) || null
     );

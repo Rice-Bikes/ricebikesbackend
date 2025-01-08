@@ -10,12 +10,28 @@ export type User = z.infer<typeof UserSchema>;
 export const UserSchema = z.object({
   user_id: z.string().uuid(),
   username: z.string(),
-  first_name: z.string(),
-  last_name: z.string(),
+  firstname: z.string(),
+  lastname: z.string(),
   active: z.boolean(),
 });
 
 // Input Validation for 'GET users/:id' endpoint
 export const GetUserSchema = z.object({
+  params: z.object({ id: z.string() }),
+});
+
+export const CreateUserSchema = z.object({
+  body: z.object({
+    username: z.string(),
+    firstname: z.string(),
+    lastname: z.string(),
+  }),
+  params: z.object({ id: z.string() }),
+});
+
+export const PatchUserSchema = z.object({
   params: z.object({ id: commonValidations.id }),
+  body: z.object({
+    username: z.string().nullable(),
+  }),
 });

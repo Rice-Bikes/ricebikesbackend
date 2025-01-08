@@ -20,6 +20,7 @@ transactionDetailsRegistry.registerPath({
   method: "get",
   path: "/transactionDetails",
   tags: ["TransactionDetail"],
+  summary: "Get all transaction details from all transactions, including items and repairs",
   responses: createApiResponse(z.array(TransactionDetailsSchema), "Success"),
 });
 
@@ -27,7 +28,8 @@ transactionDetailsRouter.get("/", transactionDetailsController.getAllTransaction
 
 transactionDetailsRegistry.registerPath({
   method: "get",
-  path: "/transactionDetails/{id}",
+  path: "/transactionDetails/{transaction_id}",
+  summary: "Get transaction details from a specific transaction, including items and repairs",
   tags: ["TransactionDetail"],
   request: { params: GetTransactionDetailsSchema.shape.params },
   responses: createApiResponse(TransactionDetailsSchema, "Success"),
@@ -41,14 +43,25 @@ transactionDetailsRouter.get(
 
 transactionDetailsRegistry.registerPath({
   method: "post",
-  path: "/transactionDetails/{id}",
+  path: "/transactionDetails/{transaction_id}",
   tags: ["TransactionDetail"],
-  request: { params: GetTransactionDetailsSchema.shape.params },
+  summary: "Create transaction details for a specific transaction, including an id of either a repair or an item",
+  request: {
+    params: CreateTransactionDetailsSchema.shape.params,
+    body: {
+      description: "Transaction Details from the user",
+      content: {
+        "application/json": {
+          schema: CreateTransactionDetailsSchema.shape.body,
+        },
+      },
+    },
+  },
   responses: createApiResponse(TransactionDetailsSchema, "Success"),
 });
 
 transactionDetailsRouter.post(
-  "/:id",
-  validateRequest(CreateTransactionDetailsSchema),
+  "/:transaction_id",
+  [validateRequest(CreateTransactionDetailsSchema)],
   transactionDetailsController.createTransactionDetails,
 );

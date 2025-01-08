@@ -5,12 +5,12 @@ const prisma = new PrismaClient();
 
 export class UsersRepository {
   async findAllAsync(): Promise<User[]> {
-    return prisma.user.findMany();
+    return prisma.users.findMany();
   }
 
   async findByIdAsync(username: string): Promise<User | null> {
     return (
-      prisma.user.findFirst({
+      prisma.users.findFirst({
         where: {
           username: username,
         },
@@ -19,7 +19,7 @@ export class UsersRepository {
   }
 
   async create(User: User): Promise<User> {
-    return prisma.user.create({
+    return prisma.users.create({
       data: User,
     });
   }

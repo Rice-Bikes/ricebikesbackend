@@ -15,7 +15,7 @@ customerRegistry.register("Customer", CustomerSchema);
 customerRegistry.registerPath({
   method: "get",
   path: "/customers",
-  tags: ["Customer"],
+  tags: ["Customers"],
   responses: createApiResponse(z.array(CustomerSchema), "Success"),
 });
 
@@ -24,7 +24,7 @@ customerRouter.get("/", customerController.getCustomers);
 customerRegistry.registerPath({
   method: "get",
   path: "/customers/{id}",
-  tags: ["Customer"],
+  tags: ["Customers"],
   request: { params: GetCustomerSchema.shape.params },
   responses: createApiResponse(CustomerSchema, "Success"),
 });
@@ -34,7 +34,7 @@ customerRouter.get("/:id", [validateRequest(GetCustomerSchema)], customerControl
 customerRegistry.registerPath({
   method: "post",
   path: "/customers/{id}",
-  tags: ["Customer"],
+  tags: ["Customers"],
   request: { params: GetCustomerSchema.shape.params },
   responses: createApiResponse(CustomerSchema, "Success"),
 });

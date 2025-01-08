@@ -5,6 +5,7 @@ import { customerRegistry } from "@/api/customer/customerRouter";
 import { healthCheckRegistry } from "@/api/healthCheck/healthCheckRouter";
 import { transactionDetailsRegistry } from "@/api/transactionDetails/transactionDetailsRouter";
 import { transactionRegistry } from "@/api/transactions/transactionRouter";
+import { userRegistry } from "@/api/users/userRouter";
 
 export function generateOpenAPIDocument() {
   const registry = new OpenAPIRegistry([
@@ -13,6 +14,7 @@ export function generateOpenAPIDocument() {
     bikeRegistry,
     transactionDetailsRegistry,
     customerRegistry,
+    userRegistry,
   ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

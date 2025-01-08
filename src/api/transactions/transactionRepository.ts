@@ -1,14 +1,19 @@
-import type { Transaction } from "@/api/transactions/transactionModel";
+import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export class TransactionRepository {
-  findAll(): Promise<Transaction[]> {
+  findAll(after_id: number, page_limit: number): Promise<any> {
     return prisma.transactions.findMany({
-      include: {
-        Bike: true,
-        Customer: true,
+      take: page_limit,
+      where: {
+        transaction_num: {
+          lt: after_id,
+        },
+      },
+      orderBy: {
+        transaction_num: "desc",
       },
     });
   }
@@ -23,7 +28,7 @@ export class TransactionRepository {
   //   );
   // }
 
-  findByIdAggregate(transaction_num: number): Promise<Transaction | null> {
+  findByIdAggregate(transaction_num: number): Promise<AggTransaction | null> {
     return (
       prisma.transactions.findUnique({
         include: {

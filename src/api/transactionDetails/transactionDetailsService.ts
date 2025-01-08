@@ -32,15 +32,15 @@ export class TransactionDetailsService {
   }
 
   // Retrieves a single transaction's details by their ID
-  async findById(id: number): Promise<ServiceResponse<TransactionDetails[] | null>> {
+  async findById(transaction_id: string): Promise<ServiceResponse<TransactionDetails[] | null>> {
     try {
-      const singeTransactionDetails = await this.TransactionDetailsRepository.findByIdAsync(id);
+      const singeTransactionDetails = await this.TransactionDetailsRepository.findByIdAsync(transaction_id);
       if (!singeTransactionDetails) {
         return ServiceResponse.failure("singeTransactionDetails not found", null, StatusCodes.NOT_FOUND);
       }
       return ServiceResponse.success<TransactionDetails[]>("singeTransactionDetails found", singeTransactionDetails);
     } catch (ex) {
-      const errorMessage = `Error finding singeTransactionDetails with id ${id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error finding singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
         "An error occurred while finding singeTransactionDetails.",
@@ -52,7 +52,7 @@ export class TransactionDetailsService {
 
   // Retrieves a single transaction's details by their ID
   async createTransactionDetail(
-    transaction_id: number,
+    transaction_id: string,
     created_by: string,
     quantity: number,
     item_id?: string,
@@ -62,22 +62,23 @@ export class TransactionDetailsService {
       const transactionDetail = {
         transaction_detail_id: crypto.randomUUID(),
         transaction_id: transaction_id,
-        item_id: item_id,
-        repair_id: repair_id,
+        item_id: item_id ? item_id : undefined,
+        repair_id: repair_id ? repair_id : undefined,
         changed_by: created_by,
         quantity: quantity,
         date_modified: new Date(),
       } as TransactionDetails;
+      console.log(transactionDetail);
       const singeTransactionDetails = await this.TransactionDetailsRepository.createAsync(transactionDetail);
       if (!singeTransactionDetails) {
-        return ServiceResponse.failure("singeTransactionDetails not found", null, StatusCodes.NOT_FOUND);
+        return ServiceResponse.failure("singeTransactionDetails not created", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<TransactionDetails>("singeTransactionDetails found", singeTransactionDetails);
+      return ServiceResponse.success<TransactionDetails>("singeTransactionDetails created", singeTransactionDetails);
     } catch (ex) {
-      const errorMessage = `Error finding singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error creating singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while finding singeTransactionDetails.",
+        "An error occurred while creating singeTransactionDetails.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

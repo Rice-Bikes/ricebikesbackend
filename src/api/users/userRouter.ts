@@ -3,9 +3,10 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
+import requestLogger from "@/common/middleware/requestLogger";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { userController } from "./userController";
-import { GetUserSchema, UserSchema } from "./userModel";
+import { CreateUserSchema, GetUserSchema, UserSchema } from "./userModel";
 
 export const userRegistry = new OpenAPIRegistry();
 export const userRouter: Router = express.Router();
@@ -15,6 +16,7 @@ userRegistry.register("User", UserSchema);
 userRegistry.registerPath({
   method: "get",
   path: "/users",
+  summary: "Get all users from the database",
   tags: ["User"],
   responses: createApiResponse(z.array(UserSchema), "Success"),
 });
@@ -24,9 +26,42 @@ userRouter.get("/", userController.getUsers);
 userRegistry.registerPath({
   method: "get",
   path: "/users/{id}",
+  summary: "Get a user from the database based on it's rice netid",
   tags: ["User"],
   request: { params: GetUserSchema.shape.params },
   responses: createApiResponse(UserSchema, "Success"),
 });
 
 userRouter.get("/:id", [validateRequest(GetUserSchema)], userController.getUser);
+
+userRegistry.registerPath({
+  method: "post",
+  path: "/users/{id}",
+  summary: "Create a user in the database and set it to active",
+  tags: ["User"],
+  request: {
+    params: CreateUserSchema.shape.params,
+    body: {
+      description: "User object",
+      content: {
+        "application/json": { schema: CreateUserSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(UserSchema, "Success"),
+});
+
+userRouter.post("/:id", [validateRequest(CreateUserSchema)], userController.getUser);
+
+userRegistry.registerPath({
+  method: "patch",
+  path: "/users/{id}",
+  summary: "Update the active status of a user in the database (wip)",
+  tags: ["User"],
+  request: {
+    params: CreateUserSchema.shape.params,
+  },
+  responses: createApiResponse(UserSchema, "Success"),
+});
+
+userRouter.patch("/:id", [requestLogger[1], validateRequest(CreateUserSchema)], userController.getUser);

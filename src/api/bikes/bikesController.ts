@@ -19,7 +19,7 @@ class BikeController {
   public createBike: RequestHandler = async (req: Request, res: Response) => {
     const bike = {
       bike_id: crypto.randomUUID(),
-      make: req.body.name,
+      make: req.body.make,
       model: req.body.model,
       description: req.body.description,
       date_created: new Date(),

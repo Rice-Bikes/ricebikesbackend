@@ -13,9 +13,9 @@ export class TransactionsService {
   }
 
   // Retrieves all Transactions from the database
-  async findAll(): Promise<ServiceResponse<Transaction[] | null>> {
+  async findAll(after_id: number, page_limit: number): Promise<ServiceResponse<Transaction[] | null>> {
     try {
-      const transactions = await this.TransactionRepository.findAll();
+      const transactions = await this.TransactionRepository.findAll(after_id, page_limit);
       if (!transactions || transactions.length === 0) {
         return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
       }

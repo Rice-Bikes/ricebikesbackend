@@ -24,12 +24,7 @@ export type TransactionDetailRequest = FromSchema<typeof transactionDetailReques
 
 class TransactionDetailsController {
   // private validator: tdValidator;
-  private isTransactionDetailRequest!: (data: unknown) => data is TransactionDetailRequest;
-
-  public TransactionDetailsController() {
-    const validator = new Validator();
-    this.isTransactionDetailRequest = validator.compile(transactionDetailRequestSchema);
-  }
+  // private isTransactionDetailRequest!: (data: unknown) => data is TransactionDetailRequest;
 
   public getAllTransactionDetails: RequestHandler = async (_req: Request, res: Response) => {
     const serviceResponse = await transactionDetailsService.findAll();
@@ -37,31 +32,34 @@ class TransactionDetailsController {
   };
 
   public getTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
-    const id = Number.parseInt(req.params.id as string, 10);
-    const serviceResponse = await transactionDetailsService.findById(id);
+    const serviceResponse = await transactionDetailsService.findById(req.params.id);
     return handleServiceResponse(serviceResponse, res);
   };
 
   public createTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
-    if (!this.isTransactionDetailRequest(req.body)) {
-      return res.status(400).send("Invalid request body");
-    }
+    const transaction_id = req.params.transaction_id;
+    console.log("id for create transaction", transaction_id);
+    // if (!this.isTransactionDetailRequest(req.body)) {
+    //   return res.status(400).send("Invalid request body");
+    // }
     const body = req.body;
 
     let serviceResponse: any;
     if (!body.item_id && body.repair_id) {
       serviceResponse = await transactionDetailsService.createTransactionDetail(
-        body.transaction_id,
+        transaction_id,
         body.changed_by,
         body.quantity,
+        undefined,
         body.repair_id,
       );
     } else if (body.item_id) {
       serviceResponse = await transactionDetailsService.createTransactionDetail(
-        body.transaction_id,
+        transaction_id,
         body.changed_by,
         body.quantity,
         body.item_id,
+        undefined,
       );
     } else {
       return res.status(400).send("Invalid request body, either item_id or repair_id must be provided");
