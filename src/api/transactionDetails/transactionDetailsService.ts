@@ -37,9 +37,7 @@ export class TransactionDetailsService {
       const singeTransactionDetails = await this.TransactionDetailsRepository.findByIdAsync(transaction_id);
       if (!singeTransactionDetails) {
         return ServiceResponse.failure(
-          "transaction details for",
-          transaction_id,
-          "not found",
+          `transaction details for ${transaction_id} not found`,
           null,
           StatusCodes.NOT_FOUND,
         );
