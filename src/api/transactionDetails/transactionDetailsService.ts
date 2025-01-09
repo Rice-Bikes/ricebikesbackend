@@ -36,14 +36,20 @@ export class TransactionDetailsService {
     try {
       const singeTransactionDetails = await this.TransactionDetailsRepository.findByIdAsync(transaction_id);
       if (!singeTransactionDetails) {
-        return ServiceResponse.failure("singeTransactionDetails not found", null, StatusCodes.NOT_FOUND);
+        return ServiceResponse.failure(
+          "transaction details for",
+          transaction_id,
+          "not found",
+          null,
+          StatusCodes.NOT_FOUND,
+        );
       }
-      return ServiceResponse.success<TransactionDetails[]>("singeTransactionDetails found", singeTransactionDetails);
+      return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
     } catch (ex) {
-      const errorMessage = `Error finding singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while finding singeTransactionDetails.",
+        "An error occurred while finding transaction details.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
@@ -65,6 +71,7 @@ export class TransactionDetailsService {
         item_id: item_id ? item_id : undefined,
         repair_id: repair_id ? repair_id : undefined,
         changed_by: created_by,
+        completed: !item_id, // always want items to be true but want repairs to start as false
         quantity: quantity,
         date_modified: new Date(),
       } as TransactionDetails;
@@ -79,6 +86,43 @@ export class TransactionDetailsService {
       logger.error(errorMessage);
       return ServiceResponse.failure(
         "An error occurred while creating singeTransactionDetails.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  // Retrieves a single transaction's details by their ID
+  async updateById(transaction_id: string, isDone: boolean): Promise<ServiceResponse<TransactionDetails | null>> {
+    try {
+      const singeTransactionDetails = await this.TransactionDetailsRepository.updateStatus(transaction_id, isDone);
+      if (!singeTransactionDetails) {
+        return ServiceResponse.failure("singeTransactionDetails not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<TransactionDetails>("singeTransactionDetails modified", singeTransactionDetails);
+    } catch (ex) {
+      const errorMessage = `Error finding singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while finding singeTransactionDetails.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Deletes a single transaction's details by their ID
+  async deleteById(transaction_detail_id: string): Promise<ServiceResponse<TransactionDetails | null>> {
+    try {
+      const singeTransactionDetails = await this.TransactionDetailsRepository.deleteAsync(transaction_detail_id);
+      if (!singeTransactionDetails) {
+        return ServiceResponse.failure("singeTransactionDetails not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<TransactionDetails>("singeTransactionDetails deleted", singeTransactionDetails);
+    } catch (ex) {
+      const errorMessage = `Error finding singeTransactionDetails with id ${transaction_detail_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while finding singeTransactionDetails.",
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

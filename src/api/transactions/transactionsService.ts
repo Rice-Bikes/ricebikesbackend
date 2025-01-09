@@ -49,6 +49,66 @@ export class TransactionsService {
       );
     }
   }
+
+  // Creates a Transaction
+  async createTransaction(transaction: Transaction): Promise<ServiceResponse<Transaction | null>> {
+    try {
+      const newTransaction = await this.TransactionRepository.createTransaction(transaction);
+      if (!newTransaction) {
+        return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Transaction>("Transaction found", newTransaction);
+    } catch (ex) {
+      const errorMessage = `Error creating Transaction with content ${transaction}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while creating Transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Creates a Transaction
+  async deleteTransactionByID(transaction_id: string): Promise<ServiceResponse<Transaction | null>> {
+    try {
+      const deletedTransaction = await this.TransactionRepository.deleteById(transaction_id);
+      if (!deletedTransaction) {
+        return ServiceResponse.failure("Transaction not deleted", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Transaction>("Transaction deleted", deletedTransaction);
+    } catch (ex) {
+      const errorMessage = `Error deleting Transaction with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while deleting Transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Updates a Transaction
+  async updateTransactionByID(
+    transaction_id: string,
+    transaction: Transaction,
+  ): Promise<ServiceResponse<Transaction | null>> {
+    try {
+      const updatedTransaction = await this.TransactionRepository.updateById(transaction_id, transaction);
+      if (!updatedTransaction) {
+        return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Transaction>("Transaction updated", updatedTransaction);
+    } catch (ex) {
+      const errorMessage = `Error updating Transaction with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while updating Transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
 export const transactionsService = new TransactionsService();

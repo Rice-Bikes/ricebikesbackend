@@ -12,4 +12,4 @@ const rateLimiter = rateLimit({
   keyGenerator: (req: Request) => req.ip as string,
 });
 
-export default rateLimiter;
+// export default rateLimiter;

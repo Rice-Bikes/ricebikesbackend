@@ -18,16 +18,6 @@ export class TransactionRepository {
     });
   }
 
-  // findByIdSingle(transaction_num: number): Promise<Transaction | null> {
-  //   return (
-  //     prisma.transactions.findUnique({
-  //       where: {
-  //         transaction_num: transaction_num,
-  //       },
-  //     }) || null
-  //   );
-  // }
-
   findByIdAggregate(transaction_num: number): Promise<AggTransaction | null> {
     return (
       prisma.transactions.findUnique({
@@ -40,5 +30,28 @@ export class TransactionRepository {
         },
       }) || null
     );
+  }
+
+  createTransaction(transaction: Transaction): Promise<Transaction> {
+    return prisma.transactions.create({
+      data: transaction,
+    });
+  }
+
+  deleteById(transaction_id: string): Promise<Transaction> {
+    return prisma.transactions.delete({
+      where: {
+        transaction_id: transaction_id,
+      },
+    });
+  }
+
+  updateById(transaction_id: string, transaction: Transaction): Promise<Transaction> {
+    return prisma.transactions.update({
+      where: {
+        transaction_id: transaction_id,
+      },
+      data: transaction,
+    });
   }
 }

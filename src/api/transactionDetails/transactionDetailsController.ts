@@ -23,9 +23,6 @@ const transactionDetailRequestSchema = {
 export type TransactionDetailRequest = FromSchema<typeof transactionDetailRequestSchema>;
 
 class TransactionDetailsController {
-  // private validator: tdValidator;
-  // private isTransactionDetailRequest!: (data: unknown) => data is TransactionDetailRequest;
-
   public getAllTransactionDetails: RequestHandler = async (_req: Request, res: Response) => {
     const serviceResponse = await transactionDetailsService.findAll();
     return handleServiceResponse(serviceResponse, res);
@@ -64,6 +61,19 @@ class TransactionDetailsController {
     } else {
       return res.status(400).send("Invalid request body, either item_id or repair_id must be provided");
     }
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public updateTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
+    const serviceResponse = await transactionDetailsService.updateById(
+      req.params.transaction_detail_id,
+      req.body.completed,
+    );
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public deleteTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
+    const serviceResponse = await transactionDetailsService.deleteById(req.params.transaction_detail_id);
     return handleServiceResponse(serviceResponse, res);
   };
 }

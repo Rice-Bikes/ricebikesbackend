@@ -7,11 +7,13 @@ import { openAPIRouter } from "@/api-docs/openAPIRouter";
 import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
 import { transactionRouter } from "@/api/transactions/transactionRouter";
 import errorHandler from "@/common/middleware/errorHandler";
-import rateLimiter from "@/common/middleware/rateLimiter";
+// import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
+import { itemRouter } from "./api/items/itemRouter";
+import { repairRouter } from "./api/repairs/repairRouter";
 import { transactionDetailsRouter } from "./api/transactionDetails/transactionDetailsRouter";
 import { userRouter } from "./api/users/userRouter";
 
@@ -26,7 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
-app.use(rateLimiter);
+// app.use(rateLimiter);
 
 // Request logging
 app.use(requestLogger);
@@ -38,6 +40,8 @@ app.use("/transactionDetails", transactionDetailsRouter);
 app.use("/bikes", bikesRouter);
 app.use("/customers", customerRouter);
 app.use("/users", userRouter);
+app.use("/items", itemRouter);
+app.use("/repairs", repairRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

@@ -20,13 +20,14 @@ model Users {
 }
 
 model Roles {
-  role_id  String  @id @default(uuid()) @db.Uuid
-  username String
-  role     String
-  active   Boolean
-  User     Users   @relation(fields: [username], references: [username], onDelete: Cascade, onUpdate: Cascade)
+  role_id String  @id @default(uuid()) @db.Uuid
+  user_id String  @db.Uuid
+  // username String
+  role    String
+  active  Boolean
+  User    Users   @relation(fields: [user_id], references: [username], onDelete: Cascade, onUpdate: Cascade)
 
-  @@index([username])
+  @@index([user_id])
 }
 
 model Transactions {
@@ -91,19 +92,18 @@ model Items {
   name               String
   description        String?
   brand              String?
-  date_created       DateTime
-  stock              Int
-  minimum_stock      Int
+  stock              Int?
+  minimum_stock      Int?
   standard_price     Int
   wholesale_cost     Int
-  condition          String
-  is_disabled        Boolean
-  is_managed         Boolean
+  condition          String?
+  disabled           Boolean?
+  managed            Boolean?
   category_1         String?
   category_2         String?
   category_3         String?
-  specifications     Json
-  features           Json
+  specifications     Json?
+  features           Json?
   OrderRequests      OrderRequests[]
   TransactionDetails TransactionDetails[]
 }
@@ -132,6 +132,7 @@ model TransactionDetails {
   item_id               String?  @db.Char(12) //upc
   repair_id             String?  @db.Uuid
   changed_by            String?  @db.Uuid
+  completed             Boolean
   quantity              Int
   date_modified         DateTime
 

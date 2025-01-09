@@ -15,6 +15,7 @@ customerRegistry.register("Customer", CustomerSchema);
 customerRegistry.registerPath({
   method: "get",
   path: "/customers",
+  summary: "Get all customers from the database",
   tags: ["Customers"],
   responses: createApiResponse(z.array(CustomerSchema), "Success"),
 });
@@ -24,6 +25,7 @@ customerRouter.get("/", customerController.getCustomers);
 customerRegistry.registerPath({
   method: "get",
   path: "/customers/{id}",
+  summary: "Get a customer from the database based on it's uuid",
   tags: ["Customers"],
   request: { params: GetCustomerSchema.shape.params },
   responses: createApiResponse(CustomerSchema, "Success"),
@@ -33,10 +35,18 @@ customerRouter.get("/:id", [validateRequest(GetCustomerSchema)], customerControl
 
 customerRegistry.registerPath({
   method: "post",
-  path: "/customers/{id}",
+  path: "/customers",
+  summary: "Create a customer in the database",
   tags: ["Customers"],
-  request: { params: GetCustomerSchema.shape.params },
+  request: {
+    body: {
+      description: "Customer object",
+      content: {
+        "application/json": { schema: CreateCustomerSchema.shape.body },
+      },
+    },
+  },
   responses: createApiResponse(CustomerSchema, "Success"),
 });
 
-customerRouter.post("/:id", [validateRequest(CreateCustomerSchema)], customerController.getCustomer);
+customerRouter.post("/", [validateRequest(CreateCustomerSchema)], customerController.createCustomer);

@@ -3,7 +3,13 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { GetTransactionSchema, TransactionSchema } from "@/api/transactions/transactionModel";
+import {
+  CreateTransactionSchema,
+  DeleteTransactionSchema,
+  GetTransactionSchema,
+  PatchTransactionSchema,
+  TransactionSchema,
+} from "@/api/transactions/transactionModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { transactionsController } from "./transactionController";
 
@@ -34,3 +40,53 @@ transactionRegistry.registerPath({
 });
 
 transactionRouter.get("/:id", validateRequest(GetTransactionSchema), transactionsController.getTransaction);
+
+transactionRegistry.registerPath({
+  method: "post",
+  path: "/transactions",
+  summary: "Create a transaction in the database",
+  tags: ["Transactions"],
+  request: {
+    body: {
+      description: "Transaction object",
+      content: {
+        "application/json": { schema: CreateTransactionSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(TransactionSchema, "Success"),
+});
+
+transactionRouter.post("/", [validateRequest(CreateTransactionSchema)], transactionsController.createTransaction);
+
+transactionRegistry.registerPath({
+  method: "put",
+  path: "/transactions/{transaction_id}",
+  summary: "Updates a transaction in the database",
+  tags: ["Transactions"],
+  request: {
+    params: PatchTransactionSchema.shape.params,
+    body: {
+      description: "Transaction object",
+      content: {
+        "application/json": { schema: PatchTransactionSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(TransactionSchema, "Success"),
+});
+
+transactionRouter.put("/:id", [validateRequest(PatchTransactionSchema)], transactionsController.updateTransaction);
+
+transactionRegistry.registerPath({
+  method: "delete",
+  path: "/transactions/{transaction_id}",
+  summary: "Deletes a transaction in the database",
+  tags: ["Transactions"],
+  request: {
+    params: DeleteTransactionSchema.shape.params,
+  },
+  responses: createApiResponse(TransactionSchema, "Success"),
+});
+
+transactionRouter.delete("/:id", [validateRequest(DeleteTransactionSchema)], transactionsController.deleteTransaction);

@@ -23,4 +23,27 @@ export class TransactionDetailsRepository {
       data: transactionDetails,
     });
   }
+
+  deleteAsync(id: string): Promise<TransactionDetails> {
+    return (
+      prisma.transactionDetails.delete({
+        where: {
+          transaction_detail_id: id,
+        },
+      }) || null
+    );
+  }
+  updateStatus(id: string, isDone: boolean): Promise<TransactionDetails | null> {
+    console.log(id, isDone);
+    return (
+      prisma.transactionDetails.update({
+        where: {
+          transaction_detail_id: id,
+        },
+        data: {
+          completed: isDone,
+        },
+      }) || null
+    );
+  }
 }

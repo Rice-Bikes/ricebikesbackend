@@ -17,12 +17,14 @@ export const CustomerSchema = z.object({
 
 // Input Validation for 'GET users/:id' endpoint
 export const GetCustomerSchema = z.object({
-  params: z.object({ id: commonValidations.id }),
+  params: z.object({ id: commonValidations.uuid }),
 });
 
 export const CreateCustomerSchema = z.object({
-  first_name: z.string(),
-  last_name: z.string(),
-  email: z.string().email(),
-  phone: z.string().nullable(),
+  body: z.object({
+    first_name: z.string(),
+    last_name: z.string(),
+    email: z.string().email(),
+    phone: z.string().nullable(),
+  }),
 });
