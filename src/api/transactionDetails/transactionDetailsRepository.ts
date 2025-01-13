@@ -1,4 +1,7 @@
-import type { TransactionDetails } from "@/api/transactionDetails/transactionDetailsModel";
+import type {
+  TransactionDetails,
+  TransactionDetailsWithForeignKeys,
+} from "@/api/transactionDetails/transactionDetailsModel";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -8,19 +11,55 @@ export class TransactionDetailsRepository {
     return prisma.transactionDetails.findMany();
   }
 
-  findByIdAsync(transaction_id: string): Promise<TransactionDetails[] | null> {
+  findAllTransactionDetails(transaction_id: string): Promise<TransactionDetailsWithForeignKeys[] | null> {
     return (
       prisma.transactionDetails.findMany({
         where: {
           transaction_id: transaction_id,
+        },
+        include: {
+          Item: true,
+          Repair: true,
+        },
+      }) || null
+    );
+  }
+
+  findAllRepairs(transaction_id: string): Promise<TransactionDetailsWithForeignKeys[] | null> {
+    console.log("finding repairs", transaction_id, "\n\n\n\\n\n\n\n");
+    return (
+      prisma.transactionDetails.findMany({
+        where: {
+          transaction_id: transaction_id,
+          item_id: null,
+        },
+        include: {
+          Repair: true,
+        },
+      }) || null
+    );
+  }
+
+  findAllItems(transaction_id: string): Promise<TransactionDetailsWithForeignKeys[] | null> {
+    console.log("finding items", transaction_id, "\n\n\n\n\n\n\n\n");
+    return (
+      prisma.transactionDetails.findMany({
+        where: {
+          transaction_id: transaction_id,
+          repair_id: null,
+        },
+        include: {
+          Item: true,
         },
       }) || null
     );
   }
 
   createAsync(transactionDetails: TransactionDetails): Promise<TransactionDetails> {
+    console.log("creating transaction details in createAsync", transactionDetails);
     return prisma.transactionDetails.create({
       data: transactionDetails,
+      // data: transactionDetails,
     });
   }
 

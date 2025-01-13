@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { Transaction } from "@/api/transactions/transactionModel";
+import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
 import { TransactionRepository } from "@/api/transactions/transactionRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
@@ -13,6 +13,7 @@ export class TransactionsService {
   }
 
   // Retrieves all Transactions from the database
+
   async findAll(after_id: number, page_limit: number): Promise<ServiceResponse<Transaction[] | null>> {
     try {
       const transactions = await this.TransactionRepository.findAll(after_id, page_limit);
@@ -20,6 +21,24 @@ export class TransactionsService {
         return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
       }
       return ServiceResponse.success<Transaction[]>("Transactions found", transactions);
+    } catch (ex) {
+      const errorMessage = `Error finding all Transactions: $${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while retrieving Transactions.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findAllAgg(after_id: number, page_limit: number): Promise<ServiceResponse<AggTransaction[] | null>> {
+    try {
+      const transactions = await this.TransactionRepository.findAllAggregate(after_id, page_limit);
+      if (!transactions || transactions.length === 0) {
+        return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<AggTransaction[]>("Transactions found", transactions);
     } catch (ex) {
       const errorMessage = `Error finding all Transactions: $${(ex as Error).message}`;
       logger.error(errorMessage);

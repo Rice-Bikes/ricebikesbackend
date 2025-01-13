@@ -6,6 +6,7 @@ import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import {
   CreateTransactionSchema,
   DeleteTransactionSchema,
+  GetAllTransactionSchema,
   GetTransactionSchema,
   PatchTransactionSchema,
   TransactionSchema,
@@ -24,7 +25,7 @@ transactionRegistry.registerPath({
   summary:
     "Get all transactions from the database, with optional query parameters for number of transactions and offset",
   tags: ["Transactions"],
-  request: { query: GetTransactionSchema.shape.query },
+  request: { query: GetAllTransactionSchema.shape.query },
   responses: createApiResponse(z.array(TransactionSchema), "Success"),
 });
 

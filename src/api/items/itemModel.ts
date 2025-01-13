@@ -8,7 +8,7 @@ extendZodWithOpenApi(z);
 export type Item = z.infer<typeof ItemSchema>;
 
 export const ItemSchema = z.object({
-  upc: z.string().length(12),
+  upc: z.string(),
   name: z.string(),
   description: z.string().nullable(),
   brand: z.string().nullable(),
@@ -17,7 +17,7 @@ export const ItemSchema = z.object({
   standard_price: z.number().int(),
   wholesale_cost: z.number().int(),
   condition: z.string().nullable(),
-  disabled: z.boolean().nullable(),
+  disabled: z.boolean(),
   managed: z.boolean().nullable(),
   category_1: z.string().nullable(),
   category_2: z.string().nullable(),
@@ -28,7 +28,7 @@ export const ItemSchema = z.object({
 
 // Input Validation for 'GET users/:id' endpoint
 export const GetItemSchema = z.object({
-  params: z.object({ id: z.string().length(12) }),
+  params: z.object({ id: z.string() }),
 });
 
 export const CreateItemSchema = z.object({

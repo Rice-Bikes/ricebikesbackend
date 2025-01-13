@@ -55,13 +55,18 @@ export const AggTransactionSchema = z.object({
 });
 type transactionType = "outpatient" | "inpatient" | "refurb" | "retrospec";
 // Input Validation for 'GET users/:id' endpoint
-export const GetTransactionSchema = z.object({
+export const GetAllTransactionSchema = z.object({
   params: z.object({ id: commonValidations.id }),
   query: z.object({
     page_limit: z.number().int().positive(),
     after_id: z.number().int().positive().optional(),
     type: z.string().optional(),
+    aggregate: z.boolean(),
   }),
+});
+
+export const GetTransactionSchema = z.object({
+  params: z.object({ id: commonValidations.id }),
 });
 
 export const CreateTransactionSchema = z.object({

@@ -4,8 +4,28 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class TransactionRepository {
-  findAll(after_id: number, page_limit: number): Promise<any> {
+  findAll(after_id: number, page_limit: number): Promise<Transaction[]> {
     return prisma.transactions.findMany({
+      take: page_limit,
+      where: {
+        transaction_num: {
+          lt: after_id,
+        },
+        is_completed: false,
+        is_paid: false,
+      },
+      orderBy: {
+        transaction_num: "desc",
+      },
+    });
+  }
+
+  findAllAggregate(after_id: number, page_limit: number): Promise<AggTransaction[]> {
+    return prisma.transactions.findMany({
+      include: {
+        Bike: true,
+        Customer: true,
+      },
       take: page_limit,
       where: {
         transaction_num: {

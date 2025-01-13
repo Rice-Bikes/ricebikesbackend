@@ -1,14 +1,15 @@
 import type { Request, RequestHandler, Response } from "express";
 
-import type { Transaction } from "@/api/transactions/transactionModel";
+import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
 import { transactionsService } from "@/api/transactions/transactionsService";
+import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 
 class TransactionsController {
   public getTransactions: RequestHandler = async (_req: Request, res: Response) => {
     let after_id: number;
     if (!_req.query.after_id) {
-      after_id = 2 ** 32 - 1;
+      after_id = 2147483647;
     } else {
       after_id = Number.parseInt(_req.query.after_id as string, 10);
     }
@@ -17,7 +18,12 @@ class TransactionsController {
     }
     const page_limit = Number.parseInt(_req.query.page_limit as string, 10);
 
-    const serviceResponse = await transactionsService.findAll(after_id, page_limit);
+    let serviceResponse: ServiceResponse<Transaction[] | AggTransaction[] | null>;
+    if (_req.query.aggregate) {
+      serviceResponse = await transactionsService.findAllAgg(after_id, page_limit);
+    } else {
+      serviceResponse = await transactionsService.findAll(after_id, page_limit);
+    }
     return handleServiceResponse(serviceResponse, res);
   };
 

@@ -32,16 +32,63 @@ export class TransactionDetailsService {
   }
 
   // Retrieves a single transaction's details by their ID
-  async findById(transaction_id: string): Promise<ServiceResponse<TransactionDetails[] | null>> {
+  async findAllById(transaction_id: string): Promise<ServiceResponse<TransactionDetails[] | null>> {
     try {
-      const singeTransactionDetails = await this.TransactionDetailsRepository.findByIdAsync(transaction_id);
+      const singeTransactionDetails = await this.TransactionDetailsRepository.findAllTransactionDetails(transaction_id);
       if (!singeTransactionDetails) {
-        return ServiceResponse.failure(
-          `transaction details for ${transaction_id} not found`,
+        return ServiceResponse.success(
+          `transaction details for ${transaction_id} do not exist`,
           null,
-          StatusCodes.NOT_FOUND,
+          StatusCodes.NO_CONTENT,
         );
       }
+      console.log(singeTransactionDetails);
+      return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
+    } catch (ex) {
+      const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while finding transaction details.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findItems(transaction_id: string): Promise<ServiceResponse<TransactionDetails[] | null>> {
+    try {
+      const singeTransactionDetails = await this.TransactionDetailsRepository.findAllItems(transaction_id);
+      if (!singeTransactionDetails) {
+        return ServiceResponse.success(
+          `transaction details for ${transaction_id} do not exist`,
+          null,
+          StatusCodes.NO_CONTENT,
+        );
+      }
+      console.log(singeTransactionDetails);
+      return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
+    } catch (ex) {
+      const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while finding transaction details.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findRepairs(transaction_id: string): Promise<ServiceResponse<TransactionDetails[] | null>> {
+    try {
+      const singeTransactionDetails = await this.TransactionDetailsRepository.findAllRepairs(transaction_id);
+      if (!singeTransactionDetails) {
+        return ServiceResponse.success(
+          `transaction details for ${transaction_id} do not exist`,
+          null,
+          StatusCodes.NO_CONTENT,
+        );
+      }
+      console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
     } catch (ex) {
       const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
@@ -66,8 +113,8 @@ export class TransactionDetailsService {
       const transactionDetail = {
         transaction_detail_id: crypto.randomUUID(),
         transaction_id: transaction_id,
-        item_id: item_id ? item_id : undefined,
-        repair_id: repair_id ? repair_id : undefined,
+        item_id: item_id ? item_id.trim() : undefined,
+        repair_id: repair_id ? repair_id.trim() : undefined,
         changed_by: created_by,
         completed: !item_id, // always want items to be true but want repairs to start as false
         quantity: quantity,
@@ -78,6 +125,7 @@ export class TransactionDetailsService {
       if (!singeTransactionDetails) {
         return ServiceResponse.failure("singeTransactionDetails not created", null, StatusCodes.NOT_FOUND);
       }
+      console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails>("singeTransactionDetails created", singeTransactionDetails);
     } catch (ex) {
       const errorMessage = `Error creating singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;

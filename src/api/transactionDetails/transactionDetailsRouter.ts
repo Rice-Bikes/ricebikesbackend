@@ -8,6 +8,7 @@ import {
   DeleteTransactionDetailsSchema,
   GetTransactionDetailsSchema,
   TransactionDetailsSchema,
+  TransactionDetailsWithForeignKeysSchema,
   updateTransactionDetailsSchema,
 } from "@/api/transactionDetails/transactionDetailsModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
@@ -33,8 +34,11 @@ transactionDetailsRegistry.registerPath({
   path: "/transactionDetails/{transaction_id}",
   summary: "Get transaction details from a specific transaction, including items and repairs",
   tags: ["TransactionDetail"],
-  request: { params: GetTransactionDetailsSchema.shape.params },
-  responses: createApiResponse(TransactionDetailsSchema, "Success"),
+  request: {
+    params: GetTransactionDetailsSchema.shape.params,
+    query: GetTransactionDetailsSchema.shape.query,
+  },
+  responses: createApiResponse(TransactionDetailsWithForeignKeysSchema, "Success"),
 });
 
 transactionDetailsRouter.get(

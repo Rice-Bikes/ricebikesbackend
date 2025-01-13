@@ -1,8 +1,10 @@
 import { transactionDetailsService } from "@/api/transactionDetails/transactionDetailsService";
+import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import type { Request, RequestHandler, Response } from "express";
 import type { FromSchema, JSONSchema } from "json-schema-to-ts";
 import { Validator } from "../validator/validator";
+import type { TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 const transactionDetailRequestSchema = {
   $id: "transactionDetail.json",
@@ -29,7 +31,18 @@ class TransactionDetailsController {
   };
 
   public getTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
-    const serviceResponse = await transactionDetailsService.findById(req.params.id);
+    const detailType = req.query.detailType;
+    let serviceResponse: ServiceResponse<TransactionDetailsWithForeignKeys[] | null>;
+
+    if (detailType === "repair") {
+      serviceResponse = await transactionDetailsService.findRepairs(req.params.transaction_id);
+    } else if (detailType === "item") {
+      serviceResponse = await transactionDetailsService.findItems(req.params.transaction_id);
+    } else {
+      serviceResponse = await transactionDetailsService.findAllById(req.params.transaction_id);
+    }
+
+    // const serviceResponse = await transactionDetailsService.findAllById(req.params.id);
     return handleServiceResponse(serviceResponse, res);
   };
 
