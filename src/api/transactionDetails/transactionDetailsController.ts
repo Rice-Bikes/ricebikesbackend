@@ -68,7 +68,7 @@ class TransactionDetailsController {
         transaction_id,
         body.changed_by,
         body.quantity,
-        body.item_id,
+        body.item_id.trim(),
         undefined,
       );
     } else {
@@ -86,6 +86,7 @@ class TransactionDetailsController {
   };
 
   public deleteTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
+    console.log("deleting transaction details", req.params.transaction_detail_id);
     const serviceResponse = await transactionDetailsService.deleteById(req.params.transaction_detail_id);
     return handleServiceResponse(serviceResponse, res);
   };

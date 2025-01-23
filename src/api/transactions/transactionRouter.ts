@@ -77,7 +77,11 @@ transactionRegistry.registerPath({
   responses: createApiResponse(TransactionSchema, "Success"),
 });
 
-transactionRouter.put("/:id", [validateRequest(PatchTransactionSchema)], transactionsController.updateTransaction);
+transactionRouter.put(
+  "/:transaction_id",
+  [validateRequest(PatchTransactionSchema)],
+  transactionsController.updateTransaction,
+);
 
 transactionRegistry.registerPath({
   method: "delete",
@@ -90,4 +94,18 @@ transactionRegistry.registerPath({
   responses: createApiResponse(TransactionSchema, "Success"),
 });
 
-transactionRouter.delete("/:id", [validateRequest(DeleteTransactionSchema)], transactionsController.deleteTransaction);
+transactionRouter.delete(
+  "/:transaction_id",
+  [validateRequest(DeleteTransactionSchema)],
+  transactionsController.deleteTransaction,
+);
+
+transactionRegistry.registerPath({
+  method: "get",
+  path: "/transactions/summary/",
+  summary: "Get a summary of all transactions in the database",
+  tags: ["Transactions"],
+  responses: createApiResponse(TransactionSchema, "Success"),
+});
+
+transactionRouter.get("//", transactionsController.getTransactionsSummary);

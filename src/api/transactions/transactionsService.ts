@@ -1,6 +1,11 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
+import type {
+  AggTransaction,
+  Transaction,
+  TransactionsSummary,
+  UpdateTransaction,
+} from "@/api/transactions/transactionModel";
 import { TransactionRepository } from "@/api/transactions/transactionRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
@@ -51,7 +56,7 @@ export class TransactionsService {
   }
 
   // Retrieves a single Transaction by their ID
-  async findById(id: number): Promise<ServiceResponse<Transaction | null>> {
+  async findById(id: string): Promise<ServiceResponse<Transaction | null>> {
     try {
       const transaction = await this.TransactionRepository.findByIdAggregate(id);
       if (!transaction) {
@@ -110,16 +115,35 @@ export class TransactionsService {
   // Updates a Transaction
   async updateTransactionByID(
     transaction_id: string,
-    transaction: Transaction,
+    transaction: UpdateTransaction,
   ): Promise<ServiceResponse<Transaction | null>> {
     try {
       const updatedTransaction = await this.TransactionRepository.updateById(transaction_id, transaction);
+      console.log("updated transaction", updatedTransaction);
       if (!updatedTransaction) {
         return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
       }
       return ServiceResponse.success<Transaction>("Transaction updated", updatedTransaction);
     } catch (ex) {
       const errorMessage = `Error updating Transaction with id ${transaction_id}:, ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while updating Transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getTransactionsSummary(): Promise<ServiceResponse<TransactionsSummary | null>> {
+    try {
+      const transactionSummary = await this.TransactionRepository.getTransactionsSummary();
+      if (!transactionSummary) {
+        return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<TransactionsSummary>("Transaction updated", transactionSummary);
+    } catch (ex) {
+      const errorMessage = `Error finding transaction summary data:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
         "An error occurred while updating Transaction.",

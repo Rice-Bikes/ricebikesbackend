@@ -26,7 +26,7 @@ userRouter.get("/", userController.getUsers);
 userRegistry.registerPath({
   method: "get",
   path: "/users/{id}",
-  summary: "Get a user from the database based on it's rice netid",
+  summary: "Get a user from the database based on their rice netid",
   tags: ["User"],
   request: { params: GetUserSchema.shape.params },
   responses: createApiResponse(UserSchema, "Success"),

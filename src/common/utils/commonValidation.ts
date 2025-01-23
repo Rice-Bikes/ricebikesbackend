@@ -10,7 +10,7 @@ export const commonValidations = {
   uuid: z
     .string()
     .refine(
-      (data) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(data),
+      (data) => /^[a-f0-9A-F]{8}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{4}-[a-f0-9A-F]{12}$/i.test(data),
       "ID must be a valid UUID",
     ),
 };

@@ -42,7 +42,7 @@ export class TransactionDetailsService {
           StatusCodes.NO_CONTENT,
         );
       }
-      console.log(singeTransactionDetails);
+      // console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
     } catch (ex) {
       const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
@@ -65,7 +65,7 @@ export class TransactionDetailsService {
           StatusCodes.NO_CONTENT,
         );
       }
-      console.log(singeTransactionDetails);
+      // console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
     } catch (ex) {
       const errorMessage = `Error finding transaction details with id ${transaction_id}:, ${(ex as Error).message}`;
@@ -120,7 +120,7 @@ export class TransactionDetailsService {
         quantity: quantity,
         date_modified: new Date(),
       } as TransactionDetails;
-      console.log(transactionDetail);
+      console.log("transaction detail in service", transactionDetail);
       const singeTransactionDetails = await this.TransactionDetailsRepository.createAsync(transactionDetail);
       if (!singeTransactionDetails) {
         return ServiceResponse.failure("singeTransactionDetails not created", null, StatusCodes.NOT_FOUND);

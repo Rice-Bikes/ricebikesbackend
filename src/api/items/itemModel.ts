@@ -8,7 +8,8 @@ extendZodWithOpenApi(z);
 export type Item = z.infer<typeof ItemSchema>;
 
 export const ItemSchema = z.object({
-  upc: z.string(),
+  item_id: z.string().uuid(),
+  upc: z.string().length(12),
   name: z.string(),
   description: z.string().nullable(),
   brand: z.string().nullable(),

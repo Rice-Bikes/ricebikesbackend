@@ -1,4 +1,9 @@
-import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
+import type {
+  AggTransaction,
+  Transaction,
+  TransactionsSummary,
+  UpdateTransaction,
+} from "@/api/transactions/transactionModel";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -15,6 +20,7 @@ export class TransactionRepository {
         is_paid: false,
       },
       orderBy: {
+        is_urgent: "desc",
         transaction_num: "desc",
       },
     });
@@ -32,13 +38,18 @@ export class TransactionRepository {
           lt: after_id,
         },
       },
-      orderBy: {
-        transaction_num: "desc",
-      },
+      orderBy: [
+        {
+          is_urgent: "desc",
+        },
+        {
+          transaction_num: "desc",
+        },
+      ],
     });
   }
 
-  findByIdAggregate(transaction_num: number): Promise<AggTransaction | null> {
+  findByIdAggregate(transaction_id: string): Promise<AggTransaction | null> {
     return (
       prisma.transactions.findUnique({
         include: {
@@ -46,7 +57,7 @@ export class TransactionRepository {
           Customer: true,
         },
         where: {
-          transaction_num: transaction_num,
+          transaction_id: transaction_id,
         },
       }) || null
     );
@@ -66,12 +77,48 @@ export class TransactionRepository {
     });
   }
 
-  updateById(transaction_id: string, transaction: Transaction): Promise<Transaction> {
+  updateById(transaction_id: string, transaction: UpdateTransaction): Promise<Transaction> {
+    console.log("before update", transaction_id, transaction);
+
+    // Ensure the transaction object matches the TransactionsUpdateInput type
+
     return prisma.transactions.update({
       where: {
         transaction_id: transaction_id,
       },
-      data: transaction,
+      data: {
+        transaction_num: undefined,
+        transaction_id: undefined,
+        date_created: undefined,
+        ...transaction,
+      },
     });
+  }
+
+  async getTransactionsSummary(): Promise<TransactionsSummary> {
+    const stats = [
+      prisma.transactions.count({
+        where: {
+          is_completed: false,
+        },
+      }),
+      prisma.transactions.count({
+        where: {
+          is_completed: true,
+          is_paid: false,
+        },
+      }),
+      Promise.resolve(0), //TODO: make sure this resolves to something meaningful once this is implemented
+    ];
+    return Promise.all(stats).then(
+      ([quantity_incomplete, quantity_waiting_on_pickup, quantity_waiting_on_safety_check]) => {
+        const summary: TransactionsSummary = {
+          quantity_incomplete,
+          quantity_waiting_on_pickup,
+          quantity_waiting_on_safety_check,
+        };
+        return summary;
+      },
+    );
   }
 }

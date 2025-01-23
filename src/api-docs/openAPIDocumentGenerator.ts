@@ -4,7 +4,9 @@ import { bikeRegistry } from "@/api/bikes/bikesRouter";
 import { customerRegistry } from "@/api/customer/customerRouter";
 import { healthCheckRegistry } from "@/api/healthCheck/healthCheckRouter";
 import { itemRegistry } from "@/api/items/itemRouter";
+import { OrderRequestsRegistry } from "@/api/orderRequests/orderRequestsRouter";
 import { repairRegistry } from "@/api/repairs/repairRouter";
+import { summaryRegistry } from "@/api/summary/summaryRouter";
 import { transactionDetailsRegistry } from "@/api/transactionDetails/transactionDetailsRouter";
 import { transactionRegistry } from "@/api/transactions/transactionRouter";
 import { userRegistry } from "@/api/users/userRouter";
@@ -19,6 +21,8 @@ export function generateOpenAPIDocument() {
     userRegistry,
     repairRegistry,
     itemRegistry,
+    summaryRegistry,
+    OrderRequestsRegistry,
   ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

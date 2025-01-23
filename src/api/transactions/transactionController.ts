@@ -1,6 +1,6 @@
 import type { Request, RequestHandler, Response } from "express";
 
-import type { AggTransaction, Transaction } from "@/api/transactions/transactionModel";
+import type { AggTransaction, Transaction, UpdateTransaction } from "@/api/transactions/transactionModel";
 import { transactionsService } from "@/api/transactions/transactionsService";
 import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
@@ -28,26 +28,47 @@ class TransactionsController {
   };
 
   public getTransaction: RequestHandler = async (req: Request, res: Response) => {
-    const id = Number.parseInt(req.params.id as string, 10);
+    const id = req.params.id as string;
     const serviceResponse = await transactionsService.findById(id);
     return handleServiceResponse(serviceResponse, res);
   };
 
   public createTransaction: RequestHandler = async (req: Request, res: Response) => {
-    const serviceResponse = await transactionsService.createTransaction(req.body as Transaction);
+    const newTransaction = {
+      ...req.body,
+      date_created: new Date(),
+      total_cost: 0,
+      description: "",
+      is_completed: false,
+      is_paid: false,
+      is_refurb: false,
+      is_urgent: false,
+      is_nuclear: false,
+      is_beer_bike: false,
+      is_reserved: false,
+      is_waiting_on_email: false,
+    } as Transaction;
+    const serviceResponse = await transactionsService.createTransaction(newTransaction);
     return handleServiceResponse(serviceResponse, res);
   };
 
   public updateTransaction: RequestHandler = async (req: Request, res: Response) => {
+    console.log("pinging update transaction", req.body.description);
     const serviceResponse = await transactionsService.updateTransactionByID(
       req.params.transaction_id,
-      req.body as Transaction,
+      req.body as UpdateTransaction,
     );
     return handleServiceResponse(serviceResponse, res);
   };
 
   public deleteTransaction: RequestHandler = async (req: Request, res: Response) => {
+    console.log("delete transaction  params", req.params);
     const serviceResponse = await transactionsService.deleteTransactionByID(req.params.transaction_id);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public getTransactionsSummary: RequestHandler = async (_req: Request, res: Response) => {
+    const serviceResponse = await transactionsService.getTransactionsSummary();
     return handleServiceResponse(serviceResponse, res);
   };
 }
