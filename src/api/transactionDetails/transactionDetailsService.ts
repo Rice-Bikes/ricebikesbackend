@@ -116,7 +116,7 @@ export class TransactionDetailsService {
         item_id: item_id ? item_id.trim() : undefined,
         repair_id: repair_id ? repair_id.trim() : undefined,
         changed_by: created_by,
-        completed: !item_id, // always want items to be true but want repairs to start as false
+        completed: repair_id === null, // always want items to be true but want repairs to start as false
         quantity: quantity,
         date_modified: new Date(),
       } as TransactionDetails;

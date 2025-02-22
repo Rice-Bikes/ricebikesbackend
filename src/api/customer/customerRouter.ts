@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { customerController } from "./customerController";
-import { CreateCustomerSchema, CustomerSchema, GetCustomerSchema } from "./customerModel";
+import { CreateCustomerSchema, CustomerSchema, EmailCustomerSchema, GetCustomerSchema } from "./customerModel";
 
 export const customerRegistry = new OpenAPIRegistry();
 export const customerRouter: Router = express.Router();
@@ -50,3 +50,22 @@ customerRegistry.registerPath({
 });
 
 customerRouter.post("/", [validateRequest(CreateCustomerSchema)], customerController.createCustomer);
+
+customerRegistry.registerPath({
+  method: "post",
+  path: "/customers/{id}",
+  summary: "Send an email to a customer in the database",
+  tags: ["Customers"],
+  request: {
+    params: EmailCustomerSchema.shape.params,
+    body: {
+      description: "Customer object",
+      content: {
+        "application/json": { schema: EmailCustomerSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(CustomerSchema, "Success"),
+});
+
+customerRouter.post("/:id", [validateRequest(EmailCustomerSchema)], customerController.emailCustomer);

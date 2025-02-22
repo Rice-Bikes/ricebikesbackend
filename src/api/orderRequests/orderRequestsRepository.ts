@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import type { CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
+import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
 
 const prisma = new PrismaClient();
 
@@ -8,18 +8,33 @@ export class OrderRequestsRepository {
     return prisma.orderRequests.findMany();
   }
 
-  async findByIdAsync(transaction_id: string): Promise<OrderRequest | null> {
+  async findByIdAgg(transaction_id: string): Promise<AggOrderRequest[] | null> {
     return (
-      prisma.orderRequests.findFirst({
+      prisma.orderRequests.findMany({
         where: {
           transaction_id: transaction_id,
+        },
+        include: {
+          Item: true,
+          User: true,
         },
       }) || null
     );
   }
 
   async create(orderRequest: OrderRequest): Promise<OrderRequest> {
+    console.log("creating order request", orderRequest);
     return prisma.orderRequests.create({
+      data: orderRequest,
+    });
+  }
+
+  async update(orderRequest: OrderRequest): Promise<OrderRequest> {
+    console.log("creating order request", orderRequest);
+    return prisma.orderRequests.update({
+      where: {
+        order_request_id: orderRequest.order_request_id,
+      },
       data: orderRequest,
     });
   }

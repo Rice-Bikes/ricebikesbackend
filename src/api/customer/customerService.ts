@@ -1,9 +1,17 @@
-import { StatusCodes } from "http-status-codes";
-
 import type { Customer } from "@/api/customer/customerModel";
 import { CustomersRepository } from "@/api/customer/customerRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
+import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
+import { render } from "@react-email/components";
+import { OAuth2Client, auth } from "google-auth-library";
+import { StatusCodes } from "http-status-codes";
+import nodemailer from "nodemailer";
+import { JSX } from "react";
+// import { render } from "@react-email/components";
+import RiceBikesEmail from "../../../emails/RiceBikesEmail";
+
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class CustomersService {
   private CustomersRepository: CustomersRepository;
@@ -59,6 +67,61 @@ export class CustomersService {
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async sendEmail(customer: Customer, transaction_num: number): Promise<ServiceResponse<Customer | null>> {
+    const authClient = new OAuth2Client({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri: "https://developers.google.com/oauthplayground",
+    });
+
+    authClient.setCredentials({
+      refresh_token:
+        "1//04FLew2BNlE1OCgYIARAAGAQSNwF-L9Irh_FyxOjtGWhYwjXRcYk_xHi7k9Hw_zZ7FjBfdNFbrhKTgScEf8bK-I4Q-bH03X40w0U",
+    });
+
+    const accessTokenResponse = await authClient.getAccessToken();
+    if (!accessTokenResponse.token) {
+      return ServiceResponse.failure("Error getting access token", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+    const accessToken = accessTokenResponse.token;
+
+    console.log(env);
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: "ricebikes@gmail.com",
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        refreshToken:
+          "1//04FLew2BNlE1OCgYIARAAGAQSNwF-L9Irh_FyxOjtGWhYwjXRcYk_xHi7k9Hw_zZ7FjBfdNFbrhKTgScEf8bK-I4Q-bH03X40w0U",
+        accessToken,
+        expires: 1484314697598,
+      },
+    });
+
+    const processedMail = await render(RiceBikesEmail({ transaction_num, email: customer.email }));
+
+    const mailStatus = await transporter.sendMail({
+      from: "ricebikes@gmail.com",
+      to: "cjg8@rice.edu",
+      subject: "Message",
+      html: processedMail,
+    });
+
+    try {
+      if (mailStatus.rejected) {
+        throw new Error(mailStatus.response);
+      }
+      console.log(`Email sent: ${mailStatus.response}`);
+      return ServiceResponse.success<Customer>("Email sent", customer);
+    } catch (error) {
+      console.log(error);
+      return ServiceResponse.failure(`Error sending email ${error}`, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 }

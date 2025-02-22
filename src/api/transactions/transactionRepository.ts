@@ -43,7 +43,7 @@ export class TransactionRepository {
           is_urgent: "desc",
         },
         {
-          transaction_num: "desc",
+          transaction_num: "asc",
         },
       ],
     });

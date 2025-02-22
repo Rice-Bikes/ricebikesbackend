@@ -14,7 +14,7 @@ OrderRequestsRegistry.register("OrderRequest", OrderRequestSchema);
 
 OrderRequestsRegistry.registerPath({
   method: "get",
-  path: "/OrderRequestss",
+  path: "/OrderRequests",
   summary: "Get all OrderRequestss from the database",
   tags: ["OrderRequests"],
   responses: createApiResponse(z.array(OrderRequestSchema), "Success"),
@@ -24,7 +24,7 @@ OrderRequestsRouter.get("/", orderRequestsController.getOrderRequests);
 
 OrderRequestsRegistry.registerPath({
   method: "get",
-  path: "/OrderRequestss/{id}",
+  path: "/OrderRequests/{id}",
   summary: "Get a OrderRequests from the database based on it's uuid",
   tags: ["OrderRequests"],
   request: { params: GetOrderRequestsSchema.shape.params },
@@ -35,7 +35,7 @@ OrderRequestsRouter.get("/:id", [validateRequest(GetOrderRequestsSchema)], order
 
 OrderRequestsRegistry.registerPath({
   method: "post",
-  path: "/OrderRequestss",
+  path: "/OrderRequests",
   summary: "Create a OrderRequests in the database",
   tags: ["OrderRequests"],
   request: {
@@ -51,6 +51,28 @@ OrderRequestsRegistry.registerPath({
 
 OrderRequestsRouter.post(
   "/",
+  [validateRequest(CreateOrderRequestsSchema)],
+  orderRequestsController.createOrderRequests,
+);
+
+OrderRequestsRegistry.registerPath({
+  method: "post",
+  path: "/OrderRequests/{request_id}",
+  summary: "Create a OrderRequests in the database",
+  tags: ["OrderRequests"],
+  request: {
+    body: {
+      description: "OrderRequest object",
+      content: {
+        "application/json": { schema: CreateOrderRequestsSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(OrderRequestSchema, "Success"),
+});
+
+OrderRequestsRouter.put(
+  "/:request_id",
   [validateRequest(CreateOrderRequestsSchema)],
   orderRequestsController.createOrderRequests,
 );

@@ -36,6 +36,9 @@ export class TransactionDetailsRepository {
         include: {
           Repair: true,
         },
+        orderBy: {
+          date_modified: "desc",
+        },
       }) || null
     );
   }

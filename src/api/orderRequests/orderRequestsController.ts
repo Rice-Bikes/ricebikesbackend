@@ -26,6 +26,14 @@ class OrderRequestsController {
     const serviceResponse = await orderRequestsService.createOrderRequest(orderRequests);
     return handleServiceResponse(serviceResponse, res);
   };
+
+  public updateOrderRequests: RequestHandler = async (req: Request, res: Response) => {
+    const orderRequests = {
+      ...req.body,
+    } as OrderRequest;
+    const serviceResponse = await orderRequestsService.updateOrderRequest(orderRequests);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const orderRequestsController = new OrderRequestsController();

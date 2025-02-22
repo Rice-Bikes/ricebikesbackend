@@ -1,4 +1,4 @@
-FROM node:20.18.1-alpine3.20
+FROM node:20.18.1-slim
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -11,7 +11,7 @@ COPY prisma ./prisma/
 RUN npm i
 
 # # Install OpenSSL
-# RUN apt-get update -y && apt-get install -y openssl
+RUN apt-get update -y && apt-get install -y openssl
 
 # Bundle app source
 COPY . .

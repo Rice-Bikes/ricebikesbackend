@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
-import type { CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
+import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
 import { OrderRequestsRepository } from "./orderRequestsRepository";
 
 export class OrderRequestsService {
@@ -32,13 +32,13 @@ export class OrderRequestsService {
   }
 
   // Retrieves a single item by their ID
-  async findById(id: string): Promise<ServiceResponse<OrderRequest | null>> {
+  async findById(id: string): Promise<ServiceResponse<AggOrderRequest[] | null>> {
     try {
-      const item = await this.OrderRequestsRepository.findByIdAsync(id);
+      const item = await this.OrderRequestsRepository.findByIdAgg(id);
       if (!item) {
         return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<OrderRequest>("OrderRequest found", item);
+      return ServiceResponse.success<AggOrderRequest[]>("OrderRequest found", item);
     } catch (ex) {
       const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -55,6 +55,17 @@ export class OrderRequestsService {
       const errorMessage = `Error creating item: ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure("An error occurred while creating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async updateOrderRequest(item: OrderRequest): Promise<ServiceResponse<OrderRequest | null>> {
+    try {
+      const newOrderRequest = await this.OrderRequestsRepository.update(item);
+      return ServiceResponse.success<OrderRequest>("OrderRequest updated", newOrderRequest);
+    } catch (ex) {
+      const errorMessage = `Error creating item: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while updating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 }

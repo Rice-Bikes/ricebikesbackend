@@ -10,7 +10,6 @@ import errorHandler from "@/common/middleware/errorHandler";
 // import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
-import { a } from "vitest/dist/chunks/suite.B2jumIFP";
 import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
 import { itemRouter } from "./api/items/itemRouter";
@@ -46,7 +45,7 @@ app.use("/users", userRouter);
 app.use("/items", itemRouter);
 app.use("/repairs", repairRouter);
 app.use("/summary", summaryRouter);
-app.use("/orderRequest", OrderRequestsRouter);
+app.use("/orderRequests", OrderRequestsRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

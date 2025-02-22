@@ -28,6 +28,13 @@ class CustomerController {
     const serviceResponse = await customersService.createCustomer(customer);
     return handleServiceResponse(serviceResponse, res);
   };
+
+  public emailCustomer: RequestHandler = async (req: Request, res: Response) => {
+    const id = Number.parseInt(req.params.id);
+    const body = req.body;
+    const serviceResponse = await customersService.sendEmail(body.customer as Customer, id);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const customerController = new CustomerController();

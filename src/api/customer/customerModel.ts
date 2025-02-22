@@ -28,3 +28,10 @@ export const CreateCustomerSchema = z.object({
     phone: z.string().nullable(),
   }),
 });
+
+export const EmailCustomerSchema = z.object({
+  params: z.object({ id: commonValidations.id }),
+  body: z.object({
+    customer: CustomerSchema,
+  }),
+});
