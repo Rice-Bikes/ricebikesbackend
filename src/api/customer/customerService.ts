@@ -106,12 +106,14 @@ export class CustomersService {
       },
     });
 
-    const processedMail = await render(RiceBikesEmail({ transaction_num, email: customer.email }));
+    const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
+
+    const processedMail = await render(RiceBikesEmail({ username: name, transaction_num, email: customer.email }));
 
     const mailStatus = await transporter.sendMail({
       from: "ricebikes@gmail.com",
-      to: "cjg8@rice.edu",
-      subject: "Message",
+      to: customer.email,
+      subject: `Bike Ready for Pickup - ${transaction_num}`,
       html: processedMail,
     });
 

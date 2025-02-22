@@ -16,8 +16,8 @@ import {
 } from '@react-email/components';
 
 interface RiceBikesEmailProps {
-  username?: string;
-  transaction_num?: number;
+  username: string;
+  transaction_num: number;
   email?: string
   // bikeReadyDate?: Date;
 
