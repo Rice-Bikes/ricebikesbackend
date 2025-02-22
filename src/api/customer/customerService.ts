@@ -71,6 +71,12 @@ export class CustomersService {
   }
 
   async sendEmail(customer: Customer, transaction_num: number): Promise<ServiceResponse<Customer | null>> {
+    console.log(
+      "Required credentials",
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+    );
     const authClient = new OAuth2Client({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -78,8 +84,7 @@ export class CustomersService {
     });
 
     authClient.setCredentials({
-      refresh_token:
-        "1//04FLew2BNlE1OCgYIARAAGAQSNwF-L9Irh_FyxOjtGWhYwjXRcYk_xHi7k9Hw_zZ7FjBfdNFbrhKTgScEf8bK-I4Q-bH03X40w0U",
+      refresh_token: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
     });
 
     const accessTokenResponse = await authClient.getAccessToken();
@@ -88,8 +93,6 @@ export class CustomersService {
     }
     const accessToken = accessTokenResponse.token;
 
-    console.log(env);
-
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -97,8 +100,7 @@ export class CustomersService {
         user: "ricebikes@gmail.com",
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken:
-          "1//04FLew2BNlE1OCgYIARAAGAQSNwF-L9Irh_FyxOjtGWhYwjXRcYk_xHi7k9Hw_zZ7FjBfdNFbrhKTgScEf8bK-I4Q-bH03X40w0U",
+        refreshToken: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
         accessToken,
         expires: 1484314697598,
       },
@@ -113,8 +115,9 @@ export class CustomersService {
       html: processedMail,
     });
 
+    console.log(mailStatus);
     try {
-      if (mailStatus.rejected) {
+      if (mailStatus.accepted.length === 0) {
         throw new Error(mailStatus.response);
       }
       console.log(`Email sent: ${mailStatus.response}`);
