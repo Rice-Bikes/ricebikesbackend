@@ -39,6 +39,13 @@ class ItemController {
     const serviceResponse = await itemsService.createItem(item);
     return handleServiceResponse(serviceResponse, res);
   };
+
+  public refreshCatalog: RequestHandler = async (req: Request, res: Response) => {
+    console.log("catalog request body", req.body);
+    const csv = req.body.csv as string;
+    const serviceResponse = await itemsService.refreshItems(csv);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const itemController = new ItemController();

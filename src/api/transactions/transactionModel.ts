@@ -4,6 +4,7 @@ import { z } from "zod";
 import { commonValidations } from "@/common/utils/commonValidation";
 import { BikeSchema } from "../bikes/bikesModel";
 import { CustomerSchema } from "../customer/customerModel";
+import { OrderRequestSchema } from "../orderRequests/orderRequestsModel";
 
 extendZodWithOpenApi(z);
 
@@ -54,6 +55,7 @@ export const AggTransactionSchema = z.object({
   date_completed: z.date().nullable(),
   Bike: BikeSchema.nullable(),
   Customer: CustomerSchema.nullable(),
+  OrderRequests: z.array(OrderRequestSchema).nullable(),
 });
 type transactionType = "outpatient" | "inpatient" | "refurb" | "retrospec";
 // Input Validation for 'GET users/:id' endpoint

@@ -31,6 +31,7 @@ export class TransactionRepository {
       include: {
         Bike: true,
         Customer: true,
+        OrderRequests: true,
       },
       take: page_limit,
       where: {
@@ -55,6 +56,7 @@ export class TransactionRepository {
         include: {
           Bike: true,
           Customer: true,
+          OrderRequests: true,
         },
         where: {
           transaction_id: transaction_id,

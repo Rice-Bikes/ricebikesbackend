@@ -34,6 +34,12 @@ class OrderRequestsController {
     const serviceResponse = await orderRequestsService.updateOrderRequest(orderRequests);
     return handleServiceResponse(serviceResponse, res);
   };
+
+  public deleteOrderRequests: RequestHandler = async (req: Request, res: Response) => {
+    const id = req.params.request_id as string;
+    const serviceResponse = await orderRequestsService.deleteOrderRequest(id);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const orderRequestsController = new OrderRequestsController();

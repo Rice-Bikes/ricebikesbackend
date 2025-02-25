@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { itemController } from "./itemController";
-import { CreateItemSchema, GetItemSchema, ItemSchema } from "./itemModel";
+import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema } from "./itemModel";
 
 export const itemRegistry = new OpenAPIRegistry();
 export const itemRouter: Router = express.Router();
@@ -50,3 +50,20 @@ itemRegistry.registerPath({
 });
 
 itemRouter.post("/", [validateRequest(CreateItemSchema)], itemController.createItem);
+
+itemRegistry.registerPath({
+  method: "patch",
+  path: "/items",
+  summary: "Update items in the database",
+  tags: ["Items"],
+  request: {
+    body: {
+      description: "Item object",
+      content: {
+        "text/plain": { schema: PatchItemsSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(ItemSchema, "Success"),
+});
+itemRouter.patch("/", itemController.refreshCatalog);

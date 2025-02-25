@@ -56,7 +56,7 @@ OrderRequestsRouter.post(
 );
 
 OrderRequestsRegistry.registerPath({
-  method: "post",
+  method: "put",
   path: "/OrderRequests/{request_id}",
   summary: "Create a OrderRequests in the database",
   tags: ["OrderRequests"],
@@ -76,3 +76,16 @@ OrderRequestsRouter.put(
   [validateRequest(CreateOrderRequestsSchema)],
   orderRequestsController.createOrderRequests,
 );
+
+OrderRequestsRegistry.registerPath({
+  method: "delete",
+  path: "/OrderRequests/{request_id}",
+  summary: "Create a OrderRequests in the database",
+  tags: ["OrderRequests"],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: createApiResponse(OrderRequestSchema, "Success"),
+});
+
+OrderRequestsRouter.delete("/:request_id", orderRequestsController.deleteOrderRequests);

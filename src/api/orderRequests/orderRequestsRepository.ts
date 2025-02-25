@@ -38,4 +38,12 @@ export class OrderRequestsRepository {
       data: orderRequest,
     });
   }
+
+  async delete(order_request_id: string): Promise<OrderRequest> {
+    return prisma.orderRequests.delete({
+      where: {
+        order_request_id: order_request_id,
+      },
+    });
+  }
 }

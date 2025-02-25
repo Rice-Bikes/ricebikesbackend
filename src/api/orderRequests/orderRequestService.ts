@@ -68,6 +68,17 @@ export class OrderRequestsService {
       return ServiceResponse.failure("An error occurred while updating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async deleteOrderRequest(id: string): Promise<ServiceResponse<OrderRequest | null>> {
+    try {
+      const newOrderRequest = await this.OrderRequestsRepository.delete(id);
+      return ServiceResponse.success<OrderRequest>("OrderRequest deleted", newOrderRequest);
+    } catch (ex) {
+      const errorMessage = `Error deleting item: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while deleting item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 export const orderRequestsService = new OrderRequestsService();

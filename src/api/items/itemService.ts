@@ -57,6 +57,24 @@ export class ItemsService {
       return ServiceResponse.failure("An error occurred while creating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async refreshItems(catalog_file: string): Promise<ServiceResponse<Item[] | null>> {
+    try {
+      const items = await this.ItemsRepository.refreshItems(catalog_file);
+      if (!items || items.length === 0) {
+        return ServiceResponse.failure("No items found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Item[]>("items found", items);
+    } catch (ex) {
+      const errorMessage = `Error finding all items: $${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while retrieving items.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
 export const itemsService = new ItemsService();

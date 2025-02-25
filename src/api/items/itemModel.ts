@@ -50,3 +50,7 @@ export const CreateItemSchema = z.object({
     category_3: z.string().nullable(),
   }),
 });
+
+export const PatchItemsSchema = z.object({
+  body: z.string(),
+});
