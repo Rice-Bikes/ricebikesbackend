@@ -74,7 +74,7 @@ OrderRequestsRegistry.registerPath({
 OrderRequestsRouter.put(
   "/:request_id",
   [validateRequest(CreateOrderRequestsSchema)],
-  orderRequestsController.createOrderRequests,
+  orderRequestsController.updateOrderRequests,
 );
 
 OrderRequestsRegistry.registerPath({
