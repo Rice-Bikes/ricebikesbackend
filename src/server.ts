@@ -7,7 +7,6 @@ import { openAPIRouter } from "@/api-docs/openAPIRouter";
 import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
 import { transactionRouter } from "@/api/transactions/transactionRouter";
 import errorHandler from "@/common/middleware/errorHandler";
-// import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { bikesRouter } from "./api/bikes/bikesRouter";
@@ -17,6 +16,7 @@ import { OrderRequestsRouter } from "./api/orderRequests/orderRequestsRouter";
 import { repairRouter } from "./api/repairs/repairRouter";
 import { summaryRouter } from "./api/summary/summaryRouter";
 import { transactionDetailsRouter } from "./api/transactionDetails/transactionDetailsRouter";
+import { transactionLogsRouter } from "./api/transactionLogs/transactionLogsRouter";
 import { userRouter } from "./api/users/userRouter";
 
 const logger = pino({ name: "server start" });
@@ -46,6 +46,7 @@ app.use("/items", itemRouter);
 app.use("/repairs", repairRouter);
 app.use("/summary", summaryRouter);
 app.use("/orderRequests", OrderRequestsRouter);
+app.use("/transactionLogs", transactionLogsRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

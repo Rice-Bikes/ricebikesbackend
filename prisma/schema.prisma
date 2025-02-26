@@ -12,13 +12,14 @@ generator client {
 }
 
 model Users {
-  user_id       String          @id @default(uuid()) @db.Uuid
-  firstname     String
-  lastname      String
-  active        Boolean
-  username      String          @unique
-  Role          Roles[]
-  OrderRequests OrderRequests[]
+  user_id         String            @id @default(uuid()) @db.Uuid
+  firstname       String
+  lastname        String
+  active          Boolean
+  username        String            @unique
+  Role            Roles[]
+  OrderRequests   OrderRequests[]
+  TransactionLogs TransactionLogs[]
 }
 
 model Roles {
@@ -61,11 +62,13 @@ model Transactions {
 model TransactionLogs {
   log_id         String   @id @default(uuid()) @db.Uuid
   date_modified  DateTime @db.Timestamp()
-  transaction_id Int      @unique
+  transaction_num Int      
   changed_by     String   @db.Uuid
   change_type    String
+  description   String
 
-  Transactions Transactions @relation(fields: [transaction_id], references: [transaction_num])
+  Transactions Transactions @relation(fields: [transaction_num], references: [transaction_num])
+  Users        Users        @relation(fields: [changed_by], references: [user_id])
 }
 
 model OrderRequests {

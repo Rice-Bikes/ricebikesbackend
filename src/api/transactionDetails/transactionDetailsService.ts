@@ -126,6 +126,7 @@ export class TransactionDetailsService {
         return ServiceResponse.failure("singeTransactionDetails not created", null, StatusCodes.NOT_FOUND);
       }
       console.log(singeTransactionDetails);
+
       return ServiceResponse.success<TransactionDetails>("singeTransactionDetails created", singeTransactionDetails);
     } catch (ex) {
       const errorMessage = `Error creating singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;

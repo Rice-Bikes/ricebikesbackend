@@ -8,6 +8,7 @@ import { OrderRequestsRegistry } from "@/api/orderRequests/orderRequestsRouter";
 import { repairRegistry } from "@/api/repairs/repairRouter";
 import { summaryRegistry } from "@/api/summary/summaryRouter";
 import { transactionDetailsRegistry } from "@/api/transactionDetails/transactionDetailsRouter";
+import { tranasactionLogsRegistry } from "@/api/transactionLogs/transactionLogsRouter";
 import { transactionRegistry } from "@/api/transactions/transactionRouter";
 import { userRegistry } from "@/api/users/userRouter";
 
@@ -23,6 +24,7 @@ export function generateOpenAPIDocument() {
     itemRegistry,
     summaryRegistry,
     OrderRequestsRegistry,
+    tranasactionLogsRegistry,
   ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 

@@ -60,6 +60,7 @@ export class TransactionDetailsRepository {
 
   createAsync(transactionDetails: TransactionDetails): Promise<TransactionDetails> {
     console.log("creating transaction details in createAsync", transactionDetails);
+
     return prisma.transactionDetails.create({
       data: transactionDetails,
       // data: transactionDetails,
