@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 export class CustomersRepository {
   async findAllAsync(): Promise<Customer[]> {
-    return prisma.customers.findMany();
+    return prisma.customers.findMany({
+      distinct: ["email"],
+    });
   }
 
   async findByIdAsync(Customer_id: string): Promise<Customer | null> {
