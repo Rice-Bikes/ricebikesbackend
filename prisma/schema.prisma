@@ -102,8 +102,8 @@ model Items {
   brand              String?
   stock              Int?
   minimum_stock      Int?
-  standard_price     Int
-  wholesale_cost     Int
+  standard_price     Float
+  wholesale_cost     Float
   condition          String?
   disabled           Boolean
   managed            Boolean?

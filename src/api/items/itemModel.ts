@@ -15,8 +15,8 @@ export const ItemSchema = z.object({
   brand: z.string().nullable(),
   stock: z.number().int().nullable(),
   minimum_stock: z.number().int().nullable(),
-  standard_price: z.number().int(),
-  wholesale_cost: z.number().int(),
+  standard_price: z.number(),
+  wholesale_cost: z.number(),
   condition: z.string().nullable(),
   disabled: z.boolean(),
   managed: z.boolean().nullable(),
@@ -40,8 +40,8 @@ export const CreateItemSchema = z.object({
     brand: z.string().nullable(),
     // stock: z.number().int(), // stock should start at 0
     minimum_stock: z.number().int().nullable(),
-    standard_price: z.number().int(),
-    wholesale_cost: z.number().int(),
+    standard_price: z.number(),
+    wholesale_cost: z.number(),
     condition: z.string().nullable(),
     // is_disabled: z.boolean(), // assume that it is not disabled on creation lol
     managed: z.boolean(), // don't know what this is
