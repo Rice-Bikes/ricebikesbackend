@@ -40,7 +40,7 @@ model Transactions {
   transaction_type    String
   customer_id         String               @db.Uuid
   bike_id             String?              @db.Uuid
-  total_cost          Int
+  total_cost          Float
   description         String?
   is_completed        Boolean
   is_paid             Boolean
