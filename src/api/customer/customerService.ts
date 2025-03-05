@@ -6,8 +6,7 @@ import { logger } from "@/server";
 import { render } from "@react-email/components";
 import { OAuth2Client, auth } from "google-auth-library";
 import { StatusCodes } from "http-status-codes";
-import nodemailer from "nodemailer";
-import { JSX } from "react";
+import nodemailer, { type SentMessageInfo } from "nodemailer";
 // import { render } from "@react-email/components";
 import RiceBikesEmail from "../../../emails/RiceBikesEmail";
 
@@ -77,45 +76,50 @@ export class CustomersService {
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
     );
-    const authClient = new OAuth2Client({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri: "https://developers.google.com/oauthplayground",
-    });
-
-    authClient.setCredentials({
-      refresh_token: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
-    });
-
-    const accessTokenResponse = await authClient.getAccessToken();
-    if (!accessTokenResponse.token) {
-      return ServiceResponse.failure("Error getting access token", null, StatusCodes.INTERNAL_SERVER_ERROR);
-    }
-    const accessToken = accessTokenResponse.token;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: "ricebikes@gmail.com",
+    let mailStatus: SentMessageInfo;
+    try {
+      const authClient = new OAuth2Client({
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
-        accessToken,
-        expires: 1484314697598,
-      },
-    });
+        redirectUri: "https://developers.google.com/oauthplayground",
+      });
 
-    const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
+      authClient.setCredentials({
+        refresh_token: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+      });
 
-    const processedMail = await render(RiceBikesEmail({ username: name, transaction_num, email: customer.email }));
+      const accessTokenResponse = await authClient.getAccessToken();
+      if (!accessTokenResponse.token) {
+        return ServiceResponse.failure("Error getting access token", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+      const accessToken = accessTokenResponse.token;
 
-    const mailStatus = await transporter.sendMail({
-      from: "ricebikes@gmail.com",
-      to: customer.email,
-      subject: `Bike Ready for Pickup - ${transaction_num}`,
-      html: processedMail,
-    });
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: "ricebikes@gmail.com",
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          refreshToken: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+          accessToken,
+          expires: 1484314697598,
+        },
+      });
+
+      const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
+      const processedMail = await render(RiceBikesEmail({ username: name, transaction_num, email: customer.email }));
+
+      mailStatus = await transporter.sendMail({
+        from: "ricebikes@gmail.com",
+        to: customer.email,
+        subject: `Bike Ready for Pickup - ${transaction_num}`,
+        html: processedMail,
+      });
+    } catch (error) {
+      console.log("Error authorizing/sending email", error);
+      return ServiceResponse.failure("Error authorizing/sending email", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
 
     console.log(mailStatus);
     try {
