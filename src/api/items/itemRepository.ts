@@ -1,5 +1,5 @@
 import parseQBPCatalog from "@/catalog-parse";
-import { PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 import type { Item } from "./itemModel";
 
 const prisma = new PrismaClient();
@@ -24,6 +24,7 @@ export class ItemsRepository {
   }
 
   async create(Item: Item): Promise<Item> {
+    Item.managed = true;
     return prisma.items.create({
       data: Item,
     });
@@ -32,30 +33,42 @@ export class ItemsRepository {
   async refreshItems(csv: string): Promise<Item[]> {
     // console.log("about to process csv", csv)
     const items = await parseQBPCatalog(csv);
+    console.log("items", items.length);
     const updates: Promise<Item>[] = new Array(items.length);
     let idx = 0;
     let valid_count = 0;
     for (const item of items) {
       // console.log(item);
-      if (item.upc === undefined) {
+      if (item.upc === undefined || Number.isNaN(item.wholesale_cost) || item.standard_price === undefined) {
         continue;
       }
       valid_count++;
-      console.log("item", item);
-      updates[idx] = prisma.items.upsert({
-        where: { upc: item.upc },
-        update: {
-          standard_price: item.standard_price,
-          name: item.name,
-        },
-        create: item,
-      });
+      // console.log("item", item);
+      const { upc, disabled, ...rest } = item;
+      updates[idx] = prisma.items
+        .update({
+          where: { upc: upc, disabled: false },
+          data: {
+            ...rest,
+          },
+        })
+        .catch((e: Prisma.PrismaClientKnownRequestError) =>
+          e.code !== "P2025" ? Promise.reject(e) : prisma.items.create({ data: { ...item, disabled: true } }),
+        );
       idx++;
     }
     const parsedItems = await Promise.all(updates);
-    console.log("first item in list", parsedItems[0], valid_count);
 
     return parsedItems;
     // return prisma.items.findMany();
+  }
+
+  enableItem(upc: string): Promise<Item | null> {
+    return prisma.items.update({
+      where: { upc: upc },
+      data: {
+        disabled: false,
+      },
+    });
   }
 }

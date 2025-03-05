@@ -29,7 +29,7 @@ class ItemController {
       wholesale_cost: body.wholesale_cost,
       condition: body.condition,
       disabled: false, // assume that it is not disabled on creation lol
-      managed: body.managed, // not sure what this does honestly
+      managed: body.managed, // not sure what this does honestly (going to change into qbp vs created )
       category_1: body.category_1,
       category_2: body.category_2,
       category_3: body.category_3,
@@ -37,6 +37,12 @@ class ItemController {
       features: body.features, // Assuming JSON can be any valid JSON
     } as Item;
     const serviceResponse = await itemsService.createItem(item);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public enableItem: RequestHandler = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const serviceResponse = await itemsService.enableItem(id);
     return handleServiceResponse(serviceResponse, res);
   };
 

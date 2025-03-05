@@ -7,7 +7,7 @@ interface ItemCSVRow {
   brand: string;
   category_2: string;
   standard_price: number;
-  wholesale_price: number;
+  wholesale_cost: number;
   name: string;
 }
 
@@ -18,7 +18,7 @@ interface ItemDetailRow {
   brand: string;
   category_2: string;
   standard_price: number;
-  wholesale_price: number;
+  wholesale_cost: number;
   // properties from user
   disabled: boolean;
   stock: number;
@@ -44,7 +44,7 @@ export default function parseQBPCatalog(qbp_file: string): Promise<Item[]> {
           undefined,
           "standard_price",
           undefined,
-          "wholesale_price",
+          "wholesale_cost",
           undefined,
           undefined,
           undefined,
@@ -62,11 +62,10 @@ export default function parseQBPCatalog(qbp_file: string): Promise<Item[]> {
         renameHeaders: true,
         delimiter: "\t",
       })
-      .pipe(csv.format<ItemCSVRow, ItemDetailRow>({ headers: true }))
       .transform(
-        (row: ItemCSVRow): ItemDetailRow => ({
-          standard_price: row.standard_price === 0 ? row.wholesale_price * 2 : row.standard_price,
-          wholesale_price: row.wholesale_price,
+        (row: any): ItemDetailRow => ({
+          standard_price: Number.parseFloat(row.standard_price) ?? Number.parseFloat(row.wholesale_cost) * 2,
+          wholesale_cost: Number.parseFloat(row.wholesale_cost),
           upc: row.upc,
           brand: row.brand,
           category_1: row.category_1,
@@ -78,6 +77,8 @@ export default function parseQBPCatalog(qbp_file: string): Promise<Item[]> {
         }),
       )
       .on("data", (data: Item) => {
+        data.standard_price = data.standard_price === 0 ? data.wholesale_cost * 2 : data.standard_price;
+        data.managed = false;
         items.push(data);
       })
       .on("end", () => resolve(items))

@@ -67,3 +67,20 @@ itemRegistry.registerPath({
   responses: createApiResponse(ItemSchema, "Success"),
 });
 itemRouter.patch("/", itemController.refreshCatalog);
+
+itemRegistry.registerPath({
+  method: "patch",
+  path: "/items/{id}",
+  summary: "Update items in the database",
+  tags: ["Items"],
+  request: {
+    body: {
+      description: "Item object",
+      content: {
+        "text/plain": { schema: PatchItemsSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(ItemSchema, "Success"),
+});
+itemRouter.patch("/:id", itemController.enableItem);

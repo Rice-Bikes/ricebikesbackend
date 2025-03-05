@@ -58,6 +58,25 @@ export class ItemsService {
     }
   }
 
+  async enableItem(id: string): Promise<ServiceResponse<Item | null>> {
+    try {
+      const item = await this.ItemsRepository.enableItem(id);
+      if (!item) {
+        return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
+      }
+
+      return ServiceResponse.success<Item>("item found", item);
+    } catch (ex) {
+      const errorMessage = `Error enabling item: $${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        `An error occurred while retrieving items. ${errorMessage}`,
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async refreshItems(catalog_file: string): Promise<ServiceResponse<Item[] | null>> {
     try {
       const items = await this.ItemsRepository.refreshItems(catalog_file);
@@ -69,7 +88,7 @@ export class ItemsService {
       const errorMessage = `Error finding all items: $${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
-        "An error occurred while retrieving items.",
+        `An error occurred while retrieving items. ${errorMessage}`,
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
