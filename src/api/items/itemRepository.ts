@@ -58,9 +58,7 @@ export class ItemsRepository {
       idx++;
     }
     const parsedItems = await Promise.all(updates);
-
     return parsedItems;
-    // return prisma.items.findMany();
   }
 
   enableItem(upc: string): Promise<Item | null> {
