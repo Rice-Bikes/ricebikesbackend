@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { itemController } from "./itemController";
-import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema } from "./itemModel";
+import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema, getCategoriesSchema } from "./itemModel";
 
 export const itemRegistry = new OpenAPIRegistry();
 export const itemRouter: Router = express.Router();
@@ -21,17 +21,6 @@ itemRegistry.registerPath({
 });
 
 itemRouter.get("/", itemController.getItems);
-
-itemRegistry.registerPath({
-  method: "get",
-  path: "/items/{id}",
-  summary: "Get a item from the database based on it's uuid",
-  tags: ["Items"],
-  request: { params: GetItemSchema.shape.params },
-  responses: createApiResponse(ItemSchema, "Success"),
-});
-
-itemRouter.get("/:id", [validateRequest(GetItemSchema)], itemController.getItem);
 
 itemRegistry.registerPath({
   method: "post",
@@ -84,3 +73,25 @@ itemRegistry.registerPath({
   responses: createApiResponse(ItemSchema, "Success"),
 });
 itemRouter.patch("/:id", itemController.enableItem);
+
+itemRegistry.registerPath({
+  method: "get",
+  path: "/items/categories/",
+  summary: "Get all unique categories in the database",
+  tags: ["Items"],
+  request: getCategoriesSchema.shape,
+  responses: createApiResponse(ItemSchema, "Success"),
+});
+
+itemRouter.get("/categories/", itemController.getCategories);
+
+itemRegistry.registerPath({
+  method: "get",
+  path: "/items/{id}",
+  summary: "Get a item from the database based on it's uuid",
+  tags: ["Items"],
+  request: { params: GetItemSchema.shape.params },
+  responses: createApiResponse(ItemSchema, "Success"),
+});
+
+itemRouter.get("/:id", [validateRequest(GetItemSchema)], itemController.getItem);

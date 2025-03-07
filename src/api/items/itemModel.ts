@@ -54,3 +54,7 @@ export const CreateItemSchema = z.object({
 export const PatchItemsSchema = z.object({
   body: z.string(),
 });
+
+export const getCategoriesSchema = z.object({
+  query: z.object({ category: z.number() }),
+});

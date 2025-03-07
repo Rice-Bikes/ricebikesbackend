@@ -1,6 +1,7 @@
 import type { Request, RequestHandler, Response } from "express";
 
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import { logger } from "@/server";
 import type { Item } from "./itemModel";
 import { itemsService } from "./itemService";
 
@@ -50,6 +51,40 @@ class ItemController {
     console.log("catalog request body", req.body);
     const csv = req.body.csv as string;
     const serviceResponse = await itemsService.refreshItems(csv);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public getCategories: RequestHandler = async (req: Request, res: Response) => {
+    logger.info(`Getting items for category ${req.query.category}`);
+    console.log("category", req.query.category);
+
+    const categoryParam = req.params.category || req.query.category;
+    if (!categoryParam) {
+      return handleServiceResponse(
+        {
+          success: false,
+          message: "Category parameter is required",
+          statusCode: 400,
+          responseObject: undefined,
+        },
+        res,
+      );
+    }
+
+    const category = Number.parseInt(categoryParam as string);
+    if (Number.isNaN(category) || category < 1 || category > 3) {
+      return handleServiceResponse(
+        {
+          success: false,
+          message: "Invalid category number",
+          statusCode: 400,
+          responseObject: undefined,
+        },
+        res,
+      );
+    }
+    logger.info(`Getting items for category ${category}`);
+    const serviceResponse = await itemsService.getCategory(category);
     return handleServiceResponse(serviceResponse, res);
   };
 }

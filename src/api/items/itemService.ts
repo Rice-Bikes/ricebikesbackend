@@ -36,7 +36,7 @@ export class ItemsService {
     try {
       const item = await this.ItemsRepository.findByIdAsync(id);
       if (!item) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+        return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
       }
       return ServiceResponse.success<Item>("Item found", item);
     } catch (ex) {
@@ -89,6 +89,29 @@ export class ItemsService {
       logger.error(errorMessage);
       return ServiceResponse.failure(
         `An error occurred while retrieving items. ${errorMessage}`,
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getCategory(category: number): Promise<ServiceResponse<string[] | null>> {
+    try {
+      const items = await this.ItemsRepository.getCategory(category);
+      logger.info("items", items);
+      if (!items || items.length === 0) {
+        return ServiceResponse.failure("No items found", null, StatusCodes.NOT_FOUND);
+      }
+      const categories = items
+        .map((result: { [key: string]: any }) => result[`category_${category}`])
+        .filter((category): category is string => category !== null && category !== undefined);
+      logger.info("categories [FINAL]", categories);
+      return ServiceResponse.success<string[]>("categories found", categories);
+    } catch (ex) {
+      const errorMessage = `Error finding categories: $${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        `An error occurred while retrieving categories. ${errorMessage}`,
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

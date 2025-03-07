@@ -1,4 +1,5 @@
 import parseQBPCatalog from "@/catalog-parse";
+import { logger } from "@/server";
 import { type Prisma, PrismaClient } from "@prisma/client";
 import type { Item } from "./itemModel";
 
@@ -44,10 +45,10 @@ export class ItemsRepository {
       }
       valid_count++;
       // console.log("item", item);
-      const { upc, disabled, ...rest } = item;
+      const { upc, disabled, managed, ...rest } = item;
       updates[idx] = prisma.items
         .update({
-          where: { upc: upc, disabled: false },
+          where: { upc: upc, disabled: false, managed: false },
           data: {
             ...rest,
           },
@@ -66,6 +67,20 @@ export class ItemsRepository {
       where: { upc: upc },
       data: {
         disabled: false,
+      },
+    });
+  }
+
+  getCategory(category: number): Promise<Item[]> {
+    const fieldName: string = `category_${category}`;
+    logger.info("fieldName", fieldName);
+    return prisma.items.findMany({
+      where: {
+        disabled: false,
+      },
+      distinct: [fieldName as Prisma.ItemsScalarFieldEnum],
+      orderBy: {
+        [fieldName]: "asc",
       },
     });
   }
