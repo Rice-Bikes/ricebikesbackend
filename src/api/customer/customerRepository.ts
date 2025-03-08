@@ -21,13 +21,6 @@ export class CustomersRepository {
   }
 
   create(Customer: Customer): Promise<Customer> {
-    // const netid = Customer.email.split("@")[0];
-    // // const isUser = !!(await prisma.users.findFirst({
-    // //   where: {
-    // //     username: netid,
-    // //   },
-    // // }));
-
     return prisma.customers.create({
       data: Customer,
     });
