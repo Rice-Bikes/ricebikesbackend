@@ -5,7 +5,13 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { customerController } from "./customerController";
-import { CreateCustomerSchema, CustomerSchema, EmailCustomerSchema, GetCustomerSchema } from "./customerModel";
+import {
+  CreateCustomerSchema,
+  CustomerSchema,
+  EmailCustomerSchema,
+  GetCustomerSchema,
+  UpdateCustomerSchema,
+} from "./customerModel";
 
 export const customerRegistry = new OpenAPIRegistry();
 export const customerRouter: Router = express.Router();
@@ -69,3 +75,22 @@ customerRegistry.registerPath({
 });
 
 customerRouter.post("/:id", [validateRequest(EmailCustomerSchema)], customerController.emailCustomer);
+
+customerRegistry.registerPath({
+  method: "patch",
+  path: "/customers/{id}",
+  summary: "Updating customers in the database",
+  tags: ["Customers"],
+  request: {
+    params: UpdateCustomerSchema.shape.params,
+    body: {
+      description: "Customer object",
+      content: {
+        "application/json": { schema: UpdateCustomerSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(CustomerSchema, "Success"),
+});
+
+customerRouter.patch("/:id", [validateRequest(UpdateCustomerSchema)], customerController.updateCustomer);

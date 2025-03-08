@@ -29,6 +29,16 @@ export const CreateCustomerSchema = z.object({
   }),
 });
 
+export const UpdateCustomerSchema = z.object({
+  params: z.object({ id: commonValidations.uuid }),
+  body: z.object({
+    first_name: z.string(),
+    last_name: z.string(),
+    email: z.string().email(),
+    phone: z.string().nullable(),
+  }),
+});
+
 export const EmailCustomerSchema = z.object({
   params: z.object({ id: commonValidations.id }),
   body: z.object({

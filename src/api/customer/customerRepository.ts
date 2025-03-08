@@ -20,15 +20,24 @@ export class CustomersRepository {
     );
   }
 
-  async create(Customer: Customer): Promise<Customer> {
-    const netid = Customer.email.split("@")[0];
-    const isUser = !!(await prisma.users.findFirst({
-      where: {
-        username: netid,
-      },
-    }));
+  create(Customer: Customer): Promise<Customer> {
+    // const netid = Customer.email.split("@")[0];
+    // // const isUser = !!(await prisma.users.findFirst({
+    // //   where: {
+    // //     username: netid,
+    // //   },
+    // // }));
 
     return prisma.customers.create({
+      data: Customer,
+    });
+  }
+
+  update(Customer: Customer): Promise<Customer> {
+    return prisma.customers.update({
+      where: {
+        customer_id: Customer.customer_id,
+      },
       data: Customer,
     });
   }

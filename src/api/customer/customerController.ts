@@ -29,6 +29,20 @@ class CustomerController {
     return handleServiceResponse(serviceResponse, res);
   };
 
+  public updateCustomer: RequestHandler = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const body = req.body;
+    const customer = {
+      customer_id: id,
+      first_name: body.first_name,
+      last_name: body.last_name,
+      email: body.email,
+      phone: body.phone,
+    } as Customer;
+    const serviceResponse = await customersService.updateCustomer(customer);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
   public emailCustomer: RequestHandler = async (req: Request, res: Response) => {
     const id = Number.parseInt(req.params.id);
     const body = req.body;

@@ -69,6 +69,21 @@ export class CustomersService {
     }
   }
 
+  async updateCustomer(customer: Customer): Promise<ServiceResponse<Customer | null>> {
+    try {
+      const updatedCustomer = await this.CustomersRepository.update(customer);
+      return ServiceResponse.success<Customer>("Customer updated", updatedCustomer);
+    } catch (ex) {
+      const errorMessage = `Error updating customer: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while updating customer.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async sendEmail(customer: Customer, transaction_num: number): Promise<ServiceResponse<Customer | null>> {
     console.log(
       "Required credentials",
