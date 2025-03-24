@@ -79,6 +79,21 @@ export class OrderRequestsService {
       return ServiceResponse.failure("An error occurred while deleting item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async extractText(file: Buffer): Promise<ServiceResponse<string[] | null>> {
+    try {
+      const text = await this.OrderRequestsRepository.extractText(file);
+      return ServiceResponse.success<string[]>("Text extracted", text);
+    } catch (ex) {
+      const errorMessage = `Error extracting text: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while extracting text.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
 export const orderRequestsService = new OrderRequestsService();

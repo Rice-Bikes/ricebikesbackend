@@ -1,14 +1,18 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
-import express, { type Router } from "express";
+import express, { type NextFunction, type Router } from "express";
+import { RequestHandler } from "express";
+import multer from "multer";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
+import { ServiceResponse } from "@/common/models/serviceResponse";
 import { validateRequest } from "@/common/utils/httpHandlers";
-import { orderRequestsController } from "./orderRequestsController";
+import orderRequestsController from "./orderRequestsController";
 import { CreateOrderRequestsSchema, GetOrderRequestsSchema, OrderRequestSchema } from "./orderRequestsModel";
 
 export const OrderRequestsRegistry = new OpenAPIRegistry();
 export const OrderRequestsRouter: Router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 OrderRequestsRegistry.register("OrderRequest", OrderRequestSchema);
 
@@ -89,3 +93,12 @@ OrderRequestsRegistry.registerPath({
 });
 
 OrderRequestsRouter.delete("/:request_id", orderRequestsController.deleteOrderRequests);
+
+const uploadMiddleware = (req: express.Request, res: express.Response, next: NextFunction) => {
+  upload.single("pdf")(req, res, (err) => {
+    if (err) return ServiceResponse.failure(err.message, null, 400);
+    next();
+  });
+};
+
+OrderRequestsRouter.post("/process-pdf", uploadMiddleware, orderRequestsController.processOrderPdf);
