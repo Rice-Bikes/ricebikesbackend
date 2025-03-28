@@ -95,3 +95,6 @@ itemRegistry.registerPath({
 });
 
 itemRouter.get("/:id", [validateRequest(GetItemSchema)], itemController.getItem);
+
+itemRouter.delete("/:id", [validateRequest(GetItemSchema)], itemController.deleteItem);
+itemRouter.patch("/:id", [validateRequest(GetItemSchema)], itemController.updateItem);

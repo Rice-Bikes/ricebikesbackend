@@ -50,3 +50,6 @@ repairRegistry.registerPath({
 });
 
 repairRouter.post("/", [validateRequest(CreateRepairSchema)], repairController.createRepair);
+
+repairRouter.patch("/:id", [validateRequest(GetRepairSchema)], repairController.updateRepair);
+repairRouter.delete("/:id", [validateRequest(GetRepairSchema)], repairController.deleteRepair);

@@ -26,8 +26,16 @@ export class ItemsRepository {
 
   async create(Item: Item): Promise<Item> {
     Item.managed = true;
-    return prisma.items.create({
-      data: Item,
+    return prisma.items.upsert({
+      where: {
+        upc: Item.upc,
+      },
+      update: {
+        ...Item,
+      },
+      create: {
+        ...Item,
+      },
     });
   }
 
@@ -82,6 +90,22 @@ export class ItemsRepository {
       orderBy: {
         [fieldName]: "asc",
       },
+    });
+  }
+  async delete(id: string): Promise<Item> {
+    return prisma.items.delete({
+      where: {
+        item_id: id,
+      },
+    });
+  }
+  async update(Item: Item): Promise<Item> {
+    console.log("update item", Item);
+    return prisma.items.update({
+      where: {
+        upc: Item.upc,
+      },
+      data: Item,
     });
   }
 }

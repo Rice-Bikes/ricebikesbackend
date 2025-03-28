@@ -61,6 +61,42 @@ export class RepairsService {
       );
     }
   }
+  // Updates a repair
+  async updateRepair(id: string, repair: Repair): Promise<ServiceResponse<Repair | null>> {
+    try {
+      const updatedRepair = await this.RepairsRepository.update(id, repair);
+      if (!updatedRepair) {
+        return ServiceResponse.failure("Repair not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Repair>("Repair updated", updatedRepair);
+    } catch (ex) {
+      const errorMessage = `Error updating repair: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while updating repair.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  // Deletes a repair
+  async deleteRepair(id: string): Promise<ServiceResponse<Repair | null>> {
+    try {
+      const deletedRepair = await this.RepairsRepository.delete(id);
+      if (!deletedRepair) {
+        return ServiceResponse.failure("Repair not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Repair>("Repair deleted", deletedRepair);
+    } catch (ex) {
+      const errorMessage = `Error deleting repair: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while deleting repair.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
 export const repairsService = new RepairsService();

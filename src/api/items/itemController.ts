@@ -87,6 +87,35 @@ class ItemController {
     const serviceResponse = await itemsService.getCategory(category);
     return handleServiceResponse(serviceResponse, res);
   };
+  public deleteItem: RequestHandler = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const serviceResponse = await itemsService.deleteItem(id);
+    return handleServiceResponse(serviceResponse, res);
+  };
+  public updateItem: RequestHandler = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const body = req.body;
+    const item = {
+      upc: body.upc,
+      name: body.name,
+      description: body.description,
+      brand: body.brand,
+      stock: 0,
+      minimum_stock: body.minimum_stock,
+      standard_price: body.standard_price,
+      wholesale_cost: body.wholesale_cost,
+      condition: body.condition,
+      disabled: false, // assume that it is not disabled on creation lol
+      managed: body.managed, // not sure what this does honestly (going to change into qbp vs created )
+      category_1: body.category_1,
+      category_2: body.category_2,
+      category_3: body.category_3,
+      specifications: body.specifications, // Assuming JSON can be any valid JSON
+      features: body.features, // Assuming JSON can be any valid JSON
+    } as Item;
+    const serviceResponse = await itemsService.updateItem(item);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const itemController = new ItemController();

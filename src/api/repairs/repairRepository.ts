@@ -28,4 +28,20 @@ export class RepairsRepository {
       data: Repair,
     });
   }
+  async update(repair_id: string, Repair: Repair): Promise<Repair> {
+    console.log("update repair", Repair);
+    return prisma.repairs.update({
+      where: {
+        repair_id: repair_id,
+      },
+      data: Repair,
+    });
+  }
+  async delete(repair_id: string): Promise<Repair> {
+    return prisma.repairs.delete({
+      where: {
+        repair_id: repair_id,
+      },
+    });
+  }
 }

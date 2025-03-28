@@ -117,6 +117,32 @@ export class ItemsService {
       );
     }
   }
+  async updateItem(item: Item): Promise<ServiceResponse<Item | null>> {
+    try {
+      const updatedItem = await this.ItemsRepository.update(item);
+      if (!updatedItem) {
+        return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Item>("Item updated", updatedItem);
+    } catch (ex) {
+      const errorMessage = `Error updating item: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while updating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+  async deleteItem(id: string): Promise<ServiceResponse<Item | null>> {
+    try {
+      const item = await this.ItemsRepository.delete(id);
+      if (!item) {
+        return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Item>("Item deleted", item);
+    } catch (ex) {
+      const errorMessage = `Error deleting item: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while deleting item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 export const itemsService = new ItemsService();
