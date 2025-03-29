@@ -15,13 +15,24 @@ export class SummaryRepository {
         },
       },
     });
-    console.log("pinging getTransactionsSummary", incomplete);
     const stats = [
       prisma.transactions.count({
         where: {
           is_completed: false,
           is_refurb: false,
           is_employee: false,
+          is_beer_bike: false,
+          NOT: {
+            transaction_type: "retrospec",
+          },
+        },
+      }),
+      prisma.transactions.count({
+        where: {
+          is_completed: false,
+          is_refurb: false,
+          is_employee: false,
+          is_beer_bike: true,
           NOT: {
             transaction_type: "retrospec",
           },
@@ -36,9 +47,15 @@ export class SummaryRepository {
       Promise.resolve(0), //TODO: make sure this resolves to something meaningful once this is implemented
     ];
     return Promise.all(stats).then(
-      ([quantity_incomplete, quantity_waiting_on_pickup, quantity_waiting_on_safety_check]) => {
+      ([
+        quantity_incomplete,
+        quantity_beer_bike_incomplete,
+        quantity_waiting_on_pickup,
+        quantity_waiting_on_safety_check,
+      ]) => {
         const summary: TransactionsSummary = {
           quantity_incomplete,
+          quantity_beer_bike_incomplete,
           quantity_waiting_on_pickup,
           quantity_waiting_on_safety_check,
         };

@@ -30,17 +30,39 @@ export class RepairsRepository {
   }
   async update(repair_id: string, Repair: Repair): Promise<Repair> {
     console.log("update repair", Repair);
+    const repair = await prisma.repairs.findFirst({
+      where: {
+        repair_id: repair_id,
+      },
+    });
+
+    if (repair != null && repair.price !== Repair.price) {
+      console.log("repair price changed");
+      const createdObj = await prisma.repairs.create({
+        data: {
+          ...Repair,
+          disabled: false,
+          repair_id: crypto.randomUUID(),
+        },
+      });
+    }
+
     return prisma.repairs.update({
       where: {
         repair_id: repair_id,
       },
-      data: Repair,
+      data: {
+        disabled: repair != null && repair.price !== Repair.price,
+      },
     });
   }
   async delete(repair_id: string): Promise<Repair> {
-    return prisma.repairs.delete({
+    return prisma.repairs.update({
       where: {
         repair_id: repair_id,
+      },
+      data: {
+        disabled: true,
       },
     });
   }

@@ -44,6 +44,9 @@ export class TransactionRepository {
           is_urgent: "desc",
         },
         {
+          is_beer_bike: "asc",
+        },
+        {
           transaction_num: "asc",
         },
       ],
@@ -102,6 +105,13 @@ export class TransactionRepository {
       prisma.transactions.count({
         where: {
           is_completed: false,
+          is_beer_bike: false,
+        },
+      }),
+      prisma.transactions.count({
+        where: {
+          is_completed: false,
+          is_beer_bike: true,
         },
       }),
       prisma.transactions.count({
@@ -113,12 +123,19 @@ export class TransactionRepository {
       Promise.resolve(0), //TODO: make sure this resolves to something meaningful once this is implemented
     ];
     return Promise.all(stats).then(
-      ([quantity_incomplete, quantity_waiting_on_pickup, quantity_waiting_on_safety_check]) => {
+      ([
+        quantity_incomplete,
+        quantity_beer_bike_incomplete,
+        quantity_waiting_on_pickup,
+        quantity_waiting_on_safety_check,
+      ]) => {
         const summary: TransactionsSummary = {
           quantity_incomplete,
+          quantity_beer_bike_incomplete,
           quantity_waiting_on_pickup,
           quantity_waiting_on_safety_check,
         };
+        console.log("summary:", summary);
         return summary;
       },
     );
