@@ -44,7 +44,7 @@ export class TransactionRepository {
           is_urgent: "desc",
         },
         {
-          is_beer_bike: "asc",
+          is_beer_bike: "desc",
         },
         {
           transaction_num: "asc",
