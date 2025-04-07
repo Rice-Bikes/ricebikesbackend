@@ -6,7 +6,7 @@ import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import requestLogger from "@/common/middleware/requestLogger";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { userController } from "./userController";
-import { CreateUserSchema, GetUserSchema, UserSchema } from "./userModel";
+import { CreateUserSchema, GetUserSchema, PatchUserSchema, UserSchema } from "./userModel";
 
 export const userRegistry = new OpenAPIRegistry();
 export const userRouter: Router = express.Router();
@@ -36,11 +36,10 @@ userRouter.get("/:id", [validateRequest(GetUserSchema)], userController.getUser)
 
 userRegistry.registerPath({
   method: "post",
-  path: "/users/{id}",
+  path: "/users",
   summary: "Create a user in the database and set it to active",
   tags: ["User"],
   request: {
-    params: CreateUserSchema.shape.params,
     body: {
       description: "User object",
       content: {
@@ -51,7 +50,7 @@ userRegistry.registerPath({
   responses: createApiResponse(UserSchema, "Success"),
 });
 
-userRouter.post("/:id", [validateRequest(CreateUserSchema)], userController.getUser);
+userRouter.post("/", [validateRequest(CreateUserSchema)], userController.createUser);
 
 userRegistry.registerPath({
   method: "patch",
@@ -59,9 +58,19 @@ userRegistry.registerPath({
   summary: "Update the active status of a user in the database (wip)",
   tags: ["User"],
   request: {
-    params: CreateUserSchema.shape.params,
+    params: PatchUserSchema.shape.params,
   },
   responses: createApiResponse(UserSchema, "Success"),
 });
 
-userRouter.patch("/:id", [requestLogger[1], validateRequest(CreateUserSchema)], userController.getUser);
+userRouter.patch("/:id", [requestLogger[1], validateRequest(CreateUserSchema)], userController.updateUser);
+
+userRegistry.registerPath({
+  method: "delete",
+  path: "/users/{id}",
+  summary: "Delete a user from the database based on their rice netid",
+  tags: ["User"],
+  request: { params: GetUserSchema.shape.params },
+  responses: createApiResponse(UserSchema, "Success"),
+});
+userRouter.delete("/:id", [requestLogger[1], validateRequest(GetUserSchema)], userController.deleteUser);

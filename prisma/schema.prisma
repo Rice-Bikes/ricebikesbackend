@@ -24,11 +24,11 @@ model Users {
 
 model Roles {
   role_id String  @id @default(uuid()) @db.Uuid
-  user_id String  @db.Uuid
-  // username String
-  role    String
-  active  Boolean
-  User    Users   @relation(fields: [user_id], references: [username], onDelete: Cascade, onUpdate: Cascade)
+  user_id String 
+  name    String?
+  disabled  Boolean?
+  description String?
+  User    Users   @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([user_id])
 }

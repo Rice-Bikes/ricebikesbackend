@@ -25,13 +25,16 @@ export const CreateUserSchema = z.object({
     username: z.string(),
     firstname: z.string(),
     lastname: z.string(),
+    active: z.boolean(),
   }),
-  params: z.object({ id: z.string() }),
 });
 
 export const PatchUserSchema = z.object({
-  params: z.object({ id: commonValidations.id }),
+  params: z.object({ id: commonValidations.uuid }),
   body: z.object({
-    username: z.string().nullable(),
+    username: z.string(),
+    firstname: z.string(),
+    lastname: z.string(),
+    active: z.boolean(),
   }),
 });

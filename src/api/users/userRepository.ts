@@ -13,6 +13,10 @@ export class UsersRepository {
       prisma.users.findFirst({
         where: {
           username: username,
+          active: true,
+        },
+        include: {
+          Role: true,
         },
       }) || null
     );
@@ -21,6 +25,17 @@ export class UsersRepository {
   async create(User: User): Promise<User> {
     return prisma.users.create({
       data: User,
+    });
+  }
+  async update(id: string, user: User): Promise<User> {
+    return prisma.users.update({
+      where: { user_id: id },
+      data: user,
+    });
+  }
+  async delete(id: string): Promise<User> {
+    return prisma.users.delete({
+      where: { user_id: id },
     });
   }
 }
