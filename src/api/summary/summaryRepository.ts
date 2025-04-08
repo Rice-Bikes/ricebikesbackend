@@ -42,6 +42,8 @@ export class SummaryRepository {
         where: {
           is_completed: true,
           is_paid: false,
+          is_refurb: false,
+          is_employee: false,
         },
       }),
       Promise.resolve(0), //TODO: make sure this resolves to something meaningful once this is implemented
