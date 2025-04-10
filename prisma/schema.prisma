@@ -23,14 +23,29 @@ model Users {
 }
 
 model Roles {
-  role_id String  @id @default(uuid()) @db.Uuid
-  user_id String 
-  name    String?
-  disabled  Boolean?
-  description String?
-  User    Users   @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Cascade)
+  role_id         String          @id @unique @default(uuid()) @db.Uuid
+  user_id         String
+  name            String?
+  disabled        Boolean
+  description     String?
+  User            Users           @relation(fields: [user_id], references: [user_id])
+  RolePermissions RolePermissions @relation(fields: [role_id], references: [role_id])
 
   @@index([user_id])
+}
+
+model RolePermissions {
+  role_permission_id String  @id @unique @default(uuid()) @db.Uuid
+  role_id            String  @unique
+  manageRetrospecs   Boolean 
+  manageUsers       Boolean
+  manageRoles       Boolean
+  manageItems       Boolean
+  manageRepairs     Boolean
+  setAtomic         Boolean
+  Roles              Roles[]
+
+  @@index([role_id])
 }
 
 model Transactions {
@@ -60,12 +75,12 @@ model Transactions {
 }
 
 model TransactionLogs {
-  log_id         String   @id @default(uuid()) @db.Uuid
-  date_modified  DateTime @db.Timestamp()
-  transaction_num Int      
-  changed_by     String   @db.Uuid
-  change_type    String
-  description   String
+  log_id          String   @id @default(uuid()) @db.Uuid
+  date_modified   DateTime @db.Timestamp()
+  transaction_num Int
+  changed_by      String   @db.Uuid
+  change_type     String
+  description     String
 
   Transactions Transactions @relation(fields: [transaction_num], references: [transaction_num])
   Users        Users        @relation(fields: [changed_by], references: [user_id])
@@ -74,15 +89,15 @@ model TransactionLogs {
 model OrderRequests {
   order_request_id String   @id @default(uuid()) @db.Uuid
   created_by       String   @db.Uuid
-  transaction_id   String?   @db.Uuid
+  transaction_id   String?  @db.Uuid
   item_id          String   @db.Uuid
   date_created     DateTime @db.Timestamp()
   quantity         Int
   notes            String?
 
   Transaction Transactions? @relation(fields: [transaction_id], references: [transaction_id])
-  Item        Items        @relation(fields: [item_id], references: [item_id])
-  User        Users        @relation(fields: [created_by], references: [user_id])
+  Item        Items         @relation(fields: [item_id], references: [item_id])
+  User        Users         @relation(fields: [created_by], references: [user_id])
 }
 
 model Bikes {
