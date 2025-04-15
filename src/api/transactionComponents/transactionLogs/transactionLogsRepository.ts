@@ -1,5 +1,5 @@
-import type { TransactionLog, TransactionLogWithForeignKeys } from "@/api/transactionLogs/transactionLogsModel";
 import { PrismaClient } from "@prisma/client";
+import type { TransactionLog, TransactionLogWithForeignKeys } from "../transactionLogs/transactionLogsModel";
 
 const prisma = new PrismaClient();
 

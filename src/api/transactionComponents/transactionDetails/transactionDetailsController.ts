@@ -1,9 +1,9 @@
-import { transactionDetailsService } from "@/api/transactionDetails/transactionDetailsService";
 import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import type { Request, RequestHandler, Response } from "express";
 import type { FromSchema, JSONSchema } from "json-schema-to-ts";
-import { Validator } from "../validator/validator";
+import { Validator } from "../../validator/validator";
+import { transactionDetailsService } from "../transactionDetails/transactionDetailsService";
 import type { TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 const transactionDetailRequestSchema = {

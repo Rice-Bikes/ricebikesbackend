@@ -2,24 +2,24 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import { StatusCodes } from "http-status-codes";
 
-import type { User } from "./userModel";
-import { UsersRepository } from "./userRepository";
+import type { Role } from "./roleModel";
+import { RolesRepository } from "./roleRepository";
 
-export class UsersService {
-  private UsersRepository: UsersRepository;
+export class RolesService {
+  private RolesRepository: RolesRepository;
 
-  constructor(repository: UsersRepository = new UsersRepository()) {
-    this.UsersRepository = repository;
+  constructor(repository: RolesRepository = new RolesRepository()) {
+    this.RolesRepository = repository;
   }
 
   // Retrieves all users from the database
-  async findAll(): Promise<ServiceResponse<User[] | null>> {
+  async findAll(): Promise<ServiceResponse<Role[] | null>> {
     try {
-      const users = await this.UsersRepository.findAllAsync();
+      const users = await this.RolesRepository.findAllAsync();
       if (!users || users.length === 0) {
         return ServiceResponse.failure("No users found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<User[]>("users found", users);
+      return ServiceResponse.success<Role[]>("users found", users);
     } catch (ex) {
       const errorMessage = `Error finding all users: $${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -32,13 +32,13 @@ export class UsersService {
   }
 
   // Retrieves a single user by their ID
-  async findById(id: string): Promise<ServiceResponse<User | null>> {
+  async findById(id: string): Promise<ServiceResponse<Role | null>> {
     try {
-      const user = await this.UsersRepository.findByIdAsync(id);
+      const user = await this.RolesRepository.findByIdAsync(id);
       if (!user) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+        return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<User>("User found", user);
+      return ServiceResponse.success<Role>("Role found", user);
     } catch (ex) {
       const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -47,10 +47,10 @@ export class UsersService {
   }
 
   // Creates a user
-  async createUser(user: User): Promise<ServiceResponse<User | null>> {
+  async createRole(user: Role): Promise<ServiceResponse<Role | null>> {
     try {
-      const newUser = await this.UsersRepository.create(user);
-      return ServiceResponse.success<User>("User created", newUser);
+      const newRole = await this.RolesRepository.create(user);
+      return ServiceResponse.success<Role>("Role created", newRole);
     } catch (ex) {
       const errorMessage = `Error creating user: ${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -59,13 +59,13 @@ export class UsersService {
   }
 
   // Updates a user
-  async updateUser(id: string, user: User): Promise<ServiceResponse<User | null>> {
+  async updateRole(id: string, user: Role): Promise<ServiceResponse<Role | null>> {
     try {
-      const updatedUser = await this.UsersRepository.update(id, user);
-      if (!updatedUser) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+      const updatedRole = await this.RolesRepository.update(id, user);
+      if (!updatedRole) {
+        return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<User>("User updated", updatedUser);
+      return ServiceResponse.success<Role>("Role updated", updatedRole);
     } catch (ex) {
       const errorMessage = `Error updating user with id ${id}: ${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -73,13 +73,13 @@ export class UsersService {
     }
   }
   // Deletes a user
-  async deleteUser(id: string): Promise<ServiceResponse<User | null>> {
+  async deleteRole(id: string): Promise<ServiceResponse<Role | null>> {
     try {
-      const deletedUser = await this.UsersRepository.delete(id);
-      if (!deletedUser) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+      const deletedRole = await this.RolesRepository.delete(id);
+      if (!deletedRole) {
+        return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<User>("User deleted", deletedUser);
+      return ServiceResponse.success<Role>("Role deleted", deletedRole);
     } catch (ex) {
       const errorMessage = `Error deleting user with id ${id}: ${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -89,4 +89,4 @@ export class UsersService {
   // Retrieves a user by their username
 }
 
-export const usersService = new UsersService();
+export const rolesService = new RolesService();

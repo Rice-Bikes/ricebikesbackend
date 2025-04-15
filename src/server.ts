@@ -4,20 +4,22 @@ import helmet from "helmet";
 import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
-import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
-import { transactionRouter } from "@/api/transactions/transactionRouter";
 import errorHandler from "@/common/middleware/errorHandler";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
-import { itemRouter } from "./api/items/itemRouter";
-import { OrderRequestsRouter } from "./api/orderRequests/orderRequestsRouter";
-import { repairRouter } from "./api/repairs/repairRouter";
+import { healthCheckRouter } from "./api/healthCheck/healthCheckRouter";
+import { permissionsRouter } from "./api/security/permissions/permissionRouter";
+import { roleRouter } from "./api/security/roles/roleRouter";
+import { userRouter } from "./api/security/users/userRouter";
 import { summaryRouter } from "./api/summary/summaryRouter";
-import { transactionDetailsRouter } from "./api/transactionDetails/transactionDetailsRouter";
-import { transactionLogsRouter } from "./api/transactionLogs/transactionLogsRouter";
-import { userRouter } from "./api/users/userRouter";
+import { itemRouter } from "./api/transactionComponents/items/itemRouter";
+import { OrderRequestsRouter } from "./api/transactionComponents/orderRequests/orderRequestsRouter";
+import { repairRouter } from "./api/transactionComponents/repairs/repairRouter";
+import { transactionDetailsRouter } from "./api/transactionComponents/transactionDetails/transactionDetailsRouter";
+import { transactionLogsRouter } from "./api/transactionComponents/transactionLogs/transactionLogsRouter";
+import { transactionRouter } from "./api/transactionComponents/transactions/transactionRouter";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -47,6 +49,8 @@ app.use("/repairs", repairRouter);
 app.use("/summary", summaryRouter);
 app.use("/orderRequests", OrderRequestsRouter);
 app.use("/transactionLogs", transactionLogsRouter);
+app.use("/roles", roleRouter);
+app.use("/permissions", permissionsRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

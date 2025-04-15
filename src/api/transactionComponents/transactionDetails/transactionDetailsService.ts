@@ -1,9 +1,9 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { TransactionDetails } from "@/api/transactionDetails/transactionDetailsModel";
-import { TransactionDetailsRepository } from "@/api/transactionDetails/transactionDetailsRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
+import type { TransactionDetails } from "../transactionDetails/transactionDetailsModel";
+import { TransactionDetailsRepository } from "../transactionDetails/transactionDetailsRepository";
 
 export class TransactionDetailsService {
   private TransactionDetailsRepository: TransactionDetailsRepository;

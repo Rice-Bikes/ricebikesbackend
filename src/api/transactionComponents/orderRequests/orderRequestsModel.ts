@@ -2,8 +2,8 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { date, z } from "zod";
 
 import { commonValidations } from "@/common/utils/commonValidation";
+import { UserSchema } from "../../security/users/userModel";
 import { ItemSchema } from "../items/itemModel";
-import { UserSchema } from "../users/userModel";
 
 extendZodWithOpenApi(z);
 

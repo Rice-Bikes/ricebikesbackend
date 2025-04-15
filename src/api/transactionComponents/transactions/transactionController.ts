@@ -1,9 +1,9 @@
 import type { Request, RequestHandler, Response } from "express";
 
-import type { AggTransaction, Transaction, UpdateTransaction } from "@/api/transactions/transactionModel";
-import { transactionsService } from "@/api/transactions/transactionsService";
 import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import type { AggTransaction, Transaction, UpdateTransaction } from "../transactions/transactionModel";
+import { transactionsService } from "../transactions/transactionsService";
 
 class TransactionsController {
   public getTransactions: RequestHandler = async (_req: Request, res: Response) => {

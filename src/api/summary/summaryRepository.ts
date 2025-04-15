@@ -1,5 +1,5 @@
-import type { TransactionsSummary } from "@/api/transactions/transactionModel";
 import { PrismaClient } from "@prisma/client";
+import type { TransactionsSummary } from "../transactionComponents/transactions/transactionModel";
 
 const prisma = new PrismaClient();
 

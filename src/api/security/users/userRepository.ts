@@ -1,11 +1,20 @@
 import { PrismaClient } from "@prisma/client";
-import type { User } from "./userModel";
+import type { User, UserRole } from "./userModel";
 
 const prisma = new PrismaClient();
 
 export class UsersRepository {
+  private transformUser(user: User): User {
+    return {
+      ...user,
+      // Transform the user object as needed
+      // For example, you might want to hash the password or format the date
+    };
+  }
   async findAllAsync(): Promise<User[]> {
-    return prisma.users.findMany();
+    return prisma.users.findMany({
+      include: {},
+    });
   }
 
   async findByIdAsync(username: string): Promise<User | null> {
@@ -16,7 +25,7 @@ export class UsersRepository {
           active: true,
         },
         include: {
-          Role: true,
+          // Role: true,
         },
       }) || null
     );
@@ -36,6 +45,15 @@ export class UsersRepository {
   async delete(id: string): Promise<User> {
     return prisma.users.delete({
       where: { user_id: id },
+    });
+  }
+
+  async attachRoleToUser(userId: string, roleId: string): Promise<UserRole> {
+    return prisma.userRoles.create({
+      data: {
+        user_id: userId,
+        role_id: roleId,
+      },
     });
   }
 }

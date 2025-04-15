@@ -2,8 +2,8 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
 import { commonValidations } from "@/common/utils/commonValidation";
-import { BikeSchema } from "../bikes/bikesModel";
-import { CustomerSchema } from "../customer/customerModel";
+import { BikeSchema } from "../../bikes/bikesModel";
+import { CustomerSchema } from "../../customer/customerModel";
 import { OrderRequestSchema } from "../orderRequests/orderRequestsModel";
 
 extendZodWithOpenApi(z);

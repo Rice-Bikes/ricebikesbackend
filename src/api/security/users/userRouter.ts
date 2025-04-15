@@ -23,6 +23,8 @@ userRegistry.registerPath({
 
 userRouter.get("/", userController.getUsers);
 
+userRouter.post("/roles", userController.attachRoleToUser);
+
 userRegistry.registerPath({
   method: "get",
   path: "/users/{id}",

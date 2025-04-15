@@ -1,10 +1,10 @@
+import { PrismaClient } from "@prisma/client";
 import type {
   AggTransaction,
   Transaction,
   TransactionsSummary,
   UpdateTransaction,
-} from "@/api/transactions/transactionModel";
-import { PrismaClient } from "@prisma/client";
+} from "../transactions/transactionModel";
 
 const prisma = new PrismaClient();
 

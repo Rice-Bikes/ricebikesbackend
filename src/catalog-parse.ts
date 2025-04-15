@@ -1,5 +1,5 @@
 import * as csv from "fast-csv";
-import type { Item } from "./api/items/itemModel";
+import type { Item } from "./api/transactionComponents/items/itemModel";
 
 interface ItemCSVRow {
   upc: string;

@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.0.0",
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^6.6.0",
     "@react-email/components": "^0.0.33",
     "ajv": "^8.17.1",
     "cors": "^2.8.5",
@@ -58,7 +58,7 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "pino-pretty": "^11.0.0",
-    "prisma": "^6.2.1",
+    "prisma": "^6.6.0",
     "react-email": "3.0.7",
     "rimraf": "^6.0.0",
     "supertest": "^7.0.0",

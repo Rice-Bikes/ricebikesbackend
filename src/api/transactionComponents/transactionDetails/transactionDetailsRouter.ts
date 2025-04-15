@@ -3,6 +3,7 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
+import { validateRequest } from "@/common/utils/httpHandlers";
 import {
   CreateTransactionDetailsSchema,
   DeleteTransactionDetailsSchema,
@@ -10,8 +11,7 @@ import {
   TransactionDetailsSchema,
   TransactionDetailsWithForeignKeysSchema,
   updateTransactionDetailsSchema,
-} from "@/api/transactionDetails/transactionDetailsModel";
-import { validateRequest } from "@/common/utils/httpHandlers";
+} from "../transactionDetails/transactionDetailsModel";
 import { transactionDetailsController } from "./transactionDetailsController";
 
 export const transactionDetailsRegistry = new OpenAPIRegistry();

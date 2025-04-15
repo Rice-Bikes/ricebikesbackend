@@ -17,35 +17,43 @@ model Users {
   lastname        String
   active          Boolean
   username        String            @unique
-  Role            Roles[]
   OrderRequests   OrderRequests[]
   TransactionLogs TransactionLogs[]
+  UserRoles       UserRoles[]
 }
 
 model Roles {
-  role_id         String          @id @unique @default(uuid()) @db.Uuid
-  user_id         String
-  name            String?
+  role_id         String            @id @default(uuid()) @db.Uuid
+  name            String
   disabled        Boolean
   description     String?
-  User            Users           @relation(fields: [user_id], references: [user_id])
-  RolePermissions RolePermissions @relation(fields: [role_id], references: [role_id])
+  UserRoles       UserRoles[]
+  RolePermissions RolePermissions[]
+}
 
-  @@index([user_id])
+model UserRoles {
+  user_id String @db.Uuid
+  role_id String @db.Uuid
+  User    Users  @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  Role    Roles  @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+}
+
+model Permissions {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String
+  RolePermissions RolePermissions[]
 }
 
 model RolePermissions {
-  role_permission_id String  @id @unique @default(uuid()) @db.Uuid
-  role_id            String  @unique
-  manageRetrospecs   Boolean 
-  manageUsers       Boolean
-  manageRoles       Boolean
-  manageItems       Boolean
-  manageRepairs     Boolean
-  setAtomic         Boolean
-  Roles              Roles[]
+  role_id       String      @db.Uuid
+  permission_id Int
+  Role          Roles       @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+  Permission    Permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
 
-  @@index([role_id])
+  @@id([role_id, permission_id])
 }
 
 model Transactions {
@@ -89,7 +97,7 @@ model TransactionLogs {
 model OrderRequests {
   order_request_id String   @id @default(uuid()) @db.Uuid
   created_by       String   @db.Uuid
-  transaction_id   String?  @db.Uuid
+  transaction_id   String  @db.Uuid
   item_id          String   @db.Uuid
   date_created     DateTime @db.Timestamp()
   quantity         Int

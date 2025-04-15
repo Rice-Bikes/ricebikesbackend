@@ -1,14 +1,14 @@
 import { StatusCodes } from "http-status-codes";
 
+import { ServiceResponse } from "@/common/models/serviceResponse";
+import { logger } from "@/server";
 import type {
   AggTransaction,
   Transaction,
   TransactionsSummary,
   UpdateTransaction,
-} from "@/api/transactions/transactionModel";
-import { TransactionRepository } from "@/api/transactions/transactionRepository";
-import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+} from "../transactions/transactionModel";
+import { TransactionRepository } from "../transactions/transactionRepository";
 
 export class TransactionsService {
   private TransactionRepository: TransactionRepository;

@@ -6,6 +6,7 @@ import { commonValidations } from "@/common/utils/commonValidation";
 extendZodWithOpenApi(z);
 
 export type User = z.infer<typeof UserSchema>;
+export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const UserSchema = z.object({
   user_id: z.string().uuid(),
@@ -37,4 +38,9 @@ export const PatchUserSchema = z.object({
     lastname: z.string(),
     active: z.boolean(),
   }),
+});
+
+export const UserRoleSchema = z.object({
+  user_id: z.string().uuid(),
+  role_id: z.string().uuid(),
 });
