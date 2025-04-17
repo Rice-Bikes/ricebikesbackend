@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type RolePermissions } from "@prisma/client";
 import type { Role, RoleUser } from "./roleModel";
 
 const prisma = new PrismaClient();
@@ -37,6 +37,26 @@ export class RolesRepository {
   async delete(id: string): Promise<Role> {
     return prisma.roles.delete({
       where: { role_id: id },
+    });
+  }
+
+  async attachPermissionToRole(roleId: string, permission_id: number): Promise<RolePermissions> {
+    return prisma.rolePermissions.create({
+      data: {
+        permission_id,
+        role_id: roleId,
+      },
+    });
+  }
+
+  async detachPermissionFromRole(roleId: string, permission_id: number): Promise<RolePermissions> {
+    return prisma.rolePermissions.delete({
+      where: {
+        role_id_permission_id: {
+          role_id: roleId,
+          permission_id,
+        },
+      },
     });
   }
 }

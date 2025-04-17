@@ -22,6 +22,8 @@ roleRegistry.registerPath({
 });
 
 roleRouter.get("/", roleController.getRoles);
+roleRouter.delete("/permission", roleController.detachPermissionFromRole);
+roleRouter.post("/permission", roleController.attachPermissionToRole);
 
 roleRegistry.registerPath({
   method: "get",

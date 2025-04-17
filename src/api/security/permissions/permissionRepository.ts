@@ -21,6 +21,21 @@ export class PermissionsRepository {
     );
   }
 
+  async findByRoleIdAsync(roleId: string): Promise<Permission[] | null> {
+    const permissionsList = await prisma.rolePermissions.findMany({
+      where: {
+        role_id: roleId,
+      },
+      include: {
+        Permission: true,
+      },
+    });
+    if (permissionsList.length === 0) return null;
+    return permissionsList
+      .map((permission) => permission.Permission)
+      .filter((permission): permission is Permission => permission !== undefined);
+  }
+
   async create(Role: Permission): Promise<Permission> {
     return prisma.permissions.create({
       data: Role,

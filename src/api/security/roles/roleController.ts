@@ -1,6 +1,7 @@
 import type { Request, RequestHandler, Response } from "express";
 
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import { logger } from "@/server";
 import { rolesService } from "./roleService";
 
 class RoleController {
@@ -26,6 +27,18 @@ class RoleController {
   public deleteRole: RequestHandler = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const serviceResponse = await rolesService.deleteRole(id);
+    return handleServiceResponse(serviceResponse, res);
+  };
+  public attachPermissionToRole: RequestHandler = async (req: Request, res: Response) => {
+    logger.info("attaching permission to role", req.body);
+    const { role_id, permission_id } = req.body;
+    const serviceResponse = await rolesService.attachPermissionToRole(role_id, permission_id);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public detachPermissionFromRole: RequestHandler = async (req: Request, res: Response) => {
+    const { role_id, permission_id } = req.body;
+    const serviceResponse = await rolesService.detachPermissionFromRole(role_id, permission_id);
     return handleServiceResponse(serviceResponse, res);
   };
 }

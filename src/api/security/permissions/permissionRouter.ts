@@ -38,6 +38,7 @@ permissionsRegistry.registerPath({
 });
 
 permissionsRouter.get("/:id", [validateRequest(GetPermissionSchema)], roleController.getPermission);
+permissionsRouter.get("/role/:id", roleController.findPermissionByRole);
 
 permissionsRegistry.registerPath({
   method: "post",

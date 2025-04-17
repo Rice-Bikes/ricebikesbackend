@@ -28,6 +28,11 @@ class PermissionsController {
     const serviceResponse = await rolesService.deletePermission(id);
     return handleServiceResponse(serviceResponse, res);
   };
+  public findPermissionByRole: RequestHandler = async (req: Request, res: Response) => {
+    const id: string = req.params.id;
+    const serviceResponse = await rolesService.findByRoleId(id);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const roleController = new PermissionsController();

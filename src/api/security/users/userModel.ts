@@ -2,6 +2,7 @@ import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
 import { commonValidations } from "@/common/utils/commonValidation";
+import { PermissionSchema } from "../permissions/permissionModel";
 
 extendZodWithOpenApi(z);
 
@@ -14,6 +15,7 @@ export const UserSchema = z.object({
   firstname: z.string(),
   lastname: z.string(),
   active: z.boolean(),
+  permissions: z.array(PermissionSchema).optional(),
 });
 
 // Input Validation for 'GET users/:id' endpoint

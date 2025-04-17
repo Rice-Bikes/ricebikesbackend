@@ -2,6 +2,7 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import { StatusCodes } from "http-status-codes";
 
+import type { RolePermissions } from "@prisma/client";
 import type { Role } from "./roleModel";
 import { RolesRepository } from "./roleRepository";
 
@@ -86,7 +87,39 @@ export class RolesService {
       return ServiceResponse.failure("An error occurred while deleting user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
-  // Retrieves a user by their username
+  async attachPermissionToRole(
+    roleId: string,
+    permission_id: number,
+  ): Promise<ServiceResponse<RolePermissions | null>> {
+    try {
+      const updatedRole = await this.RolesRepository.attachPermissionToRole(roleId, permission_id);
+      if (!updatedRole) {
+        return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<RolePermissions>("Role updated", updatedRole);
+    } catch (ex) {
+      const errorMessage = `Error updating user with id ${roleId}: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while updating user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async detachPermissionFromRole(
+    roleId: string,
+    permission_id: number,
+  ): Promise<ServiceResponse<RolePermissions | null>> {
+    try {
+      const updatedRole = await this.RolesRepository.detachPermissionFromRole(roleId, permission_id);
+      if (!updatedRole) {
+        return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<RolePermissions>("Role updated", updatedRole);
+    } catch (ex) {
+      const errorMessage = `Error updating user with id ${roleId}: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while updating user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 export const rolesService = new RolesService();

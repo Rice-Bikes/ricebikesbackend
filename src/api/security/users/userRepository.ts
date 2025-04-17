@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import type { Permission } from "../permissions/permissionModel";
 import type { User, UserRole } from "./userModel";
 
 const prisma = new PrismaClient();
@@ -10,18 +11,70 @@ export class UsersRepository {
     });
   }
 
+  // async findByIdAsync(username: string): Promise<User | null> {
+  //   return (
+  //     prisma.users.findFirst({
+  //       where: {
+  //         username: username,
+  //         active: true,
+  //       },
+  //       include: {
+  //         // Role: true,
+  //       },
+  //     }) || null
+  //   );
+  // }
+
   async findByIdAsync(username: string): Promise<User | null> {
-    return (
-      prisma.users.findFirst({
-        where: {
-          username: username,
-          active: true,
+    const user = await prisma.users.findFirst({
+      where: {
+        username: username,
+        active: true,
+      },
+      include: {
+        UserRoles: {
+          include: {
+            Role: {
+              include: {
+                RolePermissions: {
+                  include: {
+                    Permission: true,
+                  },
+                },
+              },
+            },
+          },
         },
-        include: {
-          // Role: true,
-        },
-      }) || null
-    );
+      },
+    });
+
+    if (!user) return null;
+
+    // Transform to flattened structure
+    const roles = user.UserRoles.map((userRole) => ({
+      role_id: userRole.Role.role_id,
+      name: userRole.Role.name,
+      description: userRole.Role.description,
+      disabled: userRole.Role.disabled,
+    }));
+
+    // Extract all unique permission names
+    const permissionSet = new Set<Permission>();
+    user.UserRoles.forEach((userRole) => {
+      if (!userRole.Role.disabled) {
+        userRole.Role.RolePermissions.forEach((rp) => {
+          permissionSet.add(rp.Permission);
+        });
+      }
+    });
+    return {
+      user_id: user.user_id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      username: user.username,
+      active: user.active,
+      permissions: Array.from(permissionSet),
+    };
   }
 
   async create(User: User): Promise<User> {

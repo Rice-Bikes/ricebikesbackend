@@ -102,7 +102,24 @@ export class PermissionsService {
       );
     }
   }
-  // Retrieves a permission by their permissionname
+  // Retrieves a permission by the role
+  async findByRoleId(roleId: string): Promise<ServiceResponse<Permission[] | null>> {
+    try {
+      const permissions = await this.PermissionsRepository.findByRoleIdAsync(roleId);
+      if (!permissions || permissions.length === 0) {
+        return ServiceResponse.failure("No permissions found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<Permission[]>("permissions found", permissions);
+    } catch (ex) {
+      const errorMessage = `Error finding all permissions: $${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while retrieving permissions.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
 
 export const rolesService = new PermissionsService();
