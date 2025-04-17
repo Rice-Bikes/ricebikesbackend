@@ -25,6 +25,8 @@ userRouter.get("/", userController.getUsers);
 
 userRouter.post("/roles", userController.attachRoleToUser);
 
+userRouter.delete("/roles", userController.detachRoleFromUser);
+
 userRegistry.registerPath({
   method: "get",
   path: "/users/{id}",

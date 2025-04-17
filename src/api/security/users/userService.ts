@@ -100,6 +100,24 @@ export class UsersService {
       return ServiceResponse.failure("An error occurred while updating user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+  async detachRoleFromUser(userId: string, roleId: string): Promise<ServiceResponse<UserRole | null>> {
+    try {
+      const user = await this.UsersRepository.detachRoleFromUser(userId, roleId);
+      if (!user) {
+        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+      }
+      return ServiceResponse.success<UserRole>("User updated", user);
+    } catch (ex) {
+      const errorMessage = `Error detaching user with id ${userId}: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        "An error occurred while detaching user.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // Retrieves a user by their username
 }
 

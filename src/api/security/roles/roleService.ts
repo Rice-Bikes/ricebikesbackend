@@ -32,13 +32,13 @@ export class RolesService {
   }
 
   // Retrieves a single user by their ID
-  async findById(id: string): Promise<ServiceResponse<Role | null>> {
+  async findById(id: string): Promise<ServiceResponse<Role[] | null>> {
     try {
       const user = await this.RolesRepository.findByIdAsync(id);
       if (!user) {
         return ServiceResponse.failure("Role not found", null, StatusCodes.NOT_FOUND);
       }
-      return ServiceResponse.success<Role>("Role found", user);
+      return ServiceResponse.success<Role[]>("Role found", user);
     } catch (ex) {
       const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);

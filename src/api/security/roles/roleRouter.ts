@@ -26,7 +26,7 @@ roleRouter.get("/", roleController.getRoles);
 roleRegistry.registerPath({
   method: "get",
   path: "/roles/{id}",
-  summary: "Get a role from the database based on their rice netid",
+  summary: "Get a role from the database based on the user id",
   tags: ["Role"],
   request: { params: GetRoleSchema.shape.params },
   responses: createApiResponse(RoleSchema, "Success"),

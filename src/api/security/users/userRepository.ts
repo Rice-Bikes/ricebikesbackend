@@ -4,13 +4,6 @@ import type { User, UserRole } from "./userModel";
 const prisma = new PrismaClient();
 
 export class UsersRepository {
-  private transformUser(user: User): User {
-    return {
-      ...user,
-      // Transform the user object as needed
-      // For example, you might want to hash the password or format the date
-    };
-  }
   async findAllAsync(): Promise<User[]> {
     return prisma.users.findMany({
       include: {},
@@ -53,6 +46,16 @@ export class UsersRepository {
       data: {
         user_id: userId,
         role_id: roleId,
+      },
+    });
+  }
+  async detachRoleFromUser(userId: string, roleId: string): Promise<UserRole> {
+    return prisma.userRoles.delete({
+      where: {
+        user_id_role_id: {
+          user_id: userId,
+          role_id: roleId,
+        },
       },
     });
   }

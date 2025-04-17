@@ -29,9 +29,15 @@ class UserController {
     return handleServiceResponse(serviceResponse, res);
   };
   public attachRoleToUser: RequestHandler = async (req: Request, res: Response) => {
-    const userId = req.query.userId as string;
-    const roleId = req.query.roleId as string;
+    const userId = req.body.user_id as string;
+    const roleId = req.body.role_id as string;
     const serviceResponse = await usersService.attachRoleToUser(userId, roleId);
+    return handleServiceResponse(serviceResponse, res);
+  };
+  public detachRoleFromUser: RequestHandler = async (req: Request, res: Response) => {
+    const userId = req.body.user_id as string;
+    const roleId = req.body.role_id as string;
+    const serviceResponse = await usersService.detachRoleFromUser(userId, roleId);
     return handleServiceResponse(serviceResponse, res);
   };
 }
