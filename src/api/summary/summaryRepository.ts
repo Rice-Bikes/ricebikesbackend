@@ -5,16 +5,16 @@ const prisma = new PrismaClient();
 
 export class SummaryRepository {
   async getTransactionsSummary(): Promise<TransactionsSummary> {
-    const incomplete = await prisma.transactions.findMany({
-      where: {
-        is_completed: false,
-        is_refurb: false,
-        is_employee: false,
-        NOT: {
-          transaction_type: "retrospec",
-        },
-      },
-    });
+    // const incomplete = await prisma.transactions.findMany({
+    //   where: {
+    //     is_completed: false,
+    //     is_refurb: false,
+    //     is_employee: false,
+    //     NOT: {
+    //       transaction_type: "retrospec",
+    //     },
+    //   },
+    // });
     const stats = [
       prisma.transactions.count({
         where: {
@@ -46,7 +46,15 @@ export class SummaryRepository {
           is_employee: false,
         },
       }),
-      Promise.resolve(0), //TODO: make sure this resolves to something meaningful once this is implemented
+      Promise.resolve(0), // TODO: implement this
+      // prisma.transactions.count({
+      //   where: {
+      //     is_completed: false,
+      //     is_paid: false,
+      //     is_refurb: true,
+      //     transaction_type: "Retrospec",
+      //   },
+      // }), //TODO: make sure this resolves to something meaningful once this is implemented
     ];
     return Promise.all(stats).then(
       ([
