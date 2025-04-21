@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { type Items, PrismaClient } from "@prisma/client";
+import { or } from "ajv/dist/compile/codegen";
 import pdfParse from "pdf-parse";
 import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
 
@@ -25,6 +26,23 @@ export class OrderRequestsRepository {
 
   async create(orderRequest: OrderRequest): Promise<OrderRequest> {
     console.log("creating order request", orderRequest);
+    if (orderRequest.item_id) {
+      const item: Items | null = await prisma.items.findFirst({
+        where: {
+          item_id: orderRequest.item_id,
+        },
+      });
+      if (item !== null) {
+        prisma.items.update({
+          where: {
+            item_id: orderRequest.item_id,
+          },
+          data: {
+            stock: item.stock - orderRequest.quantity,
+          },
+        });
+      }
+    }
     return prisma.orderRequests.create({
       data: orderRequest,
     });

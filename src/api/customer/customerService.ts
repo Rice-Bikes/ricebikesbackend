@@ -148,6 +148,72 @@ export class CustomersService {
       return ServiceResponse.failure(`Error sending email ${error}`, null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async sendBackups(): Promise<ServiceResponse<null>> {
+    console.log(
+      "Required credentials",
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+    );
+    let mailStatus: SentMessageInfo;
+    try {
+      const authClient = new OAuth2Client({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri: "https://developers.google.com/oauthplayground",
+      });
+
+      authClient.setCredentials({
+        refresh_token: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+      });
+
+      const accessTokenResponse = await authClient.getAccessToken();
+      if (!accessTokenResponse.token) {
+        return ServiceResponse.failure("Error getting access token", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+      const accessToken = accessTokenResponse.token;
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: "ricebikes@gmail.com",
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          refreshToken: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+          accessToken,
+          expires: 1484314697598,
+        },
+      });
+      mailStatus = await transporter.sendMail({
+        from: "ricebikes@gmail.com",
+        to: "ricebikes@gmail.com",
+        subject: `Backup - ${new Date().toLocaleDateString()}`,
+        text: "Backup of Rice Bikes database",
+        attachments: [
+          {
+            path: `../../ricebikes_${new Date().toLocaleDateString()}.sql.gz`,
+          },
+        ],
+      });
+    } catch (error) {
+      console.log("Error authorizing/sending email", error);
+      return ServiceResponse.failure("Error authorizing/sending email", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    console.log(mailStatus);
+    try {
+      if (mailStatus.accepted.length === 0) {
+        throw new Error(mailStatus.response);
+      }
+      console.log(`Email sent: ${mailStatus.response}`);
+      return ServiceResponse.success<null>("Email sent", null);
+    } catch (error) {
+      console.log(error);
+      return ServiceResponse.failure(`Error sending email ${error}`, null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
 
 export const customersService = new CustomersService();

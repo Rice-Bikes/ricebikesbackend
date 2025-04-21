@@ -13,7 +13,7 @@ export const ItemSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   brand: z.string().nullable(),
-  stock: z.number().int().nullable(),
+  stock: z.number().int(),
   minimum_stock: z.number().int().nullable(),
   standard_price: z.number(),
   wholesale_cost: z.number(),

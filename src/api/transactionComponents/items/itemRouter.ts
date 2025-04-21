@@ -72,7 +72,7 @@ itemRegistry.registerPath({
   },
   responses: createApiResponse(ItemSchema, "Success"),
 });
-itemRouter.patch("/:id", itemController.enableItem);
+itemRouter.patch("/update/:id", itemController.enableItem);
 
 itemRegistry.registerPath({
   method: "get",

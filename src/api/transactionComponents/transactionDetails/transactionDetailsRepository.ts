@@ -1,8 +1,5 @@
-import type {
-  TransactionDetails,
-  TransactionDetailsWithForeignKeys,
-} from "@/api/transactionDetails/transactionDetailsModel";
 import { PrismaClient } from "@prisma/client";
+import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 const prisma = new PrismaClient();
 
