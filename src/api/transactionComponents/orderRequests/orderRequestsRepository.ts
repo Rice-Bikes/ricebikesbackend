@@ -1,4 +1,4 @@
-import { type Items, PrismaClient } from "@prisma/client";
+import { type Items, type OrderRequests, PrismaClient } from "@prisma/client";
 import { or } from "ajv/dist/compile/codegen";
 import pdfParse from "pdf-parse";
 import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
@@ -6,7 +6,7 @@ import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./order
 const prisma = new PrismaClient();
 
 export class OrderRequestsRepository {
-  async findAllAsync(): Promise<OrderRequest[]> {
+  async findAllAsync(): Promise<OrderRequests[]> {
     return prisma.orderRequests.findMany();
   }
 
@@ -24,7 +24,7 @@ export class OrderRequestsRepository {
     );
   }
 
-  async create(orderRequest: OrderRequest): Promise<OrderRequest> {
+  async create(orderRequest: OrderRequests): Promise<OrderRequests> {
     console.log("creating order request", orderRequest);
     if (orderRequest.item_id) {
       const item: Items | null = await prisma.items.findFirst({
@@ -48,7 +48,7 @@ export class OrderRequestsRepository {
     });
   }
 
-  async update(orderRequest: OrderRequest): Promise<OrderRequest> {
+  async update(orderRequest: OrderRequests): Promise<OrderRequests> {
     console.log("creating order request", orderRequest);
     return prisma.orderRequests.update({
       where: {
@@ -58,7 +58,7 @@ export class OrderRequestsRepository {
     });
   }
 
-  async delete(order_request_id: string): Promise<OrderRequest> {
+  async delete(order_request_id: string): Promise<OrderRequests> {
     return prisma.orderRequests.delete({
       where: {
         order_request_id: order_request_id,

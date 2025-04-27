@@ -9,7 +9,7 @@ export type Item = z.infer<typeof ItemSchema>;
 
 export const ItemSchema = z.object({
   item_id: z.string().uuid(),
-  upc: z.string().length(12),
+  upc: z.string(),
   name: z.string(),
   description: z.string().nullable(),
   brand: z.string().nullable(),
@@ -34,7 +34,7 @@ export const GetItemSchema = z.object({
 
 export const CreateItemSchema = z.object({
   body: z.object({
-    upc: z.string().length(12),
+    upc: z.string(),
     name: z.string(),
     description: z.string().nullable(),
     brand: z.string().nullable(),

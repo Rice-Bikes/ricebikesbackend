@@ -19,6 +19,7 @@ export const OrderRequestSchema = z.object({
   date_created: z.date(),
   quantity: z.number().int(),
   notes: z.string().nullable(),
+  ordered: z.boolean(),
 });
 
 export const AggOrderRequestSchema = z.object({

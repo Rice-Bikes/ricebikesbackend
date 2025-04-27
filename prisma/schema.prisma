@@ -102,6 +102,7 @@ model OrderRequests {
   date_created     DateTime @db.Timestamp()
   quantity         Int
   notes            String?
+  ordered          Boolean
 
   Transaction Transactions? @relation(fields: [transaction_id], references: [transaction_id])
   Item        Items         @relation(fields: [item_id], references: [item_id])
