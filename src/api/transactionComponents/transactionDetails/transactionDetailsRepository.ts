@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { logger } from "@/server";
+import { type Items, PrismaClient } from "@prisma/client";
 import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 const prisma = new PrismaClient();
@@ -55,16 +56,63 @@ export class TransactionDetailsRepository {
     );
   }
 
-  createAsync(transactionDetails: TransactionDetails): Promise<TransactionDetails> {
+  async createAsync(transactionDetails: TransactionDetails): Promise<TransactionDetails> {
     console.log("creating transaction details in createAsync", transactionDetails);
-
+    if (transactionDetails.item_id) {
+      const item: Items | null = await prisma.items.findFirst({
+        where: {
+          item_id: transactionDetails.item_id,
+        },
+      });
+      console.log("item:", item);
+      if (item !== null) {
+        const um = await prisma.items
+          .update({
+            where: {
+              item_id: transactionDetails.item_id,
+            },
+            data: {
+              stock: item.stock - 1,
+            },
+          })
+          .catch((e: any) => {
+            console.log("Error updating item stock:", e);
+          });
+        console.log("updated item stock", um);
+      } else {
+        console.log("item not found!!!!!", transactionDetails.item_id);
+      }
+    }
     return prisma.transactionDetails.create({
       data: transactionDetails,
       // data: transactionDetails,
     });
   }
 
-  deleteAsync(id: string): Promise<TransactionDetails> {
+  async deleteAsync(id: string): Promise<TransactionDetails> {
+    logger.debug("deleting transaction details", id);
+    const detail: TransactionDetails | null = await prisma.transactionDetails.findFirst({
+      where: {
+        transaction_detail_id: id,
+      },
+    });
+    if (detail?.item_id) {
+      const item: Items | null = await prisma.items.findFirst({
+        where: {
+          item_id: detail.item_id,
+        },
+      });
+      if (item !== null) {
+        prisma.items.update({
+          where: {
+            item_id: detail.item_id,
+          },
+          data: {
+            stock: item.stock + 1,
+          },
+        });
+      }
+    }
     return (
       prisma.transactionDetails.delete({
         where: {

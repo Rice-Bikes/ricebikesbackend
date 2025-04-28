@@ -53,7 +53,7 @@ class TransactionsController {
   };
 
   public updateTransaction: RequestHandler = async (req: Request, res: Response) => {
-    console.log("pinging update transaction", req.body.description);
+    // console.log("pinging update transaction", req.body.description);
     const serviceResponse = await transactionsService.updateTransactionByID(
       req.params.transaction_id,
       req.body as UpdateTransaction,
@@ -62,7 +62,7 @@ class TransactionsController {
   };
 
   public deleteTransaction: RequestHandler = async (req: Request, res: Response) => {
-    console.log("delete transaction  params", req.params);
+    // console.log("delete transaction  params", req.params);
     const serviceResponse = await transactionsService.deleteTransactionByID(req.params.transaction_id);
     return handleServiceResponse(serviceResponse, res);
   };

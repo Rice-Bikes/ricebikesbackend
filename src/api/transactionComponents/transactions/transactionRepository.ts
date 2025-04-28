@@ -83,7 +83,7 @@ export class TransactionRepository {
   }
 
   updateById(transaction_id: string, transaction: UpdateTransaction): Promise<Transaction> {
-    console.log("before update", transaction_id, transaction);
+    // console.log("before update", transaction_id, transaction);
 
     // Ensure the transaction object matches the TransactionsUpdateInput type
 

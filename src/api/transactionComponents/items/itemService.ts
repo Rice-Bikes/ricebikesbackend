@@ -98,7 +98,7 @@ export class ItemsService {
   async getCategory(category: number): Promise<ServiceResponse<string[] | null>> {
     try {
       const items = await this.ItemsRepository.getCategory(category);
-      logger.info("items", items);
+      // logger.info("items", items);
       if (!items || items.length === 0) {
         return ServiceResponse.failure("No items found", null, StatusCodes.NOT_FOUND);
       }

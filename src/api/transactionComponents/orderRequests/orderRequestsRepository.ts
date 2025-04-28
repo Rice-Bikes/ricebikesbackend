@@ -26,23 +26,6 @@ export class OrderRequestsRepository {
 
   async create(orderRequest: OrderRequests): Promise<OrderRequests> {
     console.log("creating order request", orderRequest);
-    if (orderRequest.item_id) {
-      const item: Items | null = await prisma.items.findFirst({
-        where: {
-          item_id: orderRequest.item_id,
-        },
-      });
-      if (item !== null) {
-        prisma.items.update({
-          where: {
-            item_id: orderRequest.item_id,
-          },
-          data: {
-            stock: item.stock - orderRequest.quantity,
-          },
-        });
-      }
-    }
     return prisma.orderRequests.create({
       data: orderRequest,
     });
