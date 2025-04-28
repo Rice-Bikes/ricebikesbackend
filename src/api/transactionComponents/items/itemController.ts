@@ -24,7 +24,7 @@ class ItemController {
       name: body.name,
       description: body.description,
       brand: body.brand,
-      stock: 0,
+      stock: body.stock,
       minimum_stock: body.minimum_stock,
       standard_price: body.standard_price,
       wholesale_cost: body.wholesale_cost,
