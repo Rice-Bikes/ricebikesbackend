@@ -9,6 +9,7 @@ COPY package*.json /usr/src/app
 # Install app dependencies
 COPY prisma ./prisma/
 RUN npm i
+RUN npm i multer
 
 # # Install OpenSSL
 RUN apt-get update -y && apt-get install -y openssl
