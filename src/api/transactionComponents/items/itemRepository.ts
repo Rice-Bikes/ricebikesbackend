@@ -42,7 +42,7 @@ export class ItemsRepository {
   async refreshItems(csv: string): Promise<Item[]> {
     // console.log("about to process csv", csv)
     const items = await parseQBPCatalog(csv);
-    console.log("items", items.length);
+    // console.log("items", items.length);
     const updates: Promise<Item>[] = new Array(items.length);
     let idx = 0;
     let valid_count = 0;
@@ -53,10 +53,10 @@ export class ItemsRepository {
       }
       valid_count++;
       // console.log("item", item);
-      const { upc, disabled, managed, ...rest } = item;
+      const { upc, managed, stock, minimum_stock, ...rest } = item;
       updates[idx] = prisma.items
         .update({
-          where: { upc: upc, disabled: false, managed: false },
+          where: { upc: upc },
           data: {
             ...rest,
           },
@@ -93,9 +93,12 @@ export class ItemsRepository {
     });
   }
   async delete(id: string): Promise<Item> {
-    return prisma.items.delete({
+    return prisma.items.update({
       where: {
         item_id: id,
+      },
+      data: {
+        disabled: true,
       },
     });
   }

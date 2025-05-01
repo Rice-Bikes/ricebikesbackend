@@ -27,7 +27,10 @@ export class OrderRequestsRepository {
   async create(orderRequest: OrderRequests): Promise<OrderRequests> {
     console.log("creating order request", orderRequest);
     return prisma.orderRequests.create({
-      data: orderRequest,
+      data: {
+        ...orderRequest,
+        ordered: false,
+      },
     });
   }
 

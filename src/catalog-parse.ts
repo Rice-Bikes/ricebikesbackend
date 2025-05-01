@@ -28,7 +28,7 @@ interface ItemDetailRow {
   // age: number;
 }
 export default function parseQBPCatalog(qbp_file: string): Promise<Item[]> {
-  console.log(`qbp file inpu: ${qbp_file}`);
+  // console.log(`qbp file inpu: ${qbp_file}`);
   return new Promise((resolve, reject) => {
     const items: Item[] = [];
     csv
