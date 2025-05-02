@@ -53,17 +53,18 @@ export class ItemsRepository {
       }
       valid_count++;
       // console.log("item", item);
-      const { upc, managed, stock, minimum_stock, ...rest } = item;
-      updates[idx] = prisma.items
-        .update({
-          where: { upc: upc },
-          data: {
-            ...rest,
-          },
-        })
-        .catch((e: Prisma.PrismaClientKnownRequestError) =>
-          e.code !== "P2025" ? Promise.reject(e) : prisma.items.create({ data: { ...item, disabled: true } }),
-        );
+      const { upc, managed, stock, minimum_stock, disabled, ...rest } = item;
+      updates[idx] = prisma.items.upsert({
+        where: { upc: upc },
+        update: {
+          ...rest,
+          // disabled: true
+        },
+        create: {
+          ...item,
+          disabled: true,
+        },
+      });
       idx++;
     }
     const parsedItems = await Promise.all(updates);
