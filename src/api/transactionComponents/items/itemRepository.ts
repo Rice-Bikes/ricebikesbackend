@@ -58,7 +58,6 @@ export class ItemsRepository {
         where: { upc: upc },
         update: {
           ...rest,
-          // disabled: true
         },
         create: {
           ...item,
