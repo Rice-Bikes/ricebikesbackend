@@ -315,3 +315,7 @@ ricebikesbackend/
 We'd love to hear your feedback and suggestions for further improvements. Feel free to contribute and join us in making backend development cleaner and faster!
 
 🎉 Happy coding!
+
+## 📈 Observability
+
+We recommend a private, self-hosted observability stack for internal deployments. See `OBSERVABILITY.md` for a full analysis, quickstart Docker Compose, and implementation checklist (Prometheus, Grafana, Loki, Jaeger, Alertmanager, and synthetic monitors).
