@@ -1,5 +1,9 @@
 import { env } from "@/common/utils/envConfig";
+import { setupMetrics } from "@/instrumentation/metrics";
 import { app, logger } from "@/server";
+
+// Setup metrics endpoint and middleware before server starts
+setupMetrics(app);
 
 const server = app.listen(env.PORT, () => {
   const { NODE_ENV, HOST, PORT } = env;

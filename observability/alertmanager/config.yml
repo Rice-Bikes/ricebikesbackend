@@ -1,0 +1,17 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: 'slack-webhook'
+
+receivers:
+  - name: 'slack-webhook'
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/REPLACE/ME/REPLACE'
+        send_resolved: true
+
+# You can add a 'console' receiver or other receivers for internal routing
