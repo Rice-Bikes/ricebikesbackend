@@ -11,7 +11,5 @@ route:
 receivers:
   - name: 'slack-webhook'
     webhook_configs:
-  - url: 'https://hooks.slack.com/services/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'
-        send_resolved: true
-
-# You can add a 'console' receiver or other receivers for internal routing
+      - url: 'https://hooks.slack.com/services/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'
+    send_resolved: true
