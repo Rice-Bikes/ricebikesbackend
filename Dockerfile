@@ -1,4 +1,4 @@
-FROM node:23.11.0-slim
+FROM node:20-slim
 
 # Accept build arguments
 ARG DATABASE_URL=postgresql://localhost:5432/ricebikes

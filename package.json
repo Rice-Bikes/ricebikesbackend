@@ -18,7 +18,8 @@
     "format": "biome format src/",
     "test": "vitest run",
     "prepare": "husky",
-    "email": "email dev"
+    "email": "email dev",
+    "observability:test": "BACKEND_URL=${BACKEND_URL:-http://localhost:7130} bash ../observability/test/check_site.sh"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.0.0",
