@@ -12,6 +12,7 @@
     "build": "tsup",
     "start": "node dist/index.js",
     "clean": "rimraf dist coverage",
+    "type-check": "tsc --noEmit",
     "lint": "biome check src/",
     "lint:fix": "biome check src/ --fix",
     "format": "biome format src/",
