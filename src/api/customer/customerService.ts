@@ -8,15 +8,20 @@ import { OAuth2Client, auth } from "google-auth-library";
 import { StatusCodes } from "http-status-codes";
 import nodemailer, { type SentMessageInfo } from "nodemailer";
 // import { render } from "@react-email/components";
-import RiceBikesEmail from "../../../emails/RiceBikesEmail";
+import { RiceBikesEmail, RiceBikesReciept } from "../../../emails";
+import type { Item } from "../transactionComponents/items/itemModel";
+import type { Repair } from "../transactionComponents/repairs/repairModel";
+import { TransactionDetailsRepository } from "../transactionComponents/transactionDetails/transactionDetailsRepository";
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class CustomersService {
   private CustomersRepository: CustomersRepository;
+  private TransactionDetailsRepository: TransactionDetailsRepository;
 
   constructor(repository: CustomersRepository = new CustomersRepository()) {
     this.CustomersRepository = repository;
+    this.TransactionDetailsRepository = new TransactionDetailsRepository();
   }
 
   // Retrieves all customers from the database
@@ -83,8 +88,11 @@ export class CustomersService {
       );
     }
   }
-
-  async sendEmail(customer: Customer, transaction_num: number): Promise<ServiceResponse<Customer | null>> {
+  async sendReciept(
+    customer: Customer,
+    transaction_num: number,
+    transaction_id: string,
+  ): Promise<ServiceResponse<Customer | null>> {
     console.log(
       "Required credentials",
       process.env.GOOGLE_CLIENT_ID,
@@ -122,6 +130,153 @@ export class CustomersService {
         },
       });
 
+      const transactionItemsResponse = await this.TransactionDetailsRepository.findAllItems(transaction_id);
+      let transactionItems: Item[] = [];
+      const transactionRepairsResponse = await this.TransactionDetailsRepository.findAllRepairs(transaction_id);
+      let transactionRepairs: Repair[] = [];
+      if (transactionItemsResponse && transactionItemsResponse.length > 0) {
+        transactionItems = transactionItemsResponse
+          .filter(
+            (item) =>
+              item.Item &&
+              item.Item !== null &&
+              item.Item.name !== undefined &&
+              item.Item.name !== null &&
+              item.Item.item_id !== undefined &&
+              item.Item.item_id !== null &&
+              item.Item.upc !== undefined &&
+              item.Item.upc !== null &&
+              item.Item.stock !== undefined &&
+              item.Item.stock !== null &&
+              item.Item.minimum_stock !== undefined &&
+              item.Item.standard_price !== undefined &&
+              item.Item.standard_price !== null &&
+              item.Item.wholesale_cost !== undefined &&
+              item.Item.wholesale_cost !== null,
+          )
+          .map((item) => ({
+            ...item!.Item,
+          })) as Item[];
+      }
+      if (transactionRepairsResponse && transactionRepairsResponse.length > 0) {
+        transactionRepairs = transactionRepairsResponse
+          .filter(
+            (repair) =>
+              repair.Repair &&
+              repair.Repair !== null &&
+              repair.Repair.repair_id !== undefined &&
+              repair.Repair.repair_id !== null &&
+              repair.Repair.description !== undefined &&
+              repair.Repair.description !== null &&
+              repair.Repair.price !== undefined &&
+              repair.Repair.price !== null,
+          )
+          .map((repair) => ({
+            ...repair!.Repair,
+          })) as Repair[];
+      }
+      const processedMail = await render(
+        RiceBikesReciept({
+          username: `${customer.first_name} ${customer.last_name}`,
+          items: transactionItems,
+          repairs: transactionRepairs,
+          transaction_num,
+        }),
+      );
+
+      mailStatus = await transporter.sendMail({
+        from: "ricebikes@gmail.com",
+        to: customer.email,
+        subject: `Transaction Receipt - ${transaction_num}`,
+        html: processedMail,
+      });
+    } catch (error) {
+      console.log("Error authorizing/sending email", error);
+      return ServiceResponse.failure("Error authorizing/sending email", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    console.log(mailStatus);
+    try {
+      if (mailStatus.accepted.length === 0) {
+        throw new Error(mailStatus.response);
+      }
+      console.log(`Email sent: ${mailStatus.response}`);
+      return ServiceResponse.success<Customer>("Email sent", customer);
+    } catch (error) {
+      console.log(error);
+      return ServiceResponse.failure(`Error sending email ${error}`, null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+  async sendEmail(customer: Customer, transaction_num: number): Promise<ServiceResponse<Customer | null>> {
+    console.log(
+      "Required credentials",
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+    );
+    let mailStatus: SentMessageInfo;
+    try {
+      // quick validation: ensure required env vars exist (log presence, not values)
+      const missing = [] as string[];
+      if (!process.env.GOOGLE_CLIENT_ID) missing.push("GOOGLE_CLIENT_ID");
+      if (!process.env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET");
+      if (!process.env.GOOGLE_CLIENT_REFRESH_TOKEN) missing.push("GOOGLE_CLIENT_REFRESH_TOKEN");
+      if (missing.length > 0) {
+        logger.error(`sendEmail missing env vars: ${missing.join(", ")}`);
+        return ServiceResponse.failure(
+          `Missing email configuration: ${missing.join(", ")}`,
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const authClient = new OAuth2Client({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri: "https://developers.google.com/oauthplayground",
+      });
+
+      authClient.setCredentials({
+        refresh_token: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+      });
+
+      const accessTokenResponse = await authClient.getAccessToken();
+      // log access token response shape (don't log token or secrets)
+      logger.debug("accessTokenResponse received", { hasToken: Boolean(accessTokenResponse?.token) });
+      if (!accessTokenResponse || !accessTokenResponse.token) {
+        logger.error("Failed to obtain access token", { accessTokenResponse });
+        return ServiceResponse.failure("Error getting access token", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+      const accessToken = accessTokenResponse.token;
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: "ricebikes@gmail.com",
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          refreshToken: process.env.GOOGLE_CLIENT_REFRESH_TOKEN,
+          accessToken,
+          expires: 1484314697598,
+        },
+      });
+
+      // verify transporter connectivity/auth before attempting send
+      try {
+        // transporter.verify can throw with detailed info about auth failure
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        await transporter.verify();
+        logger.debug("Email transporter successfully verified");
+      } catch (verifyError) {
+        logger.error("Email transporter verification failed", { message: (verifyError as Error).message });
+        return ServiceResponse.failure(
+          `Error verifying email transporter: ${(verifyError as Error).message}`,
+          null,
+          StatusCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
       const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
       const processedMail = await render(RiceBikesEmail({ username: name, transaction_num, email: customer.email }));
 
@@ -132,8 +287,16 @@ export class CustomersService {
         html: processedMail,
       });
     } catch (error) {
-      console.log("Error authorizing/sending email", error);
-      return ServiceResponse.failure("Error authorizing/sending email", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      // log full error with stack for debugging but avoid printing secrets
+      logger.error("Error authorizing/sending email", {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+      });
+      return ServiceResponse.failure(
+        `Error authorizing/sending email: ${(error as Error).message}`,
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
 
     console.log(mailStatus);

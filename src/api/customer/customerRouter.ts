@@ -10,6 +10,7 @@ import {
   CustomerSchema,
   EmailCustomerSchema,
   GetCustomerSchema,
+  SendReceiptSchema,
   UpdateCustomerSchema,
 } from "./customerModel";
 
@@ -59,22 +60,45 @@ customerRouter.post("/", [validateRequest(CreateCustomerSchema)], customerContro
 
 customerRegistry.registerPath({
   method: "post",
-  path: "/customers/{id}",
-  summary: "Send an email to a customer in the database",
+  path: "/customers/{id}/emails/receipt",
+  summary: "Send a receipt email to a customer",
+  tags: ["Customers"],
+  request: {
+    params: SendReceiptSchema.shape.params,
+    body: {
+      description: "Receipt details",
+      content: {
+        "application/json": { schema: SendReceiptSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(z.object({ message: z.string() }), "Success"),
+});
+
+customerRouter.post(
+  "/:id/emails/receipt",
+  [validateRequest(SendReceiptSchema)],
+  customerController.emailCustomerReceipt,
+);
+
+customerRegistry.registerPath({
+  method: "post",
+  path: "/customers/{id}/emails/pickup",
+  summary: "Send a pickup email to a customer",
   tags: ["Customers"],
   request: {
     params: EmailCustomerSchema.shape.params,
     body: {
-      description: "Customer object",
+      description: "Email details",
       content: {
         "application/json": { schema: EmailCustomerSchema.shape.body },
       },
     },
   },
-  responses: createApiResponse(CustomerSchema, "Success"),
+  responses: createApiResponse(z.object({ message: z.string() }), "Success"),
 });
 
-customerRouter.post("/:id", [validateRequest(EmailCustomerSchema)], customerController.emailCustomer);
+customerRouter.post("/:id/emails/pickup", [validateRequest(EmailCustomerSchema)], customerController.emailCustomer);
 
 customerRegistry.registerPath({
   method: "patch",

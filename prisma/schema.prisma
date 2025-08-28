@@ -172,3 +172,24 @@ model TransactionDetails {
   Item         Items?       @relation(fields: [item_id], references: [item_id])
   Repair       Repairs?     @relation(fields: [repair_id], references: [repair_id])
 }
+
+model FeatureFlagAudit {
+  id         Int      @id @default(autoincrement())
+  flag_name  String   @db.VarChar
+  old_value  Boolean?
+  new_value  Boolean?
+  changed_by String   @db.VarChar
+  changed_at DateTime @default(now()) @db.Timestamp(6)
+  reason     String?
+  details    Json?
+}
+
+model FeatureFlags {
+  flag_name   String   @id @db.VarChar
+  value       Boolean
+  description String?
+  status      String?  @default("active") @db.VarChar(32)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_by  String   @db.VarChar
+}

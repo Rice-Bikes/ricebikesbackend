@@ -9,6 +9,7 @@ import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
+import { featureFlagsRouter } from "./api/featureFlags/featureFlagsRouter";
 import { healthCheckRouter } from "./api/healthCheck/healthCheckRouter";
 import { permissionsRouter } from "./api/security/permissions/permissionRouter";
 import { roleRouter } from "./api/security/roles/roleRouter";
@@ -51,6 +52,7 @@ app.use("/orderRequests", OrderRequestsRouter);
 app.use("/transactionLogs", transactionLogsRouter);
 app.use("/roles", roleRouter);
 app.use("/permissions", permissionsRouter);
+app.use("/feature-flags", featureFlagsRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

@@ -49,6 +49,13 @@ class CustomerController {
     const serviceResponse = await customersService.sendEmail(body.customer as Customer, id);
     return handleServiceResponse(serviceResponse, res);
   };
+
+  public emailCustomerReceipt: RequestHandler = async (req: Request, res: Response) => {
+    const id = Number.parseInt(req.params.id);
+    const { customer, transaction_id } = req.body;
+    const serviceResponse = await customersService.sendReciept(customer as Customer, id, transaction_id);
+    return handleServiceResponse(serviceResponse, res);
+  };
 }
 
 export const customerController = new CustomerController();
