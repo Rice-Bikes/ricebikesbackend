@@ -97,7 +97,7 @@ model TransactionLogs {
 model OrderRequests {
   order_request_id String   @id @default(uuid()) @db.Uuid
   created_by       String   @db.Uuid
-  transaction_id   String  @db.Uuid
+  transaction_id   String   @db.Uuid
   item_id          String   @db.Uuid
   date_created     DateTime @db.Timestamp()
   quantity         Int
@@ -182,6 +182,16 @@ model FeatureFlagAudit {
   changed_at DateTime @default(now()) @db.Timestamp(6)
   reason     String?
   details    Json?
+}
+
+model Order {
+  order_id           String   @id @default(uuid())
+  order_date         DateTime @default(now())
+  estimated_delivery DateTime
+  supplier           String
+  ordered_by         String
+
+  @@map("order")
 }
 
 model FeatureFlags {

@@ -11,6 +11,7 @@ import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
 import { featureFlagsRouter } from "./api/featureFlags/featureFlagsRouter";
 import { healthCheckRouter } from "./api/healthCheck/healthCheckRouter";
+import { OrderRouter } from "./api/order/orderRouter";
 import { permissionsRouter } from "./api/security/permissions/permissionRouter";
 import { roleRouter } from "./api/security/roles/roleRouter";
 import { userRouter } from "./api/security/users/userRouter";
@@ -21,8 +22,7 @@ import { repairRouter } from "./api/transactionComponents/repairs/repairRouter";
 import { transactionDetailsRouter } from "./api/transactionComponents/transactionDetails/transactionDetailsRouter";
 import { transactionLogsRouter } from "./api/transactionComponents/transactionLogs/transactionLogsRouter";
 import { transactionRouter } from "./api/transactionComponents/transactions/transactionRouter";
-
-const logger = pino({ name: "server start" });
+const logger = pino({ name: "server start", level: "debug" });
 const app: Express = express();
 
 // Set the application to trust the reverse proxy
@@ -53,6 +53,7 @@ app.use("/transactionLogs", transactionLogsRouter);
 app.use("/roles", roleRouter);
 app.use("/permissions", permissionsRouter);
 app.use("/feature-flags", featureFlagsRouter);
+app.use("/orders", OrderRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
