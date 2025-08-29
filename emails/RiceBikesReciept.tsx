@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Body,
   Button,
@@ -35,10 +36,9 @@ export const RiceBikesReciept = ({
   repairs = [],
 }: RiceBikesRecieptProps) => {
   const previewText = `Rice Bikes - Your bike is ready for pickup - ${transaction_num}`;
-  const repairList = repairs.map(item => item.name);
-  const itemList = items.map(item => item.name);
 
-  const formattedTotal = ((items.reduce((sum, item) => sum + item.standard_price, 0) + repairs.reduce((sum, repair) => sum + repair.price, 0)) * SALES_TAX).toFixed(2);
+  const total = ((items.reduce((sum, item) => sum + item.standard_price, 0) + repairs.reduce((sum, repair) => sum + repair.price, 0)) * SALES_TAX);
+  const salesTax = (total - (items.reduce((sum, item) => sum + item.standard_price, 0) + repairs.reduce((sum, repair) => sum + repair.price, 0)));
   const formattedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   return (
     <Html>
@@ -62,10 +62,10 @@ export const RiceBikesReciept = ({
             <Section className="my-4">
               <Section className="mb-2">
                 <Heading className="text-black text-[16px] font-semibold mb-2">Items</Heading>
-                {itemList.length > 0 ? (
+                {items.length > 0 ? (
                   <Section>
-                    {itemList.map((itm, i) => (
-                      <Text key={i} className="text-black text-[14px] leading-[20px] mb-2">• {itm.trim()}</Text>
+                    {items.map((itm, i) => (
+                      <Text key={i} className="text-black text-[14px] leading-[20px] mb-2">• {itm.name.trim() + " - $" + itm.standard_price.toFixed(2)}</Text>
                     ))}
                   </Section>
                 ) : (
@@ -75,10 +75,10 @@ export const RiceBikesReciept = ({
 
               <Section className="mt-3">
                 <Heading className="text-black text-[16px] font-semibold mb-2">Repairs</Heading>
-                {repairList.length > 0 ? (
+                {repairs.length > 0 ? (
                   <Section>
-                    {repairList.map((repair, index) => (
-                      <Text key={index} className="text-black text-[14px] leading-[20px] mb-2">• {repair.trim()}</Text>
+                    {repairs.map((repair, index) => (
+                      <Text key={index} className="text-black text-[14px] leading-[20px] mb-2">• {repair.name.trim() + " - $" + repair.price.toFixed(2)}</Text>
                     ))}
                   </Section>
                 ) : (
@@ -86,7 +86,8 @@ export const RiceBikesReciept = ({
                 )}
               </Section>
             </Section>
-            <Text className="text-black text-[14px] leading-[20px] mt-4">Total: {formattedTotal}</Text>
+            <Text className="text-black text-[14px] leading-[20px] mt-4">Sales Tax: {'$' + salesTax.toFixed(2)}</Text>
+            <Text className="text-black text-[14px] leading-[20px] mt-4">Total: {'$' + total.toFixed(2)}</Text>
 
             <Text className="text-black text-[14px] leading-[24px] mt-6">
               No appointment is necessary to pick up your bike.

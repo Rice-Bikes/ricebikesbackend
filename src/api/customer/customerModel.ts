@@ -49,7 +49,7 @@ export const EmailCustomerSchema = z.object({
 export const SendReceiptSchema = z.object({
   params: z.object({ id: commonValidations.id }),
   body: z.object({
-    transaction_num: z.string().uuid(),
+    transaction_id: z.string().uuid(),
     customer: CustomerSchema,
   }),
 });

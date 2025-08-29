@@ -2,6 +2,7 @@ import type { Request, RequestHandler, Response } from "express";
 
 import { customersService } from "@/api/customer/customerService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import { logger } from "@/server";
 import type { Customer } from "./customerModel";
 
 class CustomerController {
@@ -53,6 +54,7 @@ class CustomerController {
   public emailCustomerReceipt: RequestHandler = async (req: Request, res: Response) => {
     const id = Number.parseInt(req.params.id);
     const { customer, transaction_id } = req.body;
+    logger.info(`Sending receipt to customer ${customer} for transaction ${transaction_id}`);
     const serviceResponse = await customersService.sendReciept(customer as Customer, id, transaction_id);
     return handleServiceResponse(serviceResponse, res);
   };
