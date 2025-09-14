@@ -1,5 +1,44 @@
-import { logger } from "@/server";
 import fetch from "node-fetch";
+
+// Safe logger that falls back to console in test environments
+const safeLogger = {
+  warn: (message: string) => {
+    try {
+      const { logger } = require("@/server");
+      if (logger?.warn) {
+        logger.warn(message);
+      } else {
+        console.warn(message);
+      }
+    } catch {
+      console.warn(message);
+    }
+  },
+  info: (message: string) => {
+    try {
+      const { logger } = require("@/server");
+      if (logger?.info) {
+        logger.info(message);
+      } else {
+        console.log(message);
+      }
+    } catch {
+      console.log(message);
+    }
+  },
+  error: (message: string) => {
+    try {
+      const { logger } = require("@/server");
+      if (logger?.error) {
+        logger.error(message);
+      } else {
+        console.error(message);
+      }
+    } catch {
+      console.error(message);
+    }
+  },
+};
 
 interface SlackAttachment {
   color?: string;
@@ -56,7 +95,7 @@ class SlackService {
     }
     this.enabled = process.env.SLACK_NOTIFICATIONS_ENABLED === "true";
     if (!this.enabled) {
-      logger.warn("Slack notifications are disabled.");
+      safeLogger.warn("Slack notifications are disabled.");
     }
   }
 
