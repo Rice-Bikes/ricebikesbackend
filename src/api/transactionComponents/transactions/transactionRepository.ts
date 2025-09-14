@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import type {
   AggTransaction,
   Transaction,
@@ -7,6 +7,38 @@ import type {
 } from "../transactions/transactionModel";
 
 const prisma = new PrismaClient();
+
+// Helper function to convert bike Decimal fields to numbers in transaction data
+function convertTransactionBikeDecimals(transaction: any): any {
+  if (!transaction) return transaction;
+
+  if (transaction.Bike) {
+    transaction.Bike = {
+      ...transaction.Bike,
+      size_cm:
+        transaction.Bike.size_cm instanceof Prisma.Decimal
+          ? transaction.Bike.size_cm.toNumber()
+          : transaction.Bike.size_cm,
+      price:
+        transaction.Bike.price instanceof Prisma.Decimal ? transaction.Bike.price.toNumber() : transaction.Bike.price,
+      weight_kg:
+        transaction.Bike.weight_kg instanceof Prisma.Decimal
+          ? transaction.Bike.weight_kg.toNumber()
+          : transaction.Bike.weight_kg,
+      deposit_amount:
+        transaction.Bike.deposit_amount instanceof Prisma.Decimal
+          ? transaction.Bike.deposit_amount.toNumber()
+          : transaction.Bike.deposit_amount,
+    };
+  }
+
+  // Also convert transaction total_cost if it's a Decimal
+  if (transaction.total_cost instanceof Prisma.Decimal) {
+    transaction.total_cost = transaction.total_cost.toNumber();
+  }
+
+  return transaction;
+}
 
 export class TransactionRepository {
   findAll(after_id: number, page_limit: number): Promise<Transaction[]> {
@@ -27,45 +59,47 @@ export class TransactionRepository {
   }
 
   findAllAggregate(after_id: number, page_limit: number): Promise<AggTransaction[]> {
-    return prisma.transactions.findMany({
-      include: {
-        Bike: true,
-        Customer: true,
-        OrderRequests: true,
-      },
-      take: page_limit,
-      where: {
-        transaction_num: {
-          lt: after_id,
-        },
-      },
-      orderBy: [
-        {
-          is_urgent: "desc",
-        },
-        {
-          is_beer_bike: "desc",
-        },
-        {
-          transaction_num: "asc",
-        },
-      ],
-    });
-  }
-
-  findByIdAggregate(transaction_id: string): Promise<AggTransaction | null> {
-    return (
-      prisma.transactions.findUnique({
+    return prisma.transactions
+      .findMany({
         include: {
           Bike: true,
           Customer: true,
           OrderRequests: true,
         },
+        take: page_limit,
         where: {
-          transaction_id: transaction_id,
+          transaction_num: {
+            lt: after_id,
+          },
         },
-      }) || null
-    );
+        orderBy: [
+          {
+            is_urgent: "desc",
+          },
+          {
+            is_beer_bike: "desc",
+          },
+          {
+            transaction_num: "asc",
+          },
+        ],
+      })
+      .then((transactions) => transactions.map(convertTransactionBikeDecimals));
+  }
+
+  async findByIdAggregate(transaction_id: string): Promise<AggTransaction | null> {
+    const transaction = await prisma.transactions.findUnique({
+      include: {
+        Bike: true,
+        Customer: true,
+        OrderRequests: true,
+      },
+      where: {
+        transaction_id: transaction_id,
+      },
+    });
+
+    return transaction ? convertTransactionBikeDecimals(transaction) : null;
   }
 
   createTransaction(transaction: Transaction): Promise<Transaction> {

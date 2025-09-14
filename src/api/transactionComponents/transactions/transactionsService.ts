@@ -2,6 +2,8 @@ import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
+import notificationTriggerService from "@/services/notificationTriggerService";
+import { getTransactionWithDetails } from "@/services/transactionHelpers";
 import type {
   AggTransaction,
   Transaction,
@@ -118,11 +120,42 @@ export class TransactionsService {
     transaction: UpdateTransaction,
   ): Promise<ServiceResponse<Transaction | null>> {
     try {
+      // Get the old transaction state before updating
+      const oldTransaction = await this.TransactionRepository.findByIdAggregate(transaction_id);
+
       const updatedTransaction = await this.TransactionRepository.updateById(transaction_id, transaction);
       console.log("updated transaction", updatedTransaction);
       if (!updatedTransaction) {
         return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
       }
+
+      // Trigger notifications for significant state changes
+      try {
+        const transactionData = await getTransactionWithDetails(transaction_id);
+        if (transactionData && oldTransaction) {
+          await notificationTriggerService.handleTransactionUpdate(
+            {
+              transaction_num: oldTransaction.transaction_num,
+              transaction_id: oldTransaction.transaction_id,
+              total_cost: oldTransaction.total_cost,
+              is_completed: oldTransaction.is_completed,
+              is_reserved: oldTransaction.is_reserved,
+            },
+            {
+              transaction_num: updatedTransaction.transaction_num,
+              transaction_id: updatedTransaction.transaction_id,
+              total_cost: updatedTransaction.total_cost,
+              is_completed: updatedTransaction.is_completed,
+              is_reserved: updatedTransaction.is_reserved,
+            },
+            transactionData,
+          );
+        }
+      } catch (notificationError) {
+        // Log the notification error but don't fail the transaction update
+        console.error("Failed to send transaction update notification:", notificationError);
+      }
+
       return ServiceResponse.success<Transaction>("Transaction updated", updatedTransaction);
     } catch (ex) {
       const errorMessage = `Error updating Transaction with id ${transaction_id}:, ${(ex as Error).message}`;

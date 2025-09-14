@@ -23,7 +23,9 @@ export class SummaryRepository {
           is_employee: false,
           is_beer_bike: false,
           NOT: {
-            transaction_type: "retrospec",
+            transaction_type: {
+              in: ["retrospec", "Retrospec"],
+            },
           },
         },
       }),

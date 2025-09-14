@@ -11,6 +11,7 @@ import { bikesRouter } from "./api/bikes/bikesRouter";
 import { customerRouter } from "./api/customer/customerRouter";
 import { featureFlagsRouter } from "./api/featureFlags/featureFlagsRouter";
 import { healthCheckRouter } from "./api/healthCheck/healthCheckRouter";
+import notificationRouter from "./api/notifications/notificationRouter";
 import { OrderRouter } from "./api/order/orderRouter";
 import { permissionsRouter } from "./api/security/permissions/permissionRouter";
 import { roleRouter } from "./api/security/roles/roleRouter";
@@ -22,6 +23,7 @@ import { repairRouter } from "./api/transactionComponents/repairs/repairRouter";
 import { transactionDetailsRouter } from "./api/transactionComponents/transactionDetails/transactionDetailsRouter";
 import { transactionLogsRouter } from "./api/transactionComponents/transactionLogs/transactionLogsRouter";
 import { transactionRouter } from "./api/transactionComponents/transactions/transactionRouter";
+import { workflowStepsRouter } from "./api/workflowSteps/workflowStepsRouter";
 const logger = pino({ name: "server start", level: "debug" });
 const app: Express = express();
 
@@ -42,6 +44,7 @@ app.use(requestLogger);
 app.use("/health-check", healthCheckRouter);
 app.use("/transactions", transactionRouter);
 app.use("/transactionDetails", transactionDetailsRouter);
+app.use("/workflow-steps", workflowStepsRouter);
 app.use("/bikes", bikesRouter);
 app.use("/customers", customerRouter);
 app.use("/users", userRouter);
@@ -54,6 +57,7 @@ app.use("/roles", roleRouter);
 app.use("/permissions", permissionsRouter);
 app.use("/feature-flags", featureFlagsRouter);
 app.use("/orders", OrderRouter);
+app.use("/notifications", notificationRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
