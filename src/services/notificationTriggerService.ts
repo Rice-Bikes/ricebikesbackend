@@ -38,25 +38,6 @@ interface Transaction {
 }
 
 class NotificationTriggerService {
-  async handleTransactionUpdate(
-    oldTransaction: Transaction,
-    newTransaction: Transaction,
-    transactionData: TransactionData,
-  ): Promise<void> {
-    try {
-      // Handle specific transaction field changes
-      if (!oldTransaction.is_reserved && newTransaction.is_reserved) {
-        await slackService.notifyReservationComplete(transactionData);
-      }
-
-      if (!oldTransaction.is_completed && newTransaction.is_completed) {
-        await slackService.notifyTransactionComplete(transactionData);
-      }
-    } catch (error) {
-      console.error("Failed to send transaction update notification:", error);
-    }
-  }
-
   async handleBikeReservation(transactionData: TransactionData): Promise<void> {
     try {
       await slackService.notifyReservationComplete(transactionData);

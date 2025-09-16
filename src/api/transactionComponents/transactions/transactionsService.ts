@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
+import { CustomersService, customersService } from "@/api/customer/customerService";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import notificationTriggerService from "@/services/notificationTriggerService";
@@ -129,31 +130,24 @@ export class TransactionsService {
         return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
       }
 
-      // Trigger notifications for significant state changes
-      try {
-        const transactionData = await getTransactionWithDetails(transaction_id);
-        if (transactionData && oldTransaction) {
-          await notificationTriggerService.handleTransactionUpdate(
-            {
-              transaction_num: oldTransaction.transaction_num,
-              transaction_id: oldTransaction.transaction_id,
-              total_cost: oldTransaction.total_cost,
-              is_completed: oldTransaction.is_completed,
-              is_reserved: oldTransaction.is_reserved,
-            },
-            {
-              transaction_num: updatedTransaction.transaction_num,
-              transaction_id: updatedTransaction.transaction_id,
-              total_cost: updatedTransaction.total_cost,
-              is_completed: updatedTransaction.is_completed,
-              is_reserved: updatedTransaction.is_reserved,
-            },
-            transactionData,
-          );
-        }
-      } catch (notificationError) {
-        // Log the notification error but don't fail the transaction update
-        console.error("Failed to send transaction update notification:", notificationError);
+      const detailedTransaction = await getTransactionWithDetails(transaction_id);
+
+      if (
+        updatedTransaction.transaction_type.toLowerCase() === "retrospec" &&
+        detailedTransaction &&
+        updatedTransaction.is_paid
+      ) {
+        notificationTriggerService.handleBikeSale({
+          transaction: {
+            transaction_num: updatedTransaction.transaction_num,
+            transaction_id: updatedTransaction.transaction_id,
+            total_cost: updatedTransaction.total_cost,
+            is_completed: updatedTransaction.is_completed,
+            is_reserved: updatedTransaction.is_reserved,
+          },
+          bike: detailedTransaction.bike,
+          customer: detailedTransaction.customer,
+        });
       }
 
       return ServiceResponse.success<Transaction>("Transaction updated", updatedTransaction);

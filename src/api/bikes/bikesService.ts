@@ -112,6 +112,10 @@ export class BikesService {
 
   // Updates a bike
   async updateBike(bike_id: string, updateData: UpdateBikeInput): Promise<ServiceResponse<Bike | null>> {
+    const oldBike = await this.BikesRepository.findByIdAsync(bike_id);
+    if (!oldBike) {
+      return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
+    }
     try {
       // Validate size_cm range if provided
       if (updateData.size_cm !== null && updateData.size_cm !== undefined) {
