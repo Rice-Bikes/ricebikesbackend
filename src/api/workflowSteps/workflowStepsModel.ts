@@ -42,7 +42,7 @@ export const WorkflowStepsQuerySchema = z.object({
 });
 
 // Predefined step names for different workflow types
-export const BikeStepsEnum = z.enum(["BikeSpec", "Build", "Creation", "Reservation", "Checkout"]);
+export const BikeStepsEnum = z.enum(["BikeSpec", "Build", "Creation", "Checkout"]);
 
 export const RepairStepsEnum = z.enum(["Assessment", "Parts Ordering", "Repair Work", "Quality Check"]);
 
@@ -71,15 +71,8 @@ export function createBikeSalesWorkflowSteps(transactionId: string, createdBy: s
       created_by: createdBy,
     },
     {
-      step_name: "Reservation",
-      step_order: 4,
-      workflow_type: "bike_sales",
-      transaction_id: transactionId,
-      created_by: createdBy,
-    },
-    {
       step_name: "Checkout",
-      step_order: 5,
+      step_order: 4,
       workflow_type: "bike_sales",
       transaction_id: transactionId,
       created_by: createdBy,

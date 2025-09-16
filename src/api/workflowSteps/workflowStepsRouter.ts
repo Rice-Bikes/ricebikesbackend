@@ -113,7 +113,7 @@ workflowStepsRegistry.registerPath({
   path: "/workflow-steps/initialize/bike-sales/{transaction_id}",
   tags: ["Workflow Steps"],
   summary: "Initialize bike sales workflow for a transaction",
-  description: "Creates all 4 steps of the bike sales process: Creation → Build → Reservation → Checkout",
+  description: "Creates all 4 steps of the bike sales process: BikeSpec → Build → Creation → Checkout",
   request: {
     params: z.object({
       transaction_id: z.string().uuid(),

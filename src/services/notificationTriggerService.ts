@@ -38,32 +38,6 @@ interface Transaction {
 }
 
 class NotificationTriggerService {
-  async handleWorkflowStepCompletion(stepData: WorkflowStepData, transactionData: TransactionData): Promise<void> {
-    const { step_name, is_completed } = stepData;
-
-    if (!is_completed) return;
-
-    try {
-      switch (step_name.toLowerCase()) {
-        case "build":
-          await slackService.notifyBuildComplete(transactionData);
-          break;
-        case "reservation":
-          await slackService.notifyReservationComplete(transactionData);
-          break;
-        case "checkout":
-          await slackService.notifyTransactionComplete(transactionData);
-          break;
-        default:
-          // Send generic workflow step notification for other steps
-          await slackService.notifyWorkflowStepComplete(step_name, transactionData);
-          break;
-      }
-    } catch (error) {
-      console.error("Failed to send workflow step notification:", error);
-    }
-  }
-
   async handleTransactionUpdate(
     oldTransaction: Transaction,
     newTransaction: Transaction,
@@ -96,6 +70,22 @@ class NotificationTriggerService {
       await slackService.notifyTransactionComplete(transactionData);
     } catch (error) {
       console.error("Failed to send bike sale notification:", error);
+    }
+  }
+
+  async handleWorkflowStepCompletion(stepData: WorkflowStepData, transactionData: TransactionData): Promise<void> {
+    try {
+      // Only send notifications for specific workflow steps
+      const stepName = stepData.step_name.toLowerCase();
+
+      if (stepName.includes("build")) {
+        await slackService.notifyBuildComplete(transactionData);
+      } else if (stepName.includes("reserve")) {
+        await slackService.notifyReservationComplete(transactionData);
+      }
+      // For all other steps (creation, checkout, etc.), don't send notifications
+    } catch (error) {
+      console.error("Failed to send workflow step completion notification:", error);
     }
   }
 }

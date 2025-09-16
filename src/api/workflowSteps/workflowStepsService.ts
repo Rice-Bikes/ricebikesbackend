@@ -347,7 +347,7 @@ export class WorkflowStepsService {
         updated_at: updatedStep.updated_at.toISOString(),
       };
 
-      // Trigger notification for completed workflow step
+      // Trigger notification for build and reserve steps only
       try {
         const transactionData = await getTransactionWithDetails(updatedStep.transaction_id);
         if (transactionData) {
@@ -363,8 +363,8 @@ export class WorkflowStepsService {
           );
         }
       } catch (notificationError) {
-        // Log the notification error but don't fail the workflow step completion
-        console.error("Failed to send workflow step completion notification:", notificationError);
+        // Log the error but don't fail the main operation
+        console.error("Failed to send workflow step notification:", notificationError);
       }
 
       return ServiceResponse.success("Workflow step completed successfully", transformedStep, StatusCodes.OK);

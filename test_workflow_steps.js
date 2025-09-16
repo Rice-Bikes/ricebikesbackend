@@ -26,15 +26,8 @@ function createBikeSalesWorkflowSteps(transactionId, createdBy) {
       created_by: createdBy,
     },
     {
-      step_name: "Reservation",
-      step_order: 4,
-      workflow_type: "bike_sales",
-      transaction_id: transactionId,
-      created_by: createdBy,
-    },
-    {
       step_name: "Checkout",
-      step_order: 5,
+      step_order: 4,
       workflow_type: "bike_sales",
       transaction_id: transactionId,
       created_by: createdBy,
@@ -72,10 +65,7 @@ console.log(
   `   ✅ Creation at position 3: ${steps[2]?.step_name === "Creation" && steps[2]?.step_order === 3 ? "PASS" : "FAIL"}`,
 );
 console.log(
-  `   ✅ Reservation at position 4: ${steps[3]?.step_name === "Reservation" && steps[3]?.step_order === 4 ? "PASS" : "FAIL"}`,
-);
-console.log(
-  `   ✅ Checkout at position 5: ${steps[4]?.step_name === "Checkout" && steps[4]?.step_order === 5 ? "PASS" : "FAIL"}`,
+  `   ✅ Checkout at position 4: ${steps[3]?.step_name === "Checkout" && steps[3]?.step_order === 4 ? "PASS" : "FAIL"}`,
 );
 
 console.log("");
