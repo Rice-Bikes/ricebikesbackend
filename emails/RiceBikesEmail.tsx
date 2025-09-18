@@ -13,23 +13,19 @@ import {
   Section,
   Tailwind,
   Text,
-} from '@react-email/components';
+} from "@react-email/components";
 
 interface RiceBikesEmailProps {
   username: string;
   transaction_num: number;
-  email?: string
+  email?: string;
   // bikeReadyDate?: Date;
-
 }
-import * as React from 'react';
+import * as React from "react";
 
 // const baseUrl = "localhost:3000/preview"
 
-export const RiceBikesEmail = ({
-  username,
-  transaction_num,
-}: RiceBikesEmailProps) => {
+export const RiceBikesEmail = ({ username, transaction_num }: RiceBikesEmailProps) => {
   const previewText = `Rice Bikes - Your bike is ready for pickup - ${transaction_num}`;
 
   return (
@@ -42,9 +38,7 @@ export const RiceBikesEmail = ({
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
               Hi {username},
             </Heading>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Thanks for visiting Rice Bikes!
-            </Text>
+            <Text className="text-black text-[14px] leading-[24px]">Thanks for visiting Rice Bikes!</Text>
             <Text className="text-black text-[14px] leading-[24px]">
               This is an email to let you know your bike is ready for pickup.
             </Text>
@@ -52,21 +46,16 @@ export const RiceBikesEmail = ({
               No appointment is necessary to pickup your bike.
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
-              Please note that if you do not pick up your bike within 7 days, you will be charged a storage fee of $5 for each additional day.
+              Please note that if you do not pick up your bike within 7 days, you will be charged a storage fee of $5
+              for each additional day.
             </Text>
             <Text className="text-black text-[14px] leading-[24px]">
               After 30 additional days, Rice Bikes reserves the right to retain your bike as collateral.
             </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              Best,
-            </Text>
-            <Text className="text-black text-[14px] leading-[24px]">
-              The Rice Bikes team
-            </Text>
+            <Text className="text-black text-[14px] leading-[24px]">Best,</Text>
+            <Text className="text-black text-[14px] leading-[24px]">The Rice Bikes team</Text>
             <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
-            <Text className="text-black text-[14px] leading-[24px]">
-              Leave us some feedback!
-            </Text>
+            <Text className="text-black text-[14px] leading-[24px]">Leave us some feedback!</Text>
             <Section className="text-center mt-[32px] mb-[32px]">
               <Button
                 className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"

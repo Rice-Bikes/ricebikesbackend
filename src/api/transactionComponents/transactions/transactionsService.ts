@@ -132,10 +132,13 @@ export class TransactionsService {
 
       const detailedTransaction = await getTransactionWithDetails(transaction_id);
 
+      // Only send notification if payment status changed from false to true (avoiding duplicates)
       if (
         updatedTransaction.transaction_type.toLowerCase() === "retrospec" &&
         detailedTransaction &&
-        updatedTransaction.is_paid
+        updatedTransaction.is_paid &&
+        oldTransaction &&
+        !oldTransaction.is_paid // Only notify when transitioning from unpaid to paid
       ) {
         notificationTriggerService.handleBikeSale({
           transaction: {
