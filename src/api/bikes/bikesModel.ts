@@ -16,7 +16,7 @@ export const BikeSchema = z.object({
   description: z.string().nullable(),
   date_created: z.date(), // SYSTEM GENERATED
   bike_type: z.string().max(50).nullable(),
-  size_cm: z.number().min(30).max(80).nullable(),
+  size_cm: z.number().nullable(),
   condition: z.enum(["New", "Refurbished", "Used"]).default("Used"),
   price: z.number().min(0).nullable(),
   is_available: z.boolean().default(true),
@@ -36,12 +36,7 @@ export const CreateBikeSchema = z.object({
     model: z.string().min(1, "Model is required"),
     description: z.string().nullable().optional(),
     bike_type: z.string().max(50).nullable().optional(),
-    size_cm: z.coerce
-      .number()
-      .min(30, "Size must be at least 30cm")
-      .max(80, "Size must be at most 80cm")
-      .nullable()
-      .optional(),
+    size_cm: z.coerce.number().nullable().optional(),
     condition: z.enum(["New", "Refurbished", "Used"]).default("Used").optional(),
     price: z.coerce.number().min(0, "Price must be non-negative").nullable().optional(),
     is_available: z.coerce.boolean().default(true).optional(),
@@ -58,12 +53,7 @@ export const UpdateBikeSchema = z.object({
     model: z.string().min(1).optional(),
     description: z.string().nullable().optional(),
     bike_type: z.string().max(50).nullable().optional(),
-    size_cm: z.coerce
-      .number()
-      .min(30, "Size must be at least 30cm")
-      .max(80, "Size must be at most 80cm")
-      .nullable()
-      .optional(),
+    size_cm: z.coerce.number().nullable().optional(),
     condition: z.enum(["New", "Refurbished", "Used"]).optional(),
     price: z.coerce.number().min(0, "Price must be non-negative").nullable().optional(),
     is_available: z.coerce.boolean().optional(),
@@ -80,8 +70,8 @@ export const GetBikesQuerySchema = z.object({
       bike_type: z.string().optional(),
       condition: z.enum(["New", "Refurbished", "Used"]).optional(),
       is_available: z.boolean().optional(),
-      min_size: z.number().min(30).max(80).optional(),
-      max_size: z.number().min(30).max(80).optional(),
+      min_size: z.number().optional(),
+      max_size: z.number().optional(),
       min_price: z.number().min(0).optional(),
       max_price: z.number().min(0).optional(),
     })
