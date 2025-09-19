@@ -48,10 +48,6 @@ class TransactionDetailsController {
 
   public createTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
     const transaction_id = req.params.transaction_id;
-    console.log("id for create transaction", transaction_id);
-    // if (!this.isTransactionDetailRequest(req.body)) {
-    //   return res.status(400).send("Invalid request body");
-    // }
     const body = req.body;
 
     let serviceResponse: any;
@@ -86,7 +82,6 @@ class TransactionDetailsController {
   };
 
   public deleteTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
-    console.log("deleting transaction details", req.params.transaction_detail_id);
     const serviceResponse = await transactionDetailsService.deleteById(req.params.transaction_detail_id);
     return handleServiceResponse(serviceResponse, res);
   };
