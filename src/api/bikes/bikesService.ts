@@ -69,38 +69,6 @@ export class BikesService {
   // Creates a bike
   async createBike(bikeData: CreateBikeInput): Promise<ServiceResponse<Bike | null>> {
     try {
-      // Validate required fields
-      if (!bikeData.make || !bikeData.model) {
-        return ServiceResponse.failure("Make and model are required", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate size_cm range if provided
-      if (bikeData.size_cm !== null && bikeData.size_cm !== undefined) {
-        if (bikeData.size_cm < 30 || bikeData.size_cm > 80) {
-          return ServiceResponse.failure("Size must be between 30cm and 80cm", null, StatusCodes.BAD_REQUEST);
-        }
-      }
-
-      // Validate condition if provided
-      if (bikeData.condition && !["New", "Refurbished", "Used"].includes(bikeData.condition)) {
-        return ServiceResponse.failure("Condition must be New, Refurbished, or Used", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate price if provided
-      if (bikeData.price !== null && bikeData.price !== undefined && bikeData.price < 0) {
-        return ServiceResponse.failure("Price must be non-negative", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate weight if provided
-      if (bikeData.weight_kg !== null && bikeData.weight_kg !== undefined && bikeData.weight_kg <= 0) {
-        return ServiceResponse.failure("Weight must be positive", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate deposit if provided
-      if (bikeData.deposit_amount !== null && bikeData.deposit_amount !== undefined && bikeData.deposit_amount < 0) {
-        return ServiceResponse.failure("Deposit amount must be non-negative", null, StatusCodes.BAD_REQUEST);
-      }
-
       const newBike = await this.BikesRepository.create(bikeData);
       return ServiceResponse.success<Bike>("Bike created successfully", newBike, StatusCodes.CREATED);
     } catch (ex) {
