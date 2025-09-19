@@ -117,30 +117,6 @@ export class BikesService {
       return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
     }
     try {
-      // Validate condition if provided
-      if (updateData.condition && !["New", "Refurbished", "Used"].includes(updateData.condition)) {
-        return ServiceResponse.failure("Condition must be New, Refurbished, or Used", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate price if provided
-      if (updateData.price !== null && updateData.price !== undefined && updateData.price < 0) {
-        return ServiceResponse.failure("Price must be non-negative", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate weight if provided
-      if (updateData.weight_kg !== null && updateData.weight_kg !== undefined && updateData.weight_kg <= 0) {
-        return ServiceResponse.failure("Weight must be positive", null, StatusCodes.BAD_REQUEST);
-      }
-
-      // Validate deposit if provided
-      if (
-        updateData.deposit_amount !== null &&
-        updateData.deposit_amount !== undefined &&
-        updateData.deposit_amount < 0
-      ) {
-        return ServiceResponse.failure("Deposit amount must be non-negative", null, StatusCodes.BAD_REQUEST);
-      }
-
       const updatedBike = await this.BikesRepository.update(bike_id, updateData);
       if (!updatedBike) {
         return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
