@@ -117,13 +117,6 @@ export class BikesService {
       return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
     }
     try {
-      // Validate size_cm range if provided
-      if (updateData.size_cm !== null && updateData.size_cm !== undefined) {
-        if (updateData.size_cm < 30 || updateData.size_cm > 80) {
-          return ServiceResponse.failure("Size must be between 30cm and 80cm", null, StatusCodes.BAD_REQUEST);
-        }
-      }
-
       // Validate condition if provided
       if (updateData.condition && !["New", "Refurbished", "Used"].includes(updateData.condition)) {
         return ServiceResponse.failure("Condition must be New, Refurbished, or Used", null, StatusCodes.BAD_REQUEST);

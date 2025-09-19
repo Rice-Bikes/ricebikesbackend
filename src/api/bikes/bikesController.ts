@@ -3,7 +3,7 @@ import type { Request, RequestHandler, Response } from "express";
 import type { CreateBikeInput, UpdateBikeInput } from "@/api/bikes/bikesModel";
 import { bikesService } from "@/api/bikes/bikesService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
-
+import { logger } from "@/server";
 class BikeController {
   public getBikes: RequestHandler = async (req: Request, res: Response) => {
     // Extract query filters
@@ -72,7 +72,7 @@ class BikeController {
   public updateBike: RequestHandler = async (req: Request, res: Response) => {
     const bike_id = req.params.id as string;
     const updateData: UpdateBikeInput = {};
-
+    logger.info("Request Body: ", req.body);
     // Only include fields that are present in the request body
     if (req.body.make !== undefined) updateData.make = req.body.make;
     if (req.body.model !== undefined) updateData.model = req.body.model;
@@ -86,7 +86,7 @@ class BikeController {
     if (req.body.reservation_customer_id !== undefined)
       updateData.reservation_customer_id = req.body.reservation_customer_id;
     if (req.body.deposit_amount !== undefined) updateData.deposit_amount = req.body.deposit_amount;
-
+    logger.info("Update Data: ", updateData);
     const serviceResponse = await bikesService.updateBike(bike_id, updateData);
     return handleServiceResponse(serviceResponse, res);
   };
