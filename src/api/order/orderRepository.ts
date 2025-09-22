@@ -11,7 +11,7 @@ export class OrderRepository {
     return prisma.order.findFirst({
       where: {
         order_date: {
-          gt: new Date(),
+          gte: new Date(),
         },
       },
       orderBy: {
