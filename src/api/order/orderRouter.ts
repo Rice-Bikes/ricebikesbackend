@@ -28,7 +28,7 @@ OrderRegistry.registerPath({
   tags: ["Orders"],
   responses: createApiResponse(OrderSchema, "Success"),
 });
-OrderRouter.get("/closest-future", orderController.getClosestFutureOrder);
+OrderRouter.get("/closest-future", orderController.getNextOrderAfterDate);
 
 // GET /orders/:id
 OrderRegistry.registerPath({

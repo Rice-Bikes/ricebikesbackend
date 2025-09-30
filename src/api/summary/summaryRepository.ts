@@ -36,7 +36,9 @@ export class SummaryRepository {
           is_employee: false,
           is_beer_bike: true,
           NOT: {
-            transaction_type: "retrospec",
+            transaction_type: {
+              in: ["retrospec", "Retrospec"],
+            },
           },
         },
       }),
@@ -46,8 +48,24 @@ export class SummaryRepository {
           is_paid: false,
           is_refurb: false,
           is_employee: false,
+          NOT: {
+            transaction_type: {
+              in: ["retrospec", "Retrospec", "merch", "Merch"],
+            },
+          },
         },
       }),
+      // prisma.transactions.count({
+      //   where: {
+      //     is_completed: true,
+      //     is_paid: false,
+      //     is_refurb: false,
+      //     is_employee: false,
+      //     transaction_type: {
+      //         in: ["retrospec", "Retrospec"],
+      //     },
+      //   },
+      // }
       Promise.resolve(0), // TODO: implement this
       // prisma.transactions.count({
       //   where: {

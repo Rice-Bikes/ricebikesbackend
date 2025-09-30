@@ -20,7 +20,9 @@ export const CreateOrderSchema = z.object({
     estimated_delivery: z.string().optional(),
   }),
 });
-
 export const GetOrderSchema = z.object({
   params: z.object({ id: z.string() }),
+  query: z.object({
+    range: z.array(z.string()).optional(),
+  }),
 });

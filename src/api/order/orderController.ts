@@ -10,7 +10,7 @@ class OrderController {
     return handleServiceResponse(serviceResponse, res);
   };
 
-  public getClosestFutureOrder: RequestHandler = async (_req: Request, res: Response) => {
+  public getNextOrderAfterDate: RequestHandler = async (_req: Request, res: Response) => {
     const serviceResponse = await orderService.findClosestFutureOrder();
     return handleServiceResponse(serviceResponse, res);
   };
