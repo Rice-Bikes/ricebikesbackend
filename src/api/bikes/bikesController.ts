@@ -90,7 +90,7 @@ class BikeController {
       updateData.reservation_customer_id = req.body.reservation_customer_id;
     if (req.body.deposit_amount !== undefined)
       updateData.deposit_amount = req.body.deposit_amount !== null ? Number(req.body.deposit_amount) : null;
-    logger.info("Update Data: ", updateData);
+    logger.info(`Update Data:  ${updateData}`);
     const serviceResponse = await bikesService.updateBike(bike_id, updateData);
     return handleServiceResponse(serviceResponse, res);
   };

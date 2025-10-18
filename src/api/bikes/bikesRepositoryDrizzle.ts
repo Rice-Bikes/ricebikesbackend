@@ -5,8 +5,15 @@ import type * as schema from "@/db/schema";
 import { bikes } from "@/db/schema/bikes";
 import { and, asc, desc, eq, gte, ilike, isNotNull, isNull, lte } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import type { BikeFilters } from "./bikesRepository";
-
+export interface BikeFilters {
+  bike_type?: string;
+  condition?: "New" | "Refurbished" | "Used";
+  is_available?: boolean;
+  min_size?: number;
+  max_size?: number;
+  min_price?: number;
+  max_price?: number;
+}
 export class BikesRepositoryDrizzle {
   private db: PostgresJsDatabase<typeof schema>;
 

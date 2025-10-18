@@ -1,8 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 
 import type { Bike, CreateBikeInput, UpdateBikeInput } from "@/api/bikes/bikesModel";
-import type { BikeFilters } from "@/api/bikes/bikesRepository";
-import type { BikesRepository } from "@/api/bikes/bikesRepository";
+import type { BikeFilters } from "@/api/bikes/bikesRepositoryDrizzle";
 import type { BikesRepositoryDrizzle } from "@/api/bikes/bikesRepositoryDrizzle";
 import { createBikeRepository, createBikeRepositorySync } from "@/api/bikes/bikesRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
@@ -10,10 +9,10 @@ import { serviceLogger as logger } from "@/common/utils/logger";
 import notificationTriggerService from "@/services/notificationTriggerService";
 
 export class BikesService {
-  private BikesRepository: BikesRepository | BikesRepositoryDrizzle;
+  private BikesRepository: BikesRepositoryDrizzle;
   private repositoryInitialized = false;
 
-  constructor(repository?: BikesRepository | BikesRepositoryDrizzle) {
+  constructor(repository?: BikesRepositoryDrizzle) {
     // If repository is provided, use it directly
     if (repository) {
       this.BikesRepository = repository;
