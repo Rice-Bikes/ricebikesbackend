@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
 import { OrderRequestsRepository } from "./orderRequestsRepository";
 

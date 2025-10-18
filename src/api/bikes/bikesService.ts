@@ -1,21 +1,54 @@
 import { StatusCodes } from "http-status-codes";
 
 import type { Bike, CreateBikeInput, UpdateBikeInput } from "@/api/bikes/bikesModel";
-import { type BikeFilters, BikesRepository } from "@/api/bikes/bikesRepository";
+import type { BikeFilters } from "@/api/bikes/bikesRepository";
+import type { BikesRepository } from "@/api/bikes/bikesRepository";
+import type { BikesRepositoryDrizzle } from "@/api/bikes/bikesRepositoryDrizzle";
+import { createBikeRepository, createBikeRepositorySync } from "@/api/bikes/bikesRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import notificationTriggerService from "@/services/notificationTriggerService";
 
 export class BikesService {
-  private BikesRepository: BikesRepository;
+  private BikesRepository: BikesRepository | BikesRepositoryDrizzle;
+  private repositoryInitialized = false;
 
-  constructor(repository: BikesRepository = new BikesRepository()) {
-    this.BikesRepository = repository;
+  constructor(repository?: BikesRepository | BikesRepositoryDrizzle) {
+    // If repository is provided, use it directly
+    if (repository) {
+      this.BikesRepository = repository;
+      this.repositoryInitialized = true;
+    } else {
+      // Otherwise use the sync version to have something immediately available
+      this.BikesRepository = createBikeRepositorySync();
+
+      // But also initialize the proper repository asynchronously
+      this.initializeRepository();
+    }
+  }
+
+  private async initializeRepository(): Promise<void> {
+    try {
+      this.BikesRepository = await createBikeRepository();
+      this.repositoryInitialized = true;
+      logger.debug("Bike repository initialized successfully");
+    } catch (error) {
+      logger.error(`Failed to initialize bike repository: ${error}`);
+      // We already have the sync version, so we can continue
+    }
+  }
+
+  // Helper method to ensure repository is initialized
+  private async ensureRepository(): Promise<void> {
+    if (!this.repositoryInitialized) {
+      await this.initializeRepository();
+    }
   }
 
   // Retrieves all bikes from the database with optional filtering
   async findAll(filters?: BikeFilters): Promise<ServiceResponse<Bike[] | null>> {
     try {
+      await this.ensureRepository();
       const bikes = await this.BikesRepository.findAll(filters);
       if (!bikes || bikes.length === 0) {
         return ServiceResponse.failure("No bikes found", null, StatusCodes.NOT_FOUND);
@@ -35,6 +68,7 @@ export class BikesService {
   // Retrieves bikes available for sale
   async findAvailableForSale(filters?: BikeFilters): Promise<ServiceResponse<Bike[] | null>> {
     try {
+      await this.ensureRepository();
       const bikes = await this.BikesRepository.findAvailableForSale(filters);
       if (!bikes || bikes.length === 0) {
         return ServiceResponse.failure("No bikes available for sale", null, StatusCodes.NOT_FOUND);
@@ -54,6 +88,7 @@ export class BikesService {
   // Retrieves a single bike by their ID
   async findById(id: string): Promise<ServiceResponse<Bike | null>> {
     try {
+      await this.ensureRepository();
       const bike = await this.BikesRepository.findByIdAsync(id);
       if (!bike) {
         return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
@@ -69,6 +104,7 @@ export class BikesService {
   // Creates a bike
   async createBike(bikeData: CreateBikeInput): Promise<ServiceResponse<Bike | null>> {
     try {
+      await this.ensureRepository();
       const newBike = await this.BikesRepository.create(bikeData);
       return ServiceResponse.success<Bike>("Bike created successfully", newBike, StatusCodes.CREATED);
     } catch (ex) {
@@ -80,6 +116,7 @@ export class BikesService {
 
   // Updates a bike
   async updateBike(bike_id: string, updateData: UpdateBikeInput): Promise<ServiceResponse<Bike | null>> {
+    await this.ensureRepository();
     const oldBike = await this.BikesRepository.findByIdAsync(bike_id);
     if (!oldBike) {
       return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
@@ -101,6 +138,7 @@ export class BikesService {
   // Deletes a bike
   async deleteBike(bike_id: string): Promise<ServiceResponse<null>> {
     try {
+      await this.ensureRepository();
       const deleted = await this.BikesRepository.delete(bike_id);
       if (!deleted) {
         return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
@@ -120,6 +158,7 @@ export class BikesService {
     deposit_amount?: number,
   ): Promise<ServiceResponse<Bike | null>> {
     try {
+      await this.ensureRepository();
       const reservedBike = await this.BikesRepository.reserveBike(bike_id, customer_id, deposit_amount);
       if (!reservedBike) {
         return ServiceResponse.failure("Bike not found or already reserved", null, StatusCodes.NOT_FOUND);
@@ -166,6 +205,7 @@ export class BikesService {
   // Unreserve a bike
   async unreserveBike(bike_id: string): Promise<ServiceResponse<Bike | null>> {
     try {
+      await this.ensureRepository();
       const unreservedBike = await this.BikesRepository.unreserveBike(bike_id);
       if (!unreservedBike) {
         return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);

@@ -1,7 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-import * as XLSX from "xlsx";
-
-const prisma = new PrismaClient();
+import { db } from "@/db/client";
+import {
+  bikes as bikesTable,
+  customers as customersTable,
+  items as itemsTable,
+  repairs as repairsTable,
+  transactionDetails as transactionDetailsTable,
+  transactions as transactionsTable,
+} from "@/db/schema";
+import { and, asc, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
+import ExcelJS from "exceljs";
 
 // Type definitions for export data
 export interface RepairMetrics {
@@ -70,218 +77,218 @@ export interface ExportFilters {
   includeEmployee?: boolean;
 }
 
+function buildTransactionConditions(filters: ExportFilters = {}) {
+  const conditions = [];
+
+  if (filters.startDate) {
+    conditions.push(gte(transactionsTable.date_created, new Date(filters.startDate)));
+  }
+  if (filters.endDate) {
+    conditions.push(lte(transactionsTable.date_created, new Date(filters.endDate)));
+  }
+  if (filters.transactionType) {
+    conditions.push(eq(transactionsTable.transaction_type, filters.transactionType));
+  }
+  if (filters.isCompleted !== undefined) {
+    conditions.push(eq(transactionsTable.is_completed, filters.isCompleted));
+  }
+  if (filters.isPaid !== undefined) {
+    conditions.push(eq(transactionsTable.is_paid, filters.isPaid));
+  }
+  if (filters.includeRefurb === false) {
+    conditions.push(eq(transactionsTable.is_refurb, false));
+  }
+  if (filters.includeEmployee === false) {
+    conditions.push(eq(transactionsTable.is_employee, false));
+  }
+
+  return conditions;
+}
+
 class DataExportService {
   // Get detailed repair metrics including labor profitability
   async getRepairMetrics(filters: ExportFilters = {}): Promise<RepairMetrics[]> {
-    // Build transaction filters for the relation
-    const transactionFilters: any = {
-      date_created: {
-        ...(filters.startDate && { gte: new Date(filters.startDate) }),
-        ...(filters.endDate && { lte: new Date(filters.endDate) }),
-      },
-      ...(filters.transactionType && { transaction_type: filters.transactionType }),
-      ...(filters.isCompleted !== undefined && { is_completed: filters.isCompleted }),
-      ...(filters.isPaid !== undefined && { is_paid: filters.isPaid }),
-      ...(filters.includeRefurb === false && { is_refurb: false }),
-      ...(filters.includeEmployee === false && { is_employee: false }),
-    };
+    const txConditions = buildTransactionConditions(filters);
 
-    // Remove empty date_created object if no date filters
-    if (!filters.startDate && !filters.endDate) {
-      transactionFilters.date_created = undefined;
+    // Join repairs -> transactionDetails -> transactions with filters applied on transactions
+    const rows = await db
+      .select({
+        repair_id: repairsTable.repair_id,
+        repair_name: repairsTable.name,
+        repair_price: repairsTable.price,
+        quantity: transactionDetailsTable.quantity,
+        transaction_id: transactionDetailsTable.transaction_id,
+        transaction_is_completed: transactionsTable.is_completed,
+      })
+      .from(repairsTable)
+      .leftJoin(transactionDetailsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+      .leftJoin(transactionsTable, eq(transactionDetailsTable.transaction_id, transactionsTable.transaction_id))
+      .where(and(eq(repairsTable.disabled, false), ...(txConditions.length ? txConditions : [])));
+
+    // Process the data to calculate metrics grouped by repair
+    const grouped = new Map<
+      string,
+      {
+        totalQuantity: number;
+        totalRevenue: number;
+        price: number;
+        transactionIds: Set<string>;
+        completedTransactionIds: Set<string>;
+      }
+    >();
+
+    for (const row of rows) {
+      if (!row.repair_name || row.quantity == null || row.repair_price == null) {
+        continue;
+      }
+
+      const key = row.repair_name;
+      const quantity = Number(row.quantity) || 0;
+      const price = Number(row.repair_price) || 0;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          totalQuantity: 0,
+          totalRevenue: 0,
+          price,
+          transactionIds: new Set<string>(),
+          completedTransactionIds: new Set<string>(),
+        });
+      }
+
+      const agg = grouped.get(key)!;
+      agg.totalQuantity += quantity;
+      agg.totalRevenue += price * quantity;
+
+      if (row.transaction_id) {
+        agg.transactionIds.add(row.transaction_id);
+        if (row.transaction_is_completed) {
+          agg.completedTransactionIds.add(row.transaction_id);
+        }
+      }
     }
 
-    // Get all repairs with their transaction details using the correct relationship names
-    const repairs = await prisma.repairs.findMany({
-      where: {
-        disabled: false,
-      },
-      include: {
-        TransactionDetails: {
-          include: {
-            Transactions: true,
-          },
-          where: {
-            Transactions: transactionFilters,
-          },
-        },
-      },
-    });
+    const metrics: RepairMetrics[] = [];
+    for (const [repair_name, agg] of grouped.entries()) {
+      const transactionCount = agg.transactionIds.size;
+      const completionRate = transactionCount > 0 ? (agg.completedTransactionIds.size / transactionCount) * 100 : 0;
 
-    // Process the data to calculate metrics
-    const repairMetrics: RepairMetrics[] = [];
-
-    for (const repair of repairs) {
-      const validDetails = repair.TransactionDetails.filter((td) => td.Transactions);
-
-      if (validDetails.length === 0) continue;
-
-      const totalQuantity = validDetails.reduce((sum: number, td: any) => sum + td.quantity, 0);
-      const totalRevenue = validDetails.reduce((sum: number, td: any) => sum + Number(repair.price) * td.quantity, 0);
-      const uniqueTransactions = new Set(validDetails.map((td: any) => td.transaction_id));
-      const transactionCount = uniqueTransactions.size;
-
-      // Calculate completion rate based on unique transactions
-      const completedTransactions = validDetails.filter((td: any) => td.Transactions.is_completed);
-      const uniqueCompletedTransactions = new Set(completedTransactions.map((td: any) => td.transaction_id));
-      const completionRate = transactionCount > 0 ? (uniqueCompletedTransactions.size / transactionCount) * 100 : 0;
-
-      repairMetrics.push({
-        repair_name: repair.name,
-        total_quantity: totalQuantity,
-        total_revenue: totalRevenue,
-        average_price: Number(repair.price),
+      metrics.push({
+        repair_name,
+        total_quantity: agg.totalQuantity,
+        total_revenue: agg.totalRevenue,
+        average_price: agg.price,
         transaction_count: transactionCount,
         completion_rate: completionRate,
       });
     }
 
-    // Filter out repairs with no transactions and sort by revenue
-    return repairMetrics
-      .filter((metric) => metric.total_quantity > 0)
-      .sort((a, b) => b.total_revenue - a.total_revenue);
+    // Filter out repairs with no transactions and sort by revenue desc
+    return metrics.filter((m) => m.total_quantity > 0).sort((a, b) => b.total_revenue - a.total_revenue);
   }
 
   // Get comprehensive transaction summary
   async getTransactionSummary(filters: ExportFilters = {}): Promise<TransactionSummary[]> {
-    const whereClause: any = {};
+    const txConditions = buildTransactionConditions(filters);
 
-    // Apply filters
-    if (filters.startDate) {
-      whereClause.dateCreated = { ...whereClause.dateCreated, gte: new Date(filters.startDate) };
-    }
-    if (filters.endDate) {
-      whereClause.dateCreated = { ...whereClause.dateCreated, lte: new Date(filters.endDate) };
-    }
-    if (filters.transactionType) {
-      whereClause.transactionType = filters.transactionType;
-    }
-    if (filters.isCompleted !== undefined) {
-      whereClause.isCompleted = filters.isCompleted;
-    }
-    if (filters.isPaid !== undefined) {
-      whereClause.isPaid = filters.isPaid;
-    }
-    if (filters.includeRefurb === false) {
-      whereClause.isRefurb = false;
-    }
-    if (filters.includeEmployee === false) {
-      whereClause.isEmployee = false;
+    const rows = await db
+      .select({
+        t: transactionsTable,
+        c_first: customersTable.first_name,
+        c_last: customersTable.last_name,
+        c_email: customersTable.email,
+        b_make: bikesTable.make,
+        b_model: bikesTable.model,
+        d_id: transactionDetailsTable.transaction_detail_id,
+        d_qty: transactionDetailsTable.quantity,
+        i_name: itemsTable.name,
+        i_cost: itemsTable.wholesale_cost,
+        r_name: repairsTable.name,
+        r_price: repairsTable.price,
+      })
+      .from(transactionsTable)
+      .leftJoin(customersTable, eq(transactionsTable.customer_id, customersTable.customer_id))
+      .leftJoin(bikesTable, eq(transactionsTable.bike_id, bikesTable.bike_id))
+      .leftJoin(transactionDetailsTable, eq(transactionsTable.transaction_id, transactionDetailsTable.transaction_id))
+      .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
+      .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+      .where(and(...(txConditions.length ? txConditions : [])))
+      .orderBy(desc(transactionsTable.date_created));
+
+    // Group by transaction and aggregate repair/items into strings
+    const map = new Map<string, TransactionSummary & { _repairs: string[]; _parts: string[] }>();
+
+    for (const row of rows) {
+      const t = row.t;
+      const key = t.transaction_id as string;
+      if (!map.has(key)) {
+        map.set(key, {
+          transaction_num: t.transaction_num!,
+          transaction_id: t.transaction_id!,
+          date_created: (t.date_created as Date).toISOString().split("T")[0],
+          transaction_type: t.transaction_type!,
+          customer_name: `${row.c_first ?? ""} ${row.c_last ?? ""}`.trim(),
+          customer_email: row.c_email ?? "",
+          total_cost: Number(t.total_cost),
+          is_completed: Boolean(t.is_completed),
+          is_paid: Boolean(t.is_paid),
+          is_refurb: Boolean(t.is_refurb),
+          is_employee: Boolean(t.is_employee),
+          date_completed: t.date_completed ? (t.date_completed as Date).toISOString().split("T")[0] : undefined,
+          bike_make: row.b_make ?? undefined,
+          bike_model: row.b_model ?? undefined,
+          repair_items: "",
+          parts_items: "",
+          _repairs: [],
+          _parts: [],
+        });
+      }
+
+      const agg = map.get(key)!;
+
+      // Append repair item if present
+      if (row.r_name && row.d_qty != null && row.r_price != null) {
+        agg._repairs.push(`${row.r_name} (${Number(row.d_qty)}x $${Number(row.r_price)})`);
+      }
+
+      // Append parts item if present
+      if (row.i_name && row.d_qty != null && row.i_cost != null) {
+        agg._parts.push(`${row.i_name} (${Number(row.d_qty)}x $${Number(row.i_cost)})`);
+      }
     }
 
-    const transactions = await prisma.transactions.findMany({
-      where: {
-        date_created: {
-          ...(filters.startDate && { gte: new Date(filters.startDate) }),
-          ...(filters.endDate && { lte: new Date(filters.endDate) }),
-        },
-        ...(filters.transactionType && { transaction_type: filters.transactionType }),
-        ...(filters.isCompleted !== undefined && { is_completed: filters.isCompleted }),
-        ...(filters.isPaid !== undefined && { is_paid: filters.isPaid }),
-        ...(filters.includeRefurb === false && { is_refurb: false }),
-        ...(filters.includeEmployee === false && { is_employee: false }),
-      },
-      include: {
-        Customer: true,
-        Bike: true,
-        TransactionDetails: {
-          include: {
-            Repair: true,
-            Item: true,
-          },
-        },
-      },
-      orderBy: { date_created: "desc" },
-    });
+    // Finalize aggregated strings
+    const result: TransactionSummary[] = [];
+    for (const v of map.values()) {
+      v.repair_items = v._repairs.join(", ");
+      v.parts_items = v._parts.join(", ");
+      (v as any)._repairs = undefined;
+      (v as any)._parts = undefined;
+      result.push(v);
+    }
 
-    return transactions.map((transaction: any) => ({
-      transaction_num: transaction.transaction_num,
-      transaction_id: transaction.transaction_id,
-      date_created: transaction.date_created.toISOString().split("T")[0],
-      transaction_type: transaction.transaction_type,
-      customer_name: `${transaction.Customer.first_name} ${transaction.Customer.last_name}`,
-      customer_email: transaction.Customer.email,
-      total_cost: Number.parseFloat(transaction.total_cost.toString()),
-      is_completed: transaction.is_completed,
-      is_paid: transaction.is_paid,
-      is_refurb: transaction.is_refurb,
-      is_employee: transaction.is_employee,
-      date_completed: transaction.date_completed?.toISOString().split("T")[0],
-      bike_make: transaction.Bike?.make,
-      bike_model: transaction.Bike?.model,
-      repair_items: transaction.TransactionDetails.filter((td: any) => td.Repair)
-        .map((td: any) => `${td.Repair.name} (${td.quantity}x $${td.Repair.price})`)
-        .join(", "),
-      parts_items: transaction.TransactionDetails.filter((td: any) => td.Item)
-        .map((td: any) => `${td.Item.name} (${td.quantity}x $${td.Item.wholesale_cost})`)
-        .join(", "),
-    }));
+    return result;
   }
 
   // Get high-level financial summary
   async getFinancialSummary(filters: ExportFilters = {}): Promise<FinancialSummary> {
-    const whereClause: any = {
-      date_created: {
-        ...(filters.startDate && { gte: new Date(filters.startDate) }),
-        ...(filters.endDate && { lte: new Date(filters.endDate) }),
-      },
-      ...(filters.transactionType && { transaction_type: filters.transactionType }),
-      ...(filters.isCompleted !== undefined && { is_completed: filters.isCompleted }),
-      ...(filters.isPaid !== undefined && { is_paid: filters.isPaid }),
-      ...(filters.includeRefurb === false && { is_refurb: false }),
-      ...(filters.includeEmployee === false && { is_employee: false }),
-    };
+    const txConditions = buildTransactionConditions(filters);
 
-    // Remove empty date_created object if no date filters
-    if (!filters.startDate && !filters.endDate) {
-      whereClause.date_created = undefined;
-    }
+    // Fetch transactions matching filters and compute aggregates in code
+    const rows = await db
+      .select()
+      .from(transactionsTable)
+      .where(and(...(txConditions.length ? txConditions : [])));
 
-    // Get aggregated data using Prisma aggregation
-    const aggregations = await prisma.transactions.aggregate({
-      where: whereClause,
-      _count: {
-        transaction_id: true,
-      },
-      _sum: {
-        total_cost: true,
-      },
-    });
+    const totalTransactions = rows.length;
+    const totalRevenue = rows.reduce((sum, r) => sum + Number(r.total_cost || 0), 0);
 
-    // Get paid transactions count and revenue
-    const paidAggregations = await prisma.transactions.aggregate({
-      where: {
-        ...whereClause,
-        is_paid: true,
-      },
-      _count: {
-        transaction_id: true,
-      },
-      _sum: {
-        total_cost: true,
-      },
-    });
+    const paidRows = rows.filter((r) => r.is_paid);
+    const paidTransactionsCount = paidRows.length;
+    const paidRevenue = paidRows.reduce((sum, r) => sum + Number(r.total_cost || 0), 0);
 
-    // Get completed transactions count
-    const completedCount = await prisma.transactions.count({
-      where: {
-        ...whereClause,
-        is_completed: true,
-      },
-    });
-
-    // Get pending transactions count
-    const pendingCount = await prisma.transactions.count({
-      where: {
-        ...whereClause,
-        is_completed: false,
-      },
-    });
-
-    const totalTransactions = aggregations._count.transaction_id || 0;
-    const totalRevenue = Number(aggregations._sum.total_cost) || 0;
-    const paidTransactionsCount = paidAggregations._count.transaction_id || 0;
-    const paidRevenue = Number(paidAggregations._sum.total_cost) || 0;
+    const completedCount = rows.filter((r) => r.is_completed).length;
+    const pendingCount = rows.filter((r) => !r.is_completed).length;
 
     return {
       total_transactions: totalTransactions,
@@ -298,110 +305,101 @@ class DataExportService {
 
   // Get repair history with transaction timing data
   async getRepairHistory(filters: ExportFilters = {}): Promise<any[]> {
-    // Build transaction filters
-    const transactionFilters: any = {
-      date_created: {
-        ...(filters.startDate && { gte: new Date(filters.startDate) }),
-        ...(filters.endDate && { lte: new Date(filters.endDate) }),
-      },
-      ...(filters.transactionType && { transaction_type: filters.transactionType }),
-      ...(filters.isCompleted !== undefined && { is_completed: filters.isCompleted }),
-      ...(filters.isPaid !== undefined && { is_paid: filters.isPaid }),
-      ...(filters.includeRefurb === false && { is_refurb: false }),
-      ...(filters.includeEmployee === false && { is_employee: false }),
-    };
+    const txConditions = buildTransactionConditions(filters);
 
-    // Remove empty date_created object if no date filters
-    if (!filters.startDate && !filters.endDate) {
-      transactionFilters.date_created = undefined;
-    }
+    const rows = await db
+      .select({
+        d: transactionDetailsTable,
+        r: repairsTable,
+        t: transactionsTable,
+        c_first: customersTable.first_name,
+        c_last: customersTable.last_name,
+        c_email: customersTable.email,
+        b_make: bikesTable.make,
+        b_model: bikesTable.model,
+        b_name: bikesTable.model, // model serves as name proxy if needed
+      })
+      .from(transactionDetailsTable)
+      .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+      .innerJoin(transactionsTable, eq(transactionDetailsTable.transaction_id, transactionsTable.transaction_id))
+      .leftJoin(customersTable, eq(transactionsTable.customer_id, customersTable.customer_id))
+      .leftJoin(bikesTable, eq(transactionsTable.bike_id, bikesTable.bike_id))
+      .where(and(isNotNull(transactionDetailsTable.repair_id), ...(txConditions.length ? txConditions : [])))
+      .orderBy(desc(transactionsTable.date_created));
 
-    // Get all transaction details that involve repairs with full transaction context
-    const repairHistory = await prisma.transactionDetails.findMany({
-      where: {
-        repair_id: {
-          not: null, // Only get transaction details that have repairs
-        },
-        Transactions: transactionFilters,
-      },
-      include: {
-        Repair: true,
-        Transactions: {
-          include: {
-            Customer: true,
-            Bike: true,
-          },
-        },
-      },
-      orderBy: {
-        Transactions: {
-          date_created: "desc",
-        },
-      },
+    return rows.map((row) => {
+      const d = row.d;
+      const t = row.t;
+
+      const dateCreated = t.date_created as Date;
+      const dateModified = d.date_modified as Date;
+
+      const daysToComplete =
+        d.completed && dateModified && dateCreated
+          ? Math.ceil((dateModified.getTime() - dateCreated.getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+      return {
+        id: d.transaction_detail_id,
+        transaction_id: d.transaction_id,
+        repair_id: d.repair_id,
+        repair_name: row.r?.name,
+        repair_description: row.r?.description || null,
+        repair_cost: Number(row.r?.price || 0),
+        quantity: d.quantity,
+        total_cost: Number(row.r?.price || 0) * Number(d.quantity || 0),
+        transaction_date_created: dateCreated.toISOString().split("T")[0],
+        transaction_date_completed: t.date_completed ? (t.date_completed as Date).toISOString().split("T")[0] : null,
+        repair_date_modified: dateModified ? dateModified.toISOString().split("T")[0] : null,
+        days_to_complete: daysToComplete,
+        transaction_status: t.is_completed ? "Transaction Completed" : "Transaction In Progress",
+        repair_status: d.completed ? "Repair Completed" : "Repair In Progress",
+        customer_name: `${row.c_first ?? ""} ${row.c_last ?? ""}`.trim(),
+        customer_email: row.c_email ?? "",
+        bike_name: row.b_name || null,
+        bike_model: row.b_model || null,
+        bike_brand: row.b_make || null,
+      };
     });
-
-    // Transform the data to provide repair history with timing information
-    return repairHistory.map((detail: any) => ({
-      id: detail.transaction_detail_id,
-      transaction_id: detail.transaction_id,
-      repair_id: detail.repair_id,
-      repair_name: detail.Repair.name,
-      repair_description: detail.Repair.description || null,
-      repair_cost: Number(detail.Repair.price),
-      quantity: detail.quantity,
-      total_cost: Number(detail.Repair.price) * detail.quantity,
-      transaction_date_created: detail.Transactions.date_created.toISOString().split("T")[0],
-      transaction_date_completed: detail.Transactions.date_completed?.toISOString().split("T")[0] || null,
-      repair_date_modified: detail.date_modified.toISOString().split("T")[0],
-      days_to_complete:
-        detail.completed && detail.date_modified
-          ? Math.ceil((detail.date_modified - detail.Transactions.date_created) / (1000 * 60 * 60 * 24))
-          : null,
-      transaction_status: detail.Transactions.is_completed ? "Transaction Completed" : "Transaction In Progress",
-      repair_status: detail.completed ? "Repair Completed" : "Repair In Progress",
-      customer_name: `${detail.Transactions.Customer.first_name} ${detail.Transactions.Customer.last_name}`,
-      customer_email: detail.Transactions.Customer.email,
-      bike_name: detail.Transactions.Bike?.name || null,
-      bike_model: detail.Transactions.Bike?.model || null,
-      bike_brand: detail.Transactions.Bike?.make || null,
-    }));
   }
 
   // Get bike inventory with availability status
   async getBikeInventory(): Promise<BikeInventory[]> {
-    const bikes = await prisma.bikes.findMany({
-      include: {
-        _count: {
-          select: {
-            Transactions: {
-              where: {
-                is_completed: false,
-              },
-            },
-          },
-        },
-        ReservationCustomer: true,
-      },
-      orderBy: { date_created: "desc" },
-    });
+    // Correlated subquery for active transactions count per bike
+    const activeTxSubquery = (bikeId: any) =>
+      sql<number>`(select count(*) from "Transactions" t where t."bike_id" = ${bikeId} and t."is_completed" = false)`;
 
-    return bikes.map((bike: any) => ({
-      bike_id: bike.bike_id,
-      make: bike.make || "",
-      model: bike.model || "",
-      bike_type: bike.bike_type || "",
-      size_cm: bike.size_cm?.toString() || "",
-      condition: bike.condition || "",
-      price: bike.price?.toString() || "0",
-      is_available: bike.is_available ? "Yes" : "No",
-      weight_kg: bike.weight_kg?.toString() || "",
-      reserved_by: bike.ReservationCustomer
-        ? `${bike.ReservationCustomer.first_name} ${bike.ReservationCustomer.last_name}`
-        : "",
-      deposit_amount: bike.deposit_amount?.toString() || "0",
-      active_transactions: bike._count.Transactions,
-      date_created: bike.date_created.toISOString().split("T")[0],
-    }));
+    const rows = await db
+      .select({
+        bike: bikesTable,
+        rc_first: customersTable.first_name,
+        rc_last: customersTable.last_name,
+        active_transactions: activeTxSubquery(bikesTable.bike_id),
+      })
+      .from(bikesTable)
+      .leftJoin(customersTable, eq(bikesTable.reservation_customer_id, customersTable.customer_id))
+      .orderBy(desc(bikesTable.date_created));
+
+    return rows.map((row) => {
+      const b = row.bike;
+      const reservedBy = row.rc_first && row.rc_last ? `${row.rc_first} ${row.rc_last}` : "";
+
+      return {
+        bike_id: b.bike_id!,
+        make: b.make || "",
+        model: b.model || "",
+        bike_type: b.bike_type || "",
+        size_cm: b.size_cm !== null && b.size_cm !== undefined ? String(b.size_cm) : "",
+        condition: b.condition || "",
+        price: b.price !== null && b.price !== undefined ? String(b.price) : "0",
+        is_available: b.is_available ? "Yes" : "No",
+        weight_kg: b.weight_kg !== null && b.weight_kg !== undefined ? String(b.weight_kg) : "",
+        reserved_by: reservedBy,
+        deposit_amount: b.deposit_amount !== null && b.deposit_amount !== undefined ? String(b.deposit_amount) : "0",
+        active_transactions: Number(row.active_transactions || 0),
+        date_created: (b.date_created as Date).toISOString().split("T")[0],
+      };
+    });
   }
 
   // Generate comprehensive Excel report
@@ -413,9 +411,10 @@ class DataExportService {
     ]);
 
     // Create workbook
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
 
     // Financial Summary Sheet
+    const financialSheet = workbook.addWorksheet("Financial Summary");
     const financialSummaryData = [
       ["Metric", "Value"],
       ["Total Transactions", financialSummary.total_transactions],
@@ -428,50 +427,74 @@ class DataExportService {
       ["Payment Rate", financialSummary.payment_rate],
       ["Average Transaction Value", financialSummary.average_transaction_value],
     ];
-    const financialSheet = XLSX.utils.aoa_to_sheet(financialSummaryData);
-    XLSX.utils.book_append_sheet(workbook, financialSheet, "Financial Summary");
+    financialSheet.addRows(financialSummaryData);
 
     // Repair Metrics Sheet
     if (repairMetrics.length > 0) {
-      const repairSheet = XLSX.utils.json_to_sheet(
+      const repairSheet = workbook.addWorksheet("Repair Metrics");
+      repairSheet.columns = [
+        { header: "Repair Name", key: "repair_name" },
+        { header: "Total Quantity", key: "total_quantity" },
+        { header: "Total Revenue", key: "total_revenue" },
+        { header: "Average Price", key: "average_price" },
+        { header: "Transaction Count", key: "transaction_count" },
+        { header: "Completion Rate", key: "completion_rate" },
+      ];
+      repairSheet.addRows(
         repairMetrics.map((metric) => ({
-          "Repair Name": metric.repair_name,
-          "Total Quantity": metric.total_quantity,
-          "Total Revenue": `$${metric.total_revenue.toFixed(2)}`,
-          "Average Price": `$${metric.average_price.toFixed(2)}`,
-          "Transaction Count": metric.transaction_count,
-          "Completion Rate": `${metric.completion_rate.toFixed(1)}%`,
+          repair_name: metric.repair_name,
+          total_quantity: metric.total_quantity,
+          total_revenue: `$${metric.total_revenue.toFixed(2)}`,
+          average_price: `$${metric.average_price.toFixed(2)}`,
+          transaction_count: metric.transaction_count,
+          completion_rate: `${metric.completion_rate.toFixed(1)}%`,
         })),
       );
-      XLSX.utils.book_append_sheet(workbook, repairSheet, "Repair Metrics");
     }
 
     // Transaction Details Sheet
     if (transactionSummary.length > 0) {
-      const transactionSheet = XLSX.utils.json_to_sheet(
+      const transactionSheet = workbook.addWorksheet("Transaction Details");
+      transactionSheet.columns = [
+        { header: "Transaction #", key: "transaction_num" },
+        { header: "Date Created", key: "date_created" },
+        { header: "Type", key: "transaction_type" },
+        { header: "Customer", key: "customer_name" },
+        { header: "Email", key: "customer_email" },
+        { header: "Total Cost", key: "total_cost" },
+        { header: "Completed", key: "is_completed" },
+        { header: "Paid", key: "is_paid" },
+        { header: "Refurb", key: "is_refurb" },
+        { header: "Employee", key: "is_employee" },
+        { header: "Date Completed", key: "date_completed" },
+        { header: "Bike Make", key: "bike_make" },
+        { header: "Bike Model", key: "bike_model" },
+        { header: "Repairs", key: "repair_items" },
+        { header: "Parts", key: "parts_items" },
+      ];
+      transactionSheet.addRows(
         transactionSummary.map((transaction) => ({
-          "Transaction #": transaction.transaction_num,
-          "Date Created": transaction.date_created,
-          Type: transaction.transaction_type,
-          Customer: transaction.customer_name,
-          Email: transaction.customer_email,
-          "Total Cost": `$${transaction.total_cost.toFixed(2)}`,
-          Completed: transaction.is_completed ? "Yes" : "No",
-          Paid: transaction.is_paid ? "Yes" : "No",
-          Refurb: transaction.is_refurb ? "Yes" : "No",
-          Employee: transaction.is_employee ? "Yes" : "No",
-          "Date Completed": transaction.date_completed || "",
-          "Bike Make": transaction.bike_make || "",
-          "Bike Model": transaction.bike_model || "",
-          Repairs: transaction.repair_items,
-          Parts: transaction.parts_items,
+          transaction_num: transaction.transaction_num,
+          date_created: transaction.date_created,
+          transaction_type: transaction.transaction_type,
+          customer_name: transaction.customer_name,
+          customer_email: transaction.customer_email,
+          total_cost: `$${transaction.total_cost.toFixed(2)}`,
+          is_completed: transaction.is_completed ? "Yes" : "No",
+          is_paid: transaction.is_paid ? "Yes" : "No",
+          is_refurb: transaction.is_refurb ? "Yes" : "No",
+          is_employee: transaction.is_employee ? "Yes" : "No",
+          date_completed: transaction.date_completed || "",
+          bike_make: transaction.bike_make || "",
+          bike_model: transaction.bike_model || "",
+          repair_items: transaction.repair_items,
+          parts_items: transaction.parts_items,
         })),
       );
-      XLSX.utils.book_append_sheet(workbook, transactionSheet, "Transaction Details");
     }
 
     // Convert to buffer
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
     return buffer;
   }
 
@@ -479,34 +502,53 @@ class DataExportService {
   async generateRepairHistoryExcel(filters: ExportFilters = {}): Promise<Buffer> {
     const repairHistory = await this.getRepairHistory(filters);
 
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
 
     if (repairHistory.length > 0) {
-      const repairHistorySheet = XLSX.utils.json_to_sheet(
+      const repairHistorySheet = workbook.addWorksheet("Repair History");
+      repairHistorySheet.columns = [
+        { header: "Detail ID", key: "id" },
+        { header: "Transaction ID", key: "transaction_id" },
+        { header: "Repair Name", key: "repair_name" },
+        { header: "Repair Description", key: "repair_description" },
+        { header: "Customer Name", key: "customer_name" },
+        { header: "Customer Email", key: "customer_email" },
+        { header: "Bike Brand", key: "bike_brand" },
+        { header: "Bike Model", key: "bike_model" },
+        { header: "Repair Cost", key: "repair_cost" },
+        { header: "Quantity", key: "quantity" },
+        { header: "Total Cost", key: "total_cost" },
+        { header: "Transaction Created", key: "transaction_date_created" },
+        { header: "Transaction Completed", key: "transaction_date_completed" },
+        { header: "Repair Modified", key: "repair_date_modified" },
+        { header: "Days to Complete", key: "days_to_complete" },
+        { header: "Transaction Status", key: "transaction_status" },
+        { header: "Repair Status", key: "repair_status" },
+      ];
+      repairHistorySheet.addRows(
         repairHistory.map((repair) => ({
-          "Detail ID": repair.id,
-          "Transaction ID": repair.transaction_id,
-          "Repair Name": repair.repair_name,
-          "Repair Description": repair.repair_description || "",
-          "Customer Name": repair.customer_name,
-          "Customer Email": repair.customer_email,
-          "Bike Brand": repair.bike_brand || "",
-          "Bike Model": repair.bike_model || "",
-          "Repair Cost": `$${repair.repair_cost.toFixed(2)}`,
-          Quantity: repair.quantity,
-          "Total Cost": `$${repair.total_cost.toFixed(2)}`,
-          "Transaction Created": repair.transaction_date_created,
-          "Transaction Completed": repair.transaction_date_completed || "Not Completed",
-          "Repair Modified": repair.repair_date_modified,
-          "Days to Complete": repair.days_to_complete || "Pending",
-          "Transaction Status": repair.transaction_status,
-          "Repair Status": repair.repair_status,
+          id: repair.id,
+          transaction_id: repair.transaction_id,
+          repair_name: repair.repair_name,
+          repair_description: repair.repair_description || "",
+          customer_name: repair.customer_name,
+          customer_email: repair.customer_email,
+          bike_brand: repair.bike_brand || "",
+          bike_model: repair.bike_model || "",
+          repair_cost: `$${repair.repair_cost.toFixed(2)}`,
+          quantity: repair.quantity,
+          total_cost: `$${repair.total_cost.toFixed(2)}`,
+          transaction_date_created: repair.transaction_date_created,
+          transaction_date_completed: repair.transaction_date_completed || "Not Completed",
+          repair_date_modified: repair.repair_date_modified,
+          days_to_complete: repair.days_to_complete || "Pending",
+          transaction_status: repair.transaction_status,
+          repair_status: repair.repair_status,
         })),
       );
-      XLSX.utils.book_append_sheet(workbook, repairHistorySheet, "Repair History");
     }
 
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
     return buffer;
   }
 
@@ -514,30 +556,45 @@ class DataExportService {
   async generateBikeInventoryExcel(): Promise<Buffer> {
     const inventory = await this.getBikeInventory();
 
-    const workbook = XLSX.utils.book_new();
+    const workbook = new ExcelJS.Workbook();
 
     if (inventory.length > 0) {
-      const inventorySheet = XLSX.utils.json_to_sheet(
+      const inventorySheet = workbook.addWorksheet("Bike Inventory");
+      inventorySheet.columns = [
+        { header: "Bike ID", key: "bike_id" },
+        { header: "Make", key: "make" },
+        { header: "Model", key: "model" },
+        { header: "Type", key: "bike_type" },
+        { header: "Size (cm)", key: "size_cm" },
+        { header: "Condition", key: "condition" },
+        { header: "Price", key: "price" },
+        { header: "Available", key: "is_available" },
+        { header: "Weight (kg)", key: "weight_kg" },
+        { header: "Reserved By", key: "reserved_by" },
+        { header: "Deposit", key: "deposit_amount" },
+        { header: "Active Transactions", key: "active_transactions" },
+        { header: "Date Created", key: "date_created" },
+      ];
+      inventorySheet.addRows(
         inventory.map((bike) => ({
-          "Bike ID": bike.bike_id,
-          Make: bike.make,
-          Model: bike.model,
-          Type: bike.bike_type,
-          "Size (cm)": bike.size_cm,
-          Condition: bike.condition,
-          Price: `$${Number.parseFloat(bike.price).toFixed(2)}`,
-          Available: bike.is_available,
-          "Weight (kg)": bike.weight_kg,
-          "Reserved By": bike.reserved_by,
-          Deposit: `$${Number.parseFloat(bike.deposit_amount).toFixed(2)}`,
-          "Active Transactions": bike.active_transactions,
-          "Date Created": bike.date_created,
+          bike_id: bike.bike_id,
+          make: bike.make,
+          model: bike.model,
+          bike_type: bike.bike_type,
+          size_cm: bike.size_cm,
+          condition: bike.condition,
+          price: `$${Number.parseFloat(bike.price).toFixed(2)}`,
+          is_available: bike.is_available,
+          weight_kg: bike.weight_kg,
+          reserved_by: bike.reserved_by,
+          deposit_amount: `$${Number.parseFloat(bike.deposit_amount).toFixed(2)}`,
+          active_transactions: bike.active_transactions,
+          date_created: bike.date_created,
         })),
       );
-      XLSX.utils.book_append_sheet(workbook, inventorySheet, "Bike Inventory");
     }
 
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
     return buffer;
   }
 }

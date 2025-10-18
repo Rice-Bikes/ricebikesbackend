@@ -3,7 +3,7 @@ import type { Request, RequestHandler, Response } from "express";
 import type { CreateBikeInput, UpdateBikeInput } from "@/api/bikes/bikesModel";
 import { bikesService } from "@/api/bikes/bikesService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 class BikeController {
   public getBikes: RequestHandler = async (req: Request, res: Response) => {
     // Extract query filters
@@ -58,11 +58,14 @@ class BikeController {
       bike_type: req.body.bike_type || null,
       size_cm: req.body.size_cm || null,
       condition: req.body.condition || "Used",
-      price: req.body.price || null,
+      price: req.body.price !== undefined && req.body.price !== null ? Number(req.body.price) : null,
       is_available: req.body.is_available ?? true,
       weight_kg: req.body.weight_kg || null,
       reservation_customer_id: req.body.reservation_customer_id || null,
-      deposit_amount: req.body.deposit_amount || null,
+      deposit_amount:
+        req.body.deposit_amount !== undefined && req.body.deposit_amount !== null
+          ? Number(req.body.deposit_amount)
+          : null,
     };
 
     const serviceResponse = await bikesService.createBike(bikeData);
@@ -80,12 +83,13 @@ class BikeController {
     if (req.body.bike_type !== undefined) updateData.bike_type = req.body.bike_type;
     if (req.body.size_cm !== undefined) updateData.size_cm = req.body.size_cm;
     if (req.body.condition !== undefined) updateData.condition = req.body.condition;
-    if (req.body.price !== undefined) updateData.price = req.body.price;
+    if (req.body.price !== undefined) updateData.price = req.body.price !== null ? Number(req.body.price) : null;
     if (req.body.is_available !== undefined) updateData.is_available = req.body.is_available;
     if (req.body.weight_kg !== undefined) updateData.weight_kg = req.body.weight_kg;
     if (req.body.reservation_customer_id !== undefined)
       updateData.reservation_customer_id = req.body.reservation_customer_id;
-    if (req.body.deposit_amount !== undefined) updateData.deposit_amount = req.body.deposit_amount;
+    if (req.body.deposit_amount !== undefined)
+      updateData.deposit_amount = req.body.deposit_amount !== null ? Number(req.body.deposit_amount) : null;
     logger.info("Update Data: ", updateData);
     const serviceResponse = await bikesService.updateBike(bike_id, updateData);
     return handleServiceResponse(serviceResponse, res);
@@ -109,7 +113,11 @@ class BikeController {
       });
     }
 
-    const serviceResponse = await bikesService.reserveBike(bike_id, customer_id, deposit_amount);
+    const serviceResponse = await bikesService.reserveBike(
+      bike_id,
+      customer_id,
+      deposit_amount ? Number(deposit_amount) : undefined,
+    );
     return handleServiceResponse(serviceResponse, res);
   };
 

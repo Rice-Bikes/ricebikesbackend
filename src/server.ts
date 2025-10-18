@@ -1,7 +1,7 @@
+import { logger, serverLogger } from "@/common/utils/logger";
 import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
-import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
 import errorHandler from "@/common/middleware/errorHandler";
@@ -25,8 +25,11 @@ import { transactionDetailsRouter } from "./api/transactionComponents/transactio
 import { transactionLogsRouter } from "./api/transactionComponents/transactionLogs/transactionLogsRouter";
 import { transactionRouter } from "./api/transactionComponents/transactions/transactionRouter";
 import { workflowStepsRouter } from "./api/workflowSteps/workflowStepsRouter";
-const logger = pino({ name: "server start", level: "debug" });
+// Initialize the Express application
 const app: Express = express();
+
+// Log application initialization
+serverLogger.info("Initializing Express application");
 
 // Set the application to trust the reverse proxy
 app.set("trust proxy", true);
@@ -42,6 +45,7 @@ app.use(helmet());
 app.use(requestLogger);
 
 // Routes
+serverLogger.debug("Setting up API routes");
 app.use("/health-check", healthCheckRouter);
 app.use("/transactions", transactionRouter);
 app.use("/transactionDetails", transactionDetailsRouter);
@@ -65,6 +69,8 @@ app.use("/data-export", dataExportRouter);
 app.use(openAPIRouter);
 
 // Error handlers
+serverLogger.debug("Setting up error handlers");
 app.use(errorHandler());
 
-export { app, logger };
+serverLogger.info("Express application fully configured");
+export { app };

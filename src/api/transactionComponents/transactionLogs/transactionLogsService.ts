@@ -1,14 +1,14 @@
 import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { TransactionLog } from "./transactionLogsModel";
-import { TransactionLogsRepository } from "./transactionLogsRepository";
+import { TransactionLogsRepositoryDrizzle } from "./transactionLogsRepositoryDrizzle";
 
 export class TransactionLogService {
-  private TransactionLogsRepository: TransactionLogsRepository;
+  private TransactionLogsRepository: TransactionLogsRepositoryDrizzle;
 
-  constructor(repository: TransactionLogsRepository = new TransactionLogsRepository()) {
+  constructor(repository: TransactionLogsRepositoryDrizzle = new TransactionLogsRepositoryDrizzle()) {
     this.TransactionLogsRepository = repository;
   }
 

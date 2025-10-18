@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 
 import { CustomersService, customersService } from "@/api/customer/customerService";
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import notificationTriggerService from "@/services/notificationTriggerService";
 import { getTransactionWithDetails } from "@/services/transactionHelpers";
 import type {
@@ -11,19 +11,54 @@ import type {
   TransactionsSummary,
   UpdateTransaction,
 } from "../transactions/transactionModel";
-import { TransactionRepository } from "../transactions/transactionRepository";
+import type { TransactionRepository } from "../transactions/transactionRepository";
+import type { TransactionRepositoryDrizzle } from "../transactions/transactionRepositoryDrizzle";
+import {
+  createTransactionRepository,
+  createTransactionRepositorySync,
+} from "../transactions/transactionRepositoryFactory";
 
 export class TransactionsService {
-  private TransactionRepository: TransactionRepository;
+  private TransactionRepository: TransactionRepository | TransactionRepositoryDrizzle;
+  private repositoryInitialized = false;
 
-  constructor(repository: TransactionRepository = new TransactionRepository()) {
-    this.TransactionRepository = repository;
+  constructor(repository?: TransactionRepository | TransactionRepositoryDrizzle) {
+    // If repository is provided, use it directly
+    if (repository) {
+      this.TransactionRepository = repository;
+      this.repositoryInitialized = true;
+    } else {
+      // Otherwise use the sync version to have something immediately available
+      this.TransactionRepository = createTransactionRepositorySync();
+
+      // But also initialize the proper repository asynchronously
+      this.initializeRepository();
+    }
+  }
+
+  private async initializeRepository(): Promise<void> {
+    try {
+      this.TransactionRepository = await createTransactionRepository();
+      this.repositoryInitialized = true;
+      logger.debug("Transaction repository initialized successfully");
+    } catch (error) {
+      logger.error(`Failed to initialize transaction repository: ${error}`);
+      // We already have the sync version, so we can continue
+    }
+  }
+
+  // Helper method to ensure repository is initialized
+  private async ensureRepository(): Promise<void> {
+    if (!this.repositoryInitialized) {
+      await this.initializeRepository();
+    }
   }
 
   // Retrieves all Transactions from the database
 
   async findAll(after_id: number, page_limit: number): Promise<ServiceResponse<Transaction[] | null>> {
     try {
+      await this.ensureRepository();
       const transactions = await this.TransactionRepository.findAll(after_id, page_limit);
       if (!transactions || transactions.length === 0) {
         return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
@@ -42,6 +77,7 @@ export class TransactionsService {
 
   async findAllAgg(after_id: number, page_limit: number): Promise<ServiceResponse<AggTransaction[] | null>> {
     try {
+      await this.ensureRepository();
       const transactions = await this.TransactionRepository.findAllAggregate(after_id, page_limit);
       if (!transactions || transactions.length === 0) {
         return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
@@ -61,6 +97,7 @@ export class TransactionsService {
   // Retrieves a single Transaction by their ID
   async findById(id: string): Promise<ServiceResponse<Transaction | null>> {
     try {
+      await this.ensureRepository();
       const transaction = await this.TransactionRepository.findByIdAggregate(id);
       if (!transaction) {
         return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
@@ -80,6 +117,7 @@ export class TransactionsService {
   // Creates a Transaction
   async createTransaction(transaction: Transaction): Promise<ServiceResponse<Transaction | null>> {
     try {
+      await this.ensureRepository();
       const newTransaction = await this.TransactionRepository.createTransaction(transaction);
       if (!newTransaction) {
         return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
@@ -99,6 +137,7 @@ export class TransactionsService {
   // Creates a Transaction
   async deleteTransactionByID(transaction_id: string): Promise<ServiceResponse<Transaction | null>> {
     try {
+      await this.ensureRepository();
       const deletedTransaction = await this.TransactionRepository.deleteById(transaction_id);
       if (!deletedTransaction) {
         return ServiceResponse.failure("Transaction not deleted", null, StatusCodes.NOT_FOUND);
@@ -121,6 +160,7 @@ export class TransactionsService {
     transaction: UpdateTransaction,
   ): Promise<ServiceResponse<Transaction | null>> {
     try {
+      await this.ensureRepository();
       // Get the old transaction state before updating
       const oldTransaction = await this.TransactionRepository.findByIdAggregate(transaction_id);
 
@@ -167,6 +207,7 @@ export class TransactionsService {
 
   async getTransactionsSummary(): Promise<ServiceResponse<TransactionsSummary | null>> {
     try {
+      await this.ensureRepository();
       const transactionSummary = await this.TransactionRepository.getTransactionsSummary();
       if (!transactionSummary) {
         return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);

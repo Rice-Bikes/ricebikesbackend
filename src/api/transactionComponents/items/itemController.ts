@@ -1,7 +1,7 @@
 import type { Request, RequestHandler, Response } from "express";
 
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { Item } from "./itemModel";
 import { itemsService } from "./itemService";
 
@@ -113,7 +113,7 @@ class ItemController {
       specifications: body.specifications, // Assuming JSON can be any valid JSON
       features: body.features, // Assuming JSON can be any valid JSON
     } as Item;
-    const serviceResponse = await itemsService.updateItem(item);
+    const serviceResponse = await itemsService.updateItem(id, item);
     return handleServiceResponse(serviceResponse, res);
   };
 }

@@ -1,14 +1,14 @@
 import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { Item } from "./itemModel";
-import { ItemsRepository } from "./itemRepository";
+import { ItemRepositoryDrizzle } from "./itemRepositoryDrizzle";
 
 export class ItemsService {
-  private ItemsRepository: ItemsRepository;
+  private ItemsRepository: ItemRepositoryDrizzle;
 
-  constructor(repository: ItemsRepository = new ItemsRepository()) {
+  constructor(repository: ItemRepositoryDrizzle = new ItemRepositoryDrizzle()) {
     this.ItemsRepository = repository;
   }
 
@@ -105,7 +105,7 @@ export class ItemsService {
       const categories = items
         .map((result: { [key: string]: any }) => result[`category_${category}`])
         .filter((category): category is string => category !== null && category !== undefined);
-      logger.info("categories [FINAL]", categories);
+      logger.info(`categories [FINAL]${categories}`);
       return ServiceResponse.success<string[]>("categories found", categories);
     } catch (ex) {
       const errorMessage = `Error finding categories: $${(ex as Error).message}`;
@@ -117,9 +117,9 @@ export class ItemsService {
       );
     }
   }
-  async updateItem(item: Item): Promise<ServiceResponse<Item | null>> {
+  async updateItem(item_id: string, item: Item): Promise<ServiceResponse<Item | null>> {
     try {
-      const updatedItem = await this.ItemsRepository.update(item);
+      const updatedItem = await this.ItemsRepository.update(item.item_id, item);
       if (!updatedItem) {
         return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
       }

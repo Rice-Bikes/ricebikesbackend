@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 COPY package*.json /usr/src/app
 
 # Install app dependencies
-COPY prisma ./prisma/
+COPY drizzle ./drizzle/
 RUN npm i
 RUN npm i multer
 
@@ -28,7 +28,7 @@ ENV NODE_ENV=production
 
 # Build the TypeScript files
 RUN npm run build
-RUN npx prisma generate
+RUN npm run db:generate
 
 # Expose port
 EXPOSE 7130

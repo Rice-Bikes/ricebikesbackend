@@ -1,3 +1,4 @@
+import { customersService } from "@/api/customer/customerService";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import notificationTriggerService from "@/services/notificationTriggerService";
 import { getTransactionWithDetails } from "@/services/transactionHelpers";
@@ -126,7 +127,10 @@ export class WorkflowStepsService {
     workflowType: WorkflowType,
   ): Promise<ServiceResponse<WorkflowStep[] | null>> {
     try {
-      const query: WorkflowStepsQuery = { transaction_id: transactionId, workflow_type: workflowType };
+      const query: WorkflowStepsQuery = {
+        transaction_id: transactionId,
+        workflow_type: workflowType,
+      };
       const steps = await workflowStepsRepository.findWorkflowSteps(query);
 
       if (!steps || steps.length === 0) {
@@ -361,6 +365,30 @@ export class WorkflowStepsService {
             },
             transactionData,
           );
+
+          // Send email when specific steps are completed
+          const stepName = (updatedStep.step_name || "").toLowerCase();
+          if (updatedStep.workflow_type === "bike_sales" && stepName.includes("checkout")) {
+            // No email on checkout; physical copy provided
+          } else if (stepName.includes("inspection")) {
+            const cust = transactionData.customer;
+            if (cust) {
+              const emailCustomer = {
+                customer_id: "",
+                first_name: cust.first_name,
+                last_name: cust.last_name,
+                email: cust.email,
+                phone: null,
+              } as any;
+
+              await customersService.sendNewBikeEmail(
+                emailCustomer,
+                transactionData.transaction.transaction_num,
+                transactionData.bike?.make ?? undefined,
+                transactionData.bike?.model ?? undefined,
+              );
+            }
+          }
         }
       } catch (notificationError) {
         // Log the error but don't fail the main operation
@@ -423,7 +451,10 @@ export class WorkflowStepsService {
       }
 
       // Get all steps for this transaction and workflow type
-      const query: WorkflowStepsQuery = { transaction_id: transactionId, workflow_type: workflowType };
+      const query: WorkflowStepsQuery = {
+        transaction_id: transactionId,
+        workflow_type: workflowType,
+      };
       const existingSteps = await workflowStepsRepository.findWorkflowSteps(query);
 
       if (!existingSteps || existingSteps.length === 0) {

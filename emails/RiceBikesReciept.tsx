@@ -61,7 +61,7 @@ export const RiceBikesReciept = ({ username, transaction_num, items = [], repair
                   <Section>
                     {items.map((itm, i) => (
                       <Text key={i} className="text-black text-[14px] leading-[20px] mb-2">
-                        • {itm.name.trim() + " - $" + itm.standard_price.toFixed(2)}
+                        • {`${itm.name.trim()} - $${itm.standard_price.toFixed(2)}`}
                       </Text>
                     ))}
                   </Section>
@@ -76,7 +76,7 @@ export const RiceBikesReciept = ({ username, transaction_num, items = [], repair
                   <Section>
                     {repairs.map((repair, index) => (
                       <Text key={index} className="text-black text-[14px] leading-[20px] mb-2">
-                        • {repair.name.trim() + " - $" + repair.price.toFixed(2)}
+                        • {`${repair.name.trim()} - $${repair.price.toFixed(2)}`}
                       </Text>
                     ))}
                   </Section>
@@ -85,8 +85,8 @@ export const RiceBikesReciept = ({ username, transaction_num, items = [], repair
                 )}
               </Section>
             </Section>
-            <Text className="text-black text-[14px] leading-[20px] mt-4">Sales Tax: {"$" + salesTax.toFixed(2)}</Text>
-            <Text className="text-black text-[14px] leading-[20px] mt-4">Total: {"$" + total.toFixed(2)}</Text>
+            <Text className="text-black text-[14px] leading-[20px] mt-4">Sales Tax: {`$${salesTax.toFixed(2)}`}</Text>
+            <Text className="text-black text-[14px] leading-[20px] mt-4">Total: {`$${total.toFixed(2)}`}</Text>
 
             <Text className="text-black text-[14px] leading-[24px] mt-6">
               No appointment is necessary to pick up your bike.

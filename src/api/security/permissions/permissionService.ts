@@ -1,5 +1,5 @@
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import { StatusCodes } from "http-status-codes";
 
 import type { Permission } from "./permissionModel";

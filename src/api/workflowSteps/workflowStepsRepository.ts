@@ -1,220 +1,135 @@
-import { PrismaClient } from "@prisma/client";
+import { and, asc, eq } from "drizzle-orm";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+
+import { db as drizzleDb } from "@/db/client";
+import type * as schema from "@/db/schema";
+import { transactions as transactionsTable } from "@/db/schema/transactions";
+import { workflowSteps as workflowStepsTable } from "@/db/schema/workflowSteps";
 import type { CreateWorkflowStep, UpdateWorkflowStep, WorkflowStepsQuery, WorkflowType } from "./workflowStepsModel";
 
-const prisma = new PrismaClient();
-
 export class WorkflowStepsRepository {
+  private db: PostgresJsDatabase<typeof schema>;
+
+  constructor(db = drizzleDb) {
+    this.db = db;
+  }
+
   /**
    * Get workflow steps with optional filtering
    */
   async findWorkflowSteps(query: WorkflowStepsQuery) {
-    const where: any = {};
+    const conditions = [];
 
     if (query.transaction_id) {
-      where.transaction_id = query.transaction_id;
+      conditions.push(eq(workflowStepsTable.transaction_id, query.transaction_id));
     }
 
     if (query.workflow_type) {
-      where.workflow_type = query.workflow_type;
+      conditions.push(eq(workflowStepsTable.workflow_type, query.workflow_type));
     }
 
     if (query.is_completed !== undefined) {
-      where.is_completed = query.is_completed;
+      conditions.push(eq(workflowStepsTable.is_completed, query.is_completed));
     }
 
     if (query.step_order) {
-      where.step_order = query.step_order;
+      conditions.push(eq(workflowStepsTable.step_order, query.step_order));
     }
 
-    return prisma.workflowSteps.findMany({
-      where,
-      orderBy: [{ step_order: "asc" }, { created_at: "asc" }],
-      include: {
-        CreatedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        CompletedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        Transaction: {
-          select: {
-            transaction_id: true,
-            transaction_num: true,
-            transaction_type: true,
-            Customer: {
-              select: {
-                customer_id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await this.db
+      .select()
+      .from(workflowStepsTable)
+      .where(whereClause as any)
+      .orderBy(asc(workflowStepsTable.step_order), asc(workflowStepsTable.created_at));
+
+    return rows;
   }
 
   /**
    * Get workflow steps by transaction ID and workflow type
    */
   async findByTransactionAndWorkflow(transactionId: string, workflowType: WorkflowType) {
-    return prisma.workflowSteps.findMany({
-      where: {
-        transaction_id: transactionId,
-        workflow_type: workflowType,
-      },
-      orderBy: { step_order: "asc" },
-      include: {
-        CreatedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        CompletedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-      },
-    });
+    const rows = await this.db
+      .select()
+      .from(workflowStepsTable)
+      .where(
+        and(eq(workflowStepsTable.transaction_id, transactionId), eq(workflowStepsTable.workflow_type, workflowType)),
+      )
+      .orderBy(asc(workflowStepsTable.step_order));
+
+    return rows;
   }
 
   /**
    * Get a single workflow step by ID
    */
   async findById(stepId: string) {
-    return prisma.workflowSteps.findUnique({
-      where: { step_id: stepId },
-      include: {
-        CreatedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        CompletedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        Transaction: {
-          select: {
-            transaction_id: true,
-            transaction_num: true,
-            transaction_type: true,
-            Customer: {
-              select: {
-                customer_id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const rows = await this.db.select().from(workflowStepsTable).where(eq(workflowStepsTable.step_id, stepId));
+
+    return rows[0] || null;
   }
 
   /**
    * Create a new workflow step
    */
   async create(stepData: CreateWorkflowStep) {
-    // Ensure created_by is provided since it's required in the database
     if (!stepData.created_by) {
       throw new Error("created_by is required");
     }
 
-    return prisma.workflowSteps.create({
-      data: {
+    const [inserted] = await this.db
+      .insert(workflowStepsTable)
+      .values({
         transaction_id: stepData.transaction_id,
         workflow_type: stepData.workflow_type,
         step_name: stepData.step_name,
         step_order: stepData.step_order,
         created_by: stepData.created_by,
-      },
-      include: {
-        CreatedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        Transaction: {
-          select: {
-            transaction_id: true,
-            transaction_num: true,
-            transaction_type: true,
-            Customer: {
-              select: {
-                customer_id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
-    });
+        // is_completed defaults to false, timestamps default via DB
+      })
+      .returning();
+
+    if (!inserted) {
+      throw new Error("Failed to create workflow step");
+    }
+
+    return inserted;
   }
 
   /**
    * Create multiple workflow steps (for initializing workflows)
    */
   async createMany(stepsData: CreateWorkflowStep[]) {
-    const createdSteps = await prisma.$transaction(
-      stepsData.map((stepData) => {
-        // Ensure created_by is provided since it's required in the database
+    const createdSteps = await this.db.transaction(async (tx) => {
+      const results: Array<typeof workflowStepsTable.$inferSelect> = [];
+
+      for (const stepData of stepsData) {
         if (!stepData.created_by) {
           throw new Error("created_by is required");
         }
 
-        return prisma.workflowSteps.create({
-          data: {
+        const [row] = await tx
+          .insert(workflowStepsTable)
+          .values({
             transaction_id: stepData.transaction_id,
             workflow_type: stepData.workflow_type,
             step_name: stepData.step_name,
             step_order: stepData.step_order,
             created_by: stepData.created_by,
-          },
-          include: {
-            CreatedByUser: {
-              select: {
-                user_id: true,
-                firstname: true,
-                lastname: true,
-                username: true,
-              },
-            },
-          },
-        });
-      }),
-    );
+          })
+          .returning();
+
+        if (!row) {
+          throw new Error("Failed to create workflow step in batch");
+        }
+
+        results.push(row);
+      }
+
+      return results;
+    });
 
     return createdSteps;
   }
@@ -223,106 +138,81 @@ export class WorkflowStepsRepository {
    * Update a workflow step
    */
   async update(stepId: string, updateData: UpdateWorkflowStep) {
-    const updatePayload: any = {
+    const updatePayload: Partial<typeof workflowStepsTable.$inferInsert> = {
       updated_at: new Date(),
     };
 
     if (updateData.is_completed !== undefined) {
       updatePayload.is_completed = updateData.is_completed;
 
-      // If marking as completed, set completion timestamp and user
       if (updateData.is_completed) {
         updatePayload.completed_at = new Date();
         if (updateData.completed_by) {
           updatePayload.completed_by = updateData.completed_by;
         }
       } else {
-        // If unmarking as completed, clear completion data
         updatePayload.completed_at = null;
         updatePayload.completed_by = null;
       }
     }
 
-    return prisma.workflowSteps.update({
-      where: { step_id: stepId },
-      data: updatePayload,
-      include: {
-        CreatedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        CompletedByUser: {
-          select: {
-            user_id: true,
-            firstname: true,
-            lastname: true,
-            username: true,
-          },
-        },
-        Transaction: {
-          select: {
-            transaction_id: true,
-            transaction_num: true,
-            transaction_type: true,
-            Customer: {
-              select: {
-                customer_id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const [updated] = await this.db
+      .update(workflowStepsTable)
+      .set(updatePayload)
+      .where(eq(workflowStepsTable.step_id, stepId))
+      .returning();
+
+    if (!updated) {
+      throw new Error("Workflow step not found");
+    }
+
+    return updated;
   }
 
   /**
    * Delete a workflow step
    */
   async delete(stepId: string) {
-    return prisma.workflowSteps.delete({
-      where: { step_id: stepId },
-    });
+    const [deleted] = await this.db
+      .delete(workflowStepsTable)
+      .where(eq(workflowStepsTable.step_id, stepId))
+      .returning();
+
+    return deleted || null;
   }
 
   /**
    * Check if a transaction exists
    */
   async transactionExists(transactionId: string) {
-    const transaction = await prisma.transactions.findUnique({
-      where: { transaction_id: transactionId },
-      select: { transaction_id: true },
-    });
-    return !!transaction;
+    const result = await this.db
+      .select({ transaction_id: transactionsTable.transaction_id })
+      .from(transactionsTable)
+      .where(eq(transactionsTable.transaction_id, transactionId));
+
+    return result.length > 0;
   }
 
   /**
    * Get workflow progress summary
    */
   async getWorkflowProgress(transactionId: string, workflowType: WorkflowType) {
-    const steps = await prisma.workflowSteps.findMany({
-      where: {
-        transaction_id: transactionId,
-        workflow_type: workflowType,
-      },
-      orderBy: { step_order: "asc" },
-      select: {
-        step_id: true,
-        step_name: true,
-        step_order: true,
-        is_completed: true,
-        completed_at: true,
-      },
-    });
+    const steps = await this.db
+      .select({
+        step_id: workflowStepsTable.step_id,
+        step_name: workflowStepsTable.step_name,
+        step_order: workflowStepsTable.step_order,
+        is_completed: workflowStepsTable.is_completed,
+        completed_at: workflowStepsTable.completed_at,
+      })
+      .from(workflowStepsTable)
+      .where(
+        and(eq(workflowStepsTable.transaction_id, transactionId), eq(workflowStepsTable.workflow_type, workflowType)),
+      )
+      .orderBy(asc(workflowStepsTable.step_order));
 
     const totalSteps = steps.length;
-    const completedSteps = steps.filter((step) => step.is_completed).length;
+    const completedSteps = steps.filter((s) => s.is_completed).length;
     const progressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
     return {
@@ -339,47 +229,28 @@ export class WorkflowStepsRepository {
    * Reset all workflow steps for a transaction (mark all as incomplete)
    */
   async resetWorkflowSteps(transactionId: string, workflowType: WorkflowType) {
-    return prisma.workflowSteps
-      .updateMany({
-        where: {
-          transaction_id: transactionId,
-          workflow_type: workflowType,
-        },
-        data: {
-          is_completed: false,
-          completed_at: null,
-          completed_by: null,
-          updated_at: new Date(),
-        },
+    await this.db
+      .update(workflowStepsTable)
+      .set({
+        is_completed: false,
+        completed_at: null,
+        completed_by: null,
+        updated_at: new Date(),
       })
-      .then(async () => {
-        // Return the updated steps
-        return prisma.workflowSteps.findMany({
-          where: {
-            transaction_id: transactionId,
-            workflow_type: workflowType,
-          },
-          orderBy: { step_order: "asc" },
-          include: {
-            CreatedByUser: {
-              select: {
-                user_id: true,
-                firstname: true,
-                lastname: true,
-                username: true,
-              },
-            },
-            CompletedByUser: {
-              select: {
-                user_id: true,
-                firstname: true,
-                lastname: true,
-                username: true,
-              },
-            },
-          },
-        });
-      });
+      .where(
+        and(eq(workflowStepsTable.transaction_id, transactionId), eq(workflowStepsTable.workflow_type, workflowType)),
+      );
+
+    // Return the updated steps
+    const rows = await this.db
+      .select()
+      .from(workflowStepsTable)
+      .where(
+        and(eq(workflowStepsTable.transaction_id, transactionId), eq(workflowStepsTable.workflow_type, workflowType)),
+      )
+      .orderBy(asc(workflowStepsTable.step_order));
+
+    return rows;
   }
 }
 

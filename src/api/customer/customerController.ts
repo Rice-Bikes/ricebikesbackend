@@ -2,7 +2,7 @@ import type { Request, RequestHandler, Response } from "express";
 
 import { customersService } from "@/api/customer/customerService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { Customer } from "./customerModel";
 
 class CustomerController {

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { middlewareLogger as logger } from "@/common/utils/logger";
 import type { Request, RequestHandler, Response } from "express";
 import { StatusCodes, getReasonPhrase } from "http-status-codes";
 import type { LevelWithSilent } from "pino";
@@ -25,16 +26,18 @@ type PinoCustomProps = {
 };
 
 const requestLogger = (options?: Options): RequestHandler[] => {
+  logger.debug("Initializing request logger middleware");
   const pinoOptions: Options = {
     enabled: env.isProduction,
     customProps: customProps as unknown as Options["customProps"],
-    redact: [],
+    redact: ["request.headers.authorization", "request.headers.cookie"],
     genReqId,
     customLogLevel,
     customSuccessMessage,
     customReceivedMessage: (req) => `request received: ${req.method}`,
     customErrorMessage: (_req, res) => `request errored with status code: ${res.statusCode}`,
     customAttributeKeys,
+    logger: logger,
     ...options,
   };
   return [responseBodyMiddleware, pinoHttp(pinoOptions)];
@@ -59,7 +62,43 @@ const responseBodyMiddleware: RequestHandler = (_req, res, next) => {
   if (isNotProduction) {
     const originalSend = res.send;
     res.send = (content) => {
-      res.locals.responseBody = content;
+      try {
+        // Safely handle different content types
+        if (content) {
+          const contentType = res.get("Content-Type") || "";
+          const isJSON = contentType.includes("application/json");
+          const isText = contentType.includes("text/") || isJSON;
+
+          if (isText) {
+            const strContent = content.toString();
+            const sizeInBytes = Buffer.byteLength(strContent);
+            logger.debug({ responseSize: sizeInBytes, contentType }, "Response body captured");
+
+            // Only store response body in dev mode and if it's not too large
+            if (sizeInBytes < 10000) {
+              // Don't store bodies larger than ~10KB
+              res.locals.responseBody = content;
+            } else {
+              res.locals.responseBody = `[Large response: ${sizeInBytes} bytes]`;
+            }
+          } else {
+            // For binary responses, just log the type and size
+            logger.debug(
+              {
+                contentType,
+                responseSize: Buffer.isBuffer(content) ? content.length : "unknown",
+              },
+              "Binary response body captured",
+            );
+            res.locals.responseBody = "[Binary content]";
+          }
+        }
+      } catch (err) {
+        const error = err as Error;
+        logger.debug({ err: error.message }, "Error capturing response body");
+        res.locals.responseBody = "[Error capturing response]";
+      }
+
       res.send = originalSend;
       return originalSend.call(res, content);
     };
@@ -87,4 +126,5 @@ const genReqId = (req: IncomingMessage, res: ServerResponse<IncomingMessage>) =>
   return id;
 };
 
+logger.info("Request logger middleware configured");
 export default requestLogger();

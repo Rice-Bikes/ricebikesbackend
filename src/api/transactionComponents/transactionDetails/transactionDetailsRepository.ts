@@ -1,4 +1,4 @@
-import { logger } from "@/server";
+import { serviceLogger as logger } from "@/common/utils/logger";
 import { type Items, PrismaClient } from "@prisma/client";
 import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
@@ -90,7 +90,7 @@ export class TransactionDetailsRepository {
   }
 
   async deleteAsync(id: string): Promise<TransactionDetails> {
-    logger.debug("deleting transaction details", id);
+    logger.debug(`deleting transaction details${id}`);
     const detail: TransactionDetails | null = await prisma.transactionDetails.findFirst({
       where: {
         transaction_detail_id: id,

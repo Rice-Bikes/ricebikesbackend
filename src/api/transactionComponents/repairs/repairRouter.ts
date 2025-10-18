@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { repairController } from "./repairController";
-import { CreateRepairSchema, GetRepairSchema, RepairSchema } from "./repairModel";
+import { CreateRepairInput, CreateRepairInputSchema, GetRepairSchema, RepairSchema } from "./repairModel";
 
 export const repairRegistry = new OpenAPIRegistry();
 export const repairRouter: Router = express.Router();
@@ -42,14 +42,14 @@ repairRegistry.registerPath({
     body: {
       description: "Repair object",
       content: {
-        "application/json": { schema: CreateRepairSchema.shape.body },
+        "application/json": { schema: CreateRepairInputSchema },
       },
     },
   },
   responses: createApiResponse(RepairSchema, "Success"),
 });
 
-repairRouter.post("/", [validateRequest(CreateRepairSchema)], repairController.createRepair);
+repairRouter.post("/", [validateRequest(CreateRepairInputSchema)], repairController.createRepair);
 
 repairRouter.patch("/:id", [validateRequest(GetRepairSchema)], repairController.updateRepair);
 repairRouter.delete("/:id", [validateRequest(GetRepairSchema)], repairController.deleteRepair);
