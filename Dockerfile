@@ -27,10 +27,10 @@ ENV NODE_ENV=production
 
 # Build the TypeScript files
 RUN npm run build
-RUN npm run db:generate
+
 
 # Expose port
 EXPOSE 7130
 
 # Start the app
-CMD npm run start
+CMD ["npm", "run", "start"]
