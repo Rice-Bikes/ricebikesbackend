@@ -20,7 +20,7 @@
     "prepare": "husky",
     "email": "email dev",
     "observability:test": "BACKEND_URL=${BACKEND_URL:-http://localhost:7130} bash ../observability/test/check_site.sh",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:migrate:force": "tsx src/db/migrate.ts --force",
     "db:push": "drizzle-kit push",
