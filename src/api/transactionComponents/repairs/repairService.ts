@@ -129,6 +129,7 @@ export class RepairsService {
         id,
         repair_id: id,
         name: "Deleted Repair",
+        description: null,
         price: 0,
         disabled: true,
       } as Repair;

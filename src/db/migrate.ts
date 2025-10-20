@@ -22,8 +22,7 @@ export async function runMigrations(options = { force: false }) {
     console.log("✅ Migrations completed successfully");
     return true;
   } catch (error) {
-    console.error("❌ Migration failed:", error);
-    if (error.message?.includes("relation") && error.message?.includes("already exists")) {
+    if (error instanceof Error && error.message?.includes("relation") && error.message?.includes("already exists")) {
       console.log("Try running migrations with force flag: npm run db:migrate:force");
     }
     throw error;

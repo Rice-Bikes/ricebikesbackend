@@ -8,7 +8,7 @@
 
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { isFeatureEnabled } from "@/utils/feature-flags";
-import type { TransactionRepository } from "./transactionRepository";
+
 import { TransactionRepositoryDrizzle } from "./transactionRepositoryDrizzle";
 
 // Feature flag name for transaction repository
@@ -21,7 +21,7 @@ const USE_DRIZZLE = process.env.USE_DRIZZLE === "true";
  * Create and return the appropriate transaction repository implementation
  * based on feature flags
  */
-export async function createTransactionRepository(): Promise<TransactionRepository | TransactionRepositoryDrizzle> {
+export async function createTransactionRepository(): Promise<TransactionRepositoryDrizzle> {
   try {
     // Always use Drizzle implementation now
     logger.debug("Using Drizzle Transaction Repository");
@@ -38,9 +38,7 @@ export async function createTransactionRepository(): Promise<TransactionReposito
  * This is useful for scripts or initialization code that needs to run
  * before the feature flag system is ready
  */
-export function createTransactionRepositorySync(
-  forceDrizzle = false,
-): TransactionRepository | TransactionRepositoryDrizzle {
+export function createTransactionRepositorySync(forceDrizzle = false): TransactionRepositoryDrizzle {
   // Always return Drizzle implementation
   return new TransactionRepositoryDrizzle();
 }

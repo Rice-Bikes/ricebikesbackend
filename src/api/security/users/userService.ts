@@ -3,15 +3,15 @@ import { serviceLogger as logger } from "@/common/utils/logger";
 import { StatusCodes } from "http-status-codes";
 
 import type { User, UserRole } from "./userModel";
-import type { UsersRepository } from "./userRepository";
+// Removed unused Prisma repository import
 import type { UsersRepositoryDrizzle } from "./userRepositoryDrizzle";
 import { createUserRepository, createUserRepositorySync } from "./userRepositoryFactory";
 
 export class UsersService {
-  private UsersRepository: UsersRepository | UsersRepositoryDrizzle;
+  private UsersRepository: UsersRepositoryDrizzle;
   private repositoryInitialized = false;
 
-  constructor(repository?: UsersRepository | UsersRepositoryDrizzle) {
+  constructor(repository?: UsersRepositoryDrizzle) {
     // If repository is provided, use it directly
     if (repository) {
       this.UsersRepository = repository;
