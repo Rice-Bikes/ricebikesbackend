@@ -1,0 +1,1 @@
+Implement the Drizzle <prisma repo> using the techniques in the documentation here https://orm.drizzle.team/docs/overview and following the model set by <existing drizzle impl>. If you have to build out a schema, reference <old primsa schema file> and find the associated table for the new repo

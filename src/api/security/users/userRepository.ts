@@ -51,7 +51,7 @@ export class UsersRepository {
     if (!user) return null;
 
     // Transform to flattened structure
-    const roles = user.UserRoles.map((userRole) => ({
+    const roles = user.UserRoles.map((userRole: any) => ({
       role_id: userRole.Role.role_id,
       name: userRole.Role.name,
       description: userRole.Role.description,
@@ -60,9 +60,9 @@ export class UsersRepository {
 
     // Extract all unique permission names
     const permissionSet = new Set<Permission>();
-    user.UserRoles.forEach((userRole) => {
+    user.UserRoles.forEach((userRole: any) => {
       if (!userRole.Role.disabled) {
-        userRole.Role.RolePermissions.forEach((rp) => {
+        userRole.Role.RolePermissions.forEach((rp: any) => {
           permissionSet.add(rp.Permission);
         });
       }

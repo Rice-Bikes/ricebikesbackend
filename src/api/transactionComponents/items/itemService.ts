@@ -119,7 +119,7 @@ export class ItemsService {
   }
   async updateItem(item_id: string, item: Item): Promise<ServiceResponse<Item | null>> {
     try {
-      const updatedItem = await this.ItemsRepository.update(item.item_id, item);
+      const updatedItem = await this.ItemsRepository.update(item_id, item);
       if (!updatedItem) {
         return ServiceResponse.failure("Item not found", null, StatusCodes.NOT_FOUND);
       }

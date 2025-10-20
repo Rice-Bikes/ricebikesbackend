@@ -35,7 +35,7 @@ OrderRequestsRegistry.registerPath({
   responses: createApiResponse(OrderRequestSchema, "Success"),
 });
 
-OrderRequestsRouter.get("/:id", [validateRequest(GetOrderRequestsSchema)], orderRequestsController.getOrderRequests);
+OrderRequestsRouter.get("/:id", [validateRequest(GetOrderRequestsSchema)], orderRequestsController.getOrderRequest);
 
 OrderRequestsRegistry.registerPath({
   method: "post",

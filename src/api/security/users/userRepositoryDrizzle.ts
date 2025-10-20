@@ -1,8 +1,8 @@
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { db } from "@/db/client";
 import type * as schema from "@/db/schema";
-import { permissions, rolePermissions, roles, userRoles } from "@/db/schema/roles";
-import { users } from "@/db/schema/users";
+import { permissions, rolePermissions, roles, userRoles, users } from "@/db/schema";
+
 /**
  * User Repository Implementation with Drizzle ORM
  */

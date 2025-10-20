@@ -11,12 +11,12 @@ const upload = multer();
 const router = Router();
 
 class OrderRequestsController {
-  public getOrderRequestss: RequestHandler = async (_req: Request, res: Response) => {
+  public getOrderRequests: RequestHandler = async (_req: Request, res: Response) => {
     const serviceResponse = await orderRequestsService.findAll();
     return handleServiceResponse(serviceResponse, res);
   };
 
-  public getOrderRequests: RequestHandler = async (req: Request, res: Response) => {
+  public getOrderRequest: RequestHandler = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const serviceResponse = await orderRequestsService.findById(id);
     return handleServiceResponse(serviceResponse, res);

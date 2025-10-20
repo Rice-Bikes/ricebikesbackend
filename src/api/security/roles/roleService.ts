@@ -2,7 +2,7 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { StatusCodes } from "http-status-codes";
 
-import type { RolePermissions } from "@prisma/client";
+import type { RolePermissions } from "./roleModel";
 import type { Role } from "./roleModel";
 import { RolesRepository } from "./roleRepository";
 

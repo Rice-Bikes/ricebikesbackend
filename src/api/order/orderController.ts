@@ -28,7 +28,7 @@ class OrderController {
       order_date: req.body.order_date ? new Date(req.body.order_date) : new Date(),
       estimated_delivery: req.body.estimated_delivery ? new Date(req.body.estimated_delivery) : undefined,
     };
-    logger.debug("Creating order:", orderData);
+    logger.debug({ orderData }, "Creating order");
     const serviceResponse = await orderService.createOrder(orderData);
     return handleServiceResponse(serviceResponse, res);
   };

@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { boolean, integer, pgTable, primaryKey, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, pgTable, primaryKey, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { rolePermissions } from "./rolePermissions";
 import { users } from "./users";
 
 export const roles = pgTable("Roles", {
@@ -13,11 +14,9 @@ export const roles = pgTable("Roles", {
 // Export types for use in other schema files
 export type Role = InferSelectModel<typeof roles>;
 
-export const permissions = pgTable("Permissions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: varchar("name").notNull().unique(),
-  description: text("description").notNull(),
-});
+/**
+ * Permissions schema moved to ./permissions
+ */
 
 export const userRoles = pgTable(
   "UserRoles",
@@ -36,22 +35,9 @@ export const userRoles = pgTable(
   },
 );
 
-export const rolePermissions = pgTable(
-  "RolePermissions",
-  {
-    role_id: uuid("role_id")
-      .notNull()
-      .references(() => roles.role_id, { onDelete: "cascade" }),
-    permission_id: integer("permission_id")
-      .notNull()
-      .references(() => permissions.id, { onDelete: "cascade" }),
-  },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.role_id, table.permission_id] }),
-    };
-  },
-);
+/**
+ * RolePermissions schema moved to ./rolePermissions
+ */
 
 export const rolesRelations = relations(roles, ({ many }) => ({
   userRoles: many(userRoles),
@@ -63,9 +49,9 @@ export const usersToRolesRelations = relations(users, ({ many }) => ({
   userRoles: many(userRoles),
 }));
 
-export const permissionsRelations = relations(permissions, ({ many }) => ({
-  rolePermissions: many(rolePermissions),
-}));
+/**
+ * Permissions relations are defined in ./permissions
+ */
 
 export const userRolesRelations = relations(userRoles, ({ one }) => ({
   user: one(users, {
@@ -78,13 +64,6 @@ export const userRolesRelations = relations(userRoles, ({ one }) => ({
   }),
 }));
 
-export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
-  role: one(roles, {
-    fields: [rolePermissions.role_id],
-    references: [roles.role_id],
-  }),
-  permission: one(permissions, {
-    fields: [rolePermissions.permission_id],
-    references: [permissions.id],
-  }),
-}));
+/**
+ * RolePermissions relations are defined in ./rolePermissions
+ */

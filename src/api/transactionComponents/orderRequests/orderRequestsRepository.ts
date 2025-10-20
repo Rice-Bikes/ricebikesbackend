@@ -1,55 +1,255 @@
-import { type Items, type OrderRequests, PrismaClient } from "@prisma/client";
-import { or } from "ajv/dist/compile/codegen";
+import { serviceLogger as logger } from "@/common/utils/logger";
+import { db as drizzleDb } from "@/db/client";
+import type * as schema from "@/db/schema";
+import { items as itemsTable } from "@/db/schema/items";
+import { orderRequests as orderRequestsTable } from "@/db/schema/transactions";
+import { users as usersTable } from "@/db/schema/users";
+import { asc, eq } from "drizzle-orm";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import pdfParse from "pdf-parse";
+
 import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
 
-const prisma = new PrismaClient();
-
 export class OrderRequestsRepository {
-  async findAllAsync(): Promise<OrderRequests[]> {
-    return prisma.orderRequests.findMany();
+  private db: PostgresJsDatabase<typeof schema>;
+
+  constructor(dbInstance = drizzleDb) {
+    this.db = dbInstance;
   }
 
-  async findByIdAgg(transaction_id: string): Promise<AggOrderRequest[] | null> {
-    return (
-      prisma.orderRequests.findMany({
-        where: {
-          transaction_id: transaction_id,
-        },
-        include: {
-          Item: true,
-          User: true,
-        },
-      }) || null
-    );
+  /**
+   * Map a DB record to the OrderRequest model
+   */
+  private mapToOrderRequest(record: any): OrderRequest {
+    if (!record) {
+      throw new Error("Cannot map null or undefined record to OrderRequest");
+    }
+
+    return {
+      order_request_id: record.order_request_id,
+      created_by: record.created_by,
+      transaction_id: record.transaction_id,
+      item_id: record.item_id,
+      date_created: record.date_created instanceof Date ? record.date_created : new Date(record.date_created),
+      quantity: Number(record.quantity),
+      notes: record.notes ?? null,
+      ordered: Boolean(record.ordered),
+    };
   }
 
-  async create(orderRequest: OrderRequests): Promise<OrderRequests> {
-    console.log("creating order request", orderRequest);
-    return prisma.orderRequests.create({
-      data: {
-        ...orderRequest,
-        ordered: false,
-      },
-    });
+  /**
+   * Parse value as Date
+   */
+  private toDate(value: any): Date {
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) {
+      return new Date();
+    }
+    return d;
   }
 
-  async update(orderRequest: OrderRequests): Promise<OrderRequests> {
-    console.log("creating order request", orderRequest);
-    return prisma.orderRequests.update({
-      where: {
+  /**
+   * Get all order requests
+   */
+  async findAllAsync(): Promise<AggOrderRequest[]> {
+    try {
+      const rows = await this.db
+        .select({
+          orderRequest: orderRequestsTable,
+          Item: itemsTable,
+          User: usersTable,
+        })
+        .from(orderRequestsTable)
+        .innerJoin(itemsTable, eq(orderRequestsTable.item_id, itemsTable.item_id))
+        .innerJoin(usersTable, eq(orderRequestsTable.created_by, usersTable.user_id))
+        .orderBy(asc(orderRequestsTable.date_created));
+
+      const result: AggOrderRequest[] = rows.map(({ orderRequest, Item, User }) => ({
         order_request_id: orderRequest.order_request_id,
-      },
-      data: orderRequest,
-    });
+        created_by: orderRequest.created_by,
+        transaction_id: orderRequest.transaction_id,
+        item_id: orderRequest.item_id,
+        date_created: orderRequest.date_created,
+        quantity: Number(orderRequest.quantity),
+        notes: orderRequest.notes ?? null,
+        ordered: Boolean(orderRequest.ordered),
+        Item,
+        User,
+      }));
+
+      return result;
+    } catch (error) {
+      logger.error({ error }, "[OrderRequestsRepository] findAllAsync error");
+      throw error;
+    }
   }
 
-  async delete(order_request_id: string): Promise<OrderRequests> {
-    return prisma.orderRequests.delete({
-      where: {
-        order_request_id: order_request_id,
-      },
-    });
+  /**
+   * Get order requests with aggregated Item and User by transaction_id
+   */
+  async findByIdAgg(transaction_id: string): Promise<AggOrderRequest[] | null> {
+    try {
+      if (!transaction_id) {
+        logger.warn({ transaction_id }, "[OrderRequestsRepository] findByIdAgg called with empty transaction_id");
+        return null;
+      }
+      const rows = await this.db
+        .select({
+          orderRequest: orderRequestsTable,
+          Item: itemsTable,
+          User: usersTable,
+        })
+        .from(orderRequestsTable)
+        .innerJoin(itemsTable, eq(orderRequestsTable.item_id, itemsTable.item_id))
+        .innerJoin(usersTable, eq(orderRequestsTable.created_by, usersTable.user_id))
+        .where(eq(orderRequestsTable.transaction_id, transaction_id));
+
+      if (rows.length === 0) return null;
+
+      const result: AggOrderRequest[] = rows.map(({ orderRequest, Item, User }) => ({
+        order_request_id: orderRequest.order_request_id,
+        created_by: orderRequest.created_by,
+        transaction_id: orderRequest.transaction_id,
+        item_id: orderRequest.item_id,
+        date_created: orderRequest.date_created,
+        quantity: Number(orderRequest.quantity),
+        notes: orderRequest.notes ?? null,
+        ordered: Boolean(orderRequest.ordered),
+        Item,
+        User,
+      }));
+
+      return result;
+    } catch (error) {
+      logger.error({ error, transaction_id }, "[OrderRequestsRepository] findByIdAgg error");
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new order request
+   * - Ensures ordered defaults to false
+   * - Sets date_created when not provided
+   * - order_request_id is generated by DB default if not provided
+   */
+  async create(orderRequest: Partial<OrderRequest> | CreateOrderRequests): Promise<OrderRequest> {
+    try {
+      // Normalize input: support both Partial&lt;OrderRequest&gt; and CreateOrderRequests (with body)
+      const isCreateOrderRequests = (val: unknown): val is CreateOrderRequests => {
+        return (
+          !!val &&
+          typeof val === "object" &&
+          "body" in (val as Record<string, unknown>) &&
+          !!(val as any).body &&
+          typeof (val as any).body === "object"
+        );
+      };
+
+      let body: CreateOrderRequests["body"];
+      let meta: Partial<OrderRequest> = {};
+
+      if (isCreateOrderRequests(orderRequest)) {
+        body = orderRequest.body;
+      } else {
+        const o = orderRequest as Partial<OrderRequest>;
+
+        // Ensure required fields exist when not using the { body } wrapper
+        if (!o.created_by || !o.transaction_id || !o.item_id || o.quantity === undefined || o.quantity === null) {
+          throw new Error("Missing required fields: created_by, transaction_id, item_id, quantity");
+        }
+
+        body = {
+          created_by: o.created_by,
+          transaction_id: o.transaction_id,
+          item_id: o.item_id,
+          quantity: o.quantity,
+          notes: o.notes ?? null,
+        };
+        meta = o;
+      }
+
+      const values = {
+        order_request_id: meta.order_request_id, // optional; DB can generate
+        created_by: body.created_by,
+        transaction_id: body.transaction_id,
+        item_id: body.item_id,
+        date_created: meta.date_created ? this.toDate(meta.date_created) : new Date(),
+        quantity: Number(body.quantity),
+        notes: body.notes ?? null,
+        ordered: meta.ordered ?? false,
+      };
+
+      // Remove undefined fields to let DB defaults apply (e.g., order_request_id)
+      const cleanValues = Object.fromEntries(Object.entries(values).filter(([_, v]) => v !== undefined));
+
+      const inserted = await this.db
+        .insert(orderRequestsTable)
+        .values(cleanValues as any)
+        .returning();
+
+      if (inserted.length === 0) {
+        throw new Error("Failed to insert OrderRequest");
+      }
+
+      return this.mapToOrderRequest(inserted[0]);
+    } catch (error) {
+      logger.error({ error, orderRequest }, "[OrderRequestsRepository] create error");
+      throw error;
+    }
+  }
+
+  /**
+   * Update  xisting order request
+   */
+  async update(orderRequest: OrderRequest): Promise<OrderRequest> {
+    try {
+      const updateData = {
+        created_by: orderRequest.created_by,
+        transaction_id: orderRequest.transaction_id,
+        item_id: orderRequest.item_id,
+        date_created: this.toDate(orderRequest.date_created),
+        quantity: Number(orderRequest.quantity),
+        notes: orderRequest.notes ?? null,
+        ordered: Boolean(orderRequest.ordered),
+      };
+
+      const updated = await this.db
+        .update(orderRequestsTable)
+        .set(updateData)
+        .where(eq(orderRequestsTable.order_request_id, orderRequest.order_request_id))
+        .returning();
+
+      if (updated.length === 0) {
+        throw new Error(`OrderRequest with ID ${orderRequest.order_request_id} not found`);
+      }
+
+      return this.mapToOrderRequest(updated[0]);
+    } catch (error) {
+      logger.error({ error, orderRequest }, "[OrderRequestsRepository] update error");
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an order request by id
+   */
+  async delete(order_request_id: string): Promise<OrderRequest> {
+    try {
+      const deleted = await this.db
+        .delete(orderRequestsTable)
+        .where(eq(orderRequestsTable.order_request_id, order_request_id))
+        .returning();
+
+      if (deleted.length === 0) {
+        throw new Error(`OrderRequest with ID ${order_request_id} not found`);
+      }
+
+      return this.mapToOrderRequest(deleted[0]);
+    } catch (error) {
+      logger.error({ error, order_request_id }, "[OrderRequestsRepository] delete error");
+      throw error;
+    }
   }
 
   // Extract text from a PDF buffer
@@ -57,13 +257,11 @@ export class OrderRequestsRepository {
     try {
       const dataBuffer = Buffer.from(pdfBuffer);
       const doc = await pdfParse(dataBuffer);
-      console.log(
-        "doc",
-        doc.text.split("\n").filter((line) => line.trim()),
-      );
-      return doc.text.split("\n").filter((line) => line.trim());
+      const lines = doc.text.split("\n").filter((line) => line.trim());
+      logger.debug({ lineCount: lines.length }, "[OrderRequestsRepository] PDF parsed");
+      return lines;
     } catch (error) {
-      console.error("Error parsing PDF:", error);
+      logger.error({ error }, "[OrderRequestsRepository] Error parsing PDF");
       throw error;
     }
   }

@@ -69,7 +69,7 @@ export class OrderService {
   }): Promise<ServiceResponse<Order | null>> {
     try {
       const newOrder = await this.orderRepository.create(orderData);
-      logger.debug("Order created:", newOrder);
+      logger.debug({ order: newOrder }, "Order created");
       return ServiceResponse.success<Order>("Order created", newOrder);
     } catch (ex) {
       const errorMessage = `Error creating order: ${(ex as Error).message}`;
@@ -101,7 +101,7 @@ export class OrderService {
   async deleteOrder(id: string): Promise<ServiceResponse<Order | null>> {
     try {
       const deletedOrder = await this.orderRepository.delete(id);
-      return ServiceResponse.success<Order>("Order deleted", deletedOrder);
+      return ServiceResponse.success<Order | null>("Order deleted", deletedOrder);
     } catch (ex) {
       const errorMessage = `Error deleting order: ${(ex as Error).message}`;
       logger.error(errorMessage);

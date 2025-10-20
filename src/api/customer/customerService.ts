@@ -303,9 +303,7 @@ export class CustomersService {
         await transporter.verify();
         logger.debug("Email transporter successfully verified");
       } catch (verifyError) {
-        logger.error("Email transporter verification failed", {
-          message: (verifyError as Error).message,
-        });
+        logger.error({ message: (verifyError as Error).message }, "Email transporter verification failed");
         return ServiceResponse.failure(
           `Error verifying email transporter: ${(verifyError as Error).message}`,
           null,
@@ -330,10 +328,10 @@ export class CustomersService {
       });
     } catch (error) {
       // log full error with stack for debugging but avoid printing secrets
-      logger.error("Error authorizing/sending email", {
-        message: (error as Error).message,
-        stack: (error as Error).stack,
-      });
+      logger.error(
+        { message: (error as Error).message, stack: (error as Error).stack },
+        "Error authorizing/sending email",
+      );
       return ServiceResponse.failure(
         `Error authorizing/sending email: ${(error as Error).message}`,
         null,
@@ -417,9 +415,7 @@ export class CustomersService {
         await transporter.verify();
         logger.debug("Email transporter successfully verified (new bike)");
       } catch (verifyError) {
-        logger.error("Email transporter verification failed (new bike)", {
-          message: (verifyError as Error).message,
-        });
+        logger.error({ message: (verifyError as Error).message }, "Email transporter verification failed (new bike)");
         return ServiceResponse.failure(
           `Error verifying email transporter: ${(verifyError as Error).message}`,
           null,
@@ -445,10 +441,10 @@ export class CustomersService {
       });
     } catch (error) {
       // log full error with stack for debugging but avoid printing secrets
-      logger.error("Error authorizing/sending new bike email", {
-        message: (error as Error).message,
-        stack: (error as Error).stack,
-      });
+      logger.error(
+        { message: (error as Error).message, stack: (error as Error).stack },
+        "Error authorizing/sending new bike email",
+      );
       return ServiceResponse.failure(
         `Error authorizing/sending email: ${(error as Error).message}`,
         null,
