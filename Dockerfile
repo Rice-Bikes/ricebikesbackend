@@ -12,8 +12,7 @@ COPY package*.json /usr/src/app
 
 # Install app dependencies
 COPY drizzle ./drizzle/
-RUN npm i
-RUN npm i multer
+RUN npm ci
 
 # Install OpenSSL
 RUN apt-get update -y && apt-get install -y openssl
