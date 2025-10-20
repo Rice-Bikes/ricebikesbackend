@@ -11,7 +11,6 @@ import type {
   TransactionsSummary,
   UpdateTransaction,
 } from "../transactions/transactionModel";
-import type { TransactionRepository } from "../transactions/transactionRepository";
 import type { TransactionRepositoryDrizzle } from "../transactions/transactionRepositoryDrizzle";
 import {
   createTransactionRepository,
@@ -19,21 +18,12 @@ import {
 } from "../transactions/transactionRepositoryFactory";
 
 export class TransactionsService {
-  private TransactionRepository: TransactionRepository | TransactionRepositoryDrizzle;
+  private TransactionRepository: TransactionRepositoryDrizzle;
   private repositoryInitialized = false;
 
-  constructor(repository?: TransactionRepository | TransactionRepositoryDrizzle) {
-    // If repository is provided, use it directly
-    if (repository) {
-      this.TransactionRepository = repository;
-      this.repositoryInitialized = true;
-    } else {
-      // Otherwise use the sync version to have something immediately available
-      this.TransactionRepository = createTransactionRepositorySync();
-
-      // But also initialize the proper repository asynchronously
-      this.initializeRepository();
-    }
+  constructor(repository?: TransactionRepositoryDrizzle) {
+    this.TransactionRepository = repository || createTransactionRepositorySync();
+    this.repositoryInitialized = !!repository;
   }
 
   private async initializeRepository(): Promise<void> {

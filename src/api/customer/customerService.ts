@@ -1,5 +1,4 @@
 import type { Customer } from "@/api/customer/customerModel";
-import type { CustomersRepository } from "@/api/customer/customerRepository";
 import type { CustomersRepositoryDrizzle } from "@/api/customer/customerRepositoryDrizzle";
 import { createCustomerRepository, createCustomerRepositorySync } from "@/api/customer/customerRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
@@ -13,17 +12,18 @@ import nodemailer, { type SentMessageInfo } from "nodemailer";
 import { RiceBikesEmail, RiceBikesNewBikeEmail, RiceBikesReciept } from "../../../emails";
 import type { Item } from "../transactionComponents/items/itemModel";
 import type { Repair } from "../transactionComponents/repairs/repairModel";
-import { TransactionDetailsRepository } from "../transactionComponents/transactionDetails/transactionDetailsRepository";
+import { TransactionDetailsRepositoryDrizzle } from "../transactionComponents/transactionDetails/transactionDetailsRepositoryDrizzle";
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
 export class CustomersService {
-  private CustomersRepository: CustomersRepository | CustomersRepositoryDrizzle;
-  private TransactionDetailsRepository: TransactionDetailsRepository;
+  private CustomersRepository: CustomersRepositoryDrizzle;
+  private TransactionDetailsRepository: TransactionDetailsRepositoryDrizzle;
   private repositoryInitialized = false;
 
-  constructor(repository?: CustomersRepository | CustomersRepositoryDrizzle) {
+  constructor(repository?: CustomersRepositoryDrizzle) {
     // If repository is provided, use it directly
+    this.TransactionDetailsRepository = new TransactionDetailsRepositoryDrizzle();
     if (repository) {
       this.CustomersRepository = repository;
       this.repositoryInitialized = true;
@@ -34,7 +34,6 @@ export class CustomersService {
       // But also initialize the proper repository asynchronously
       this.initializeRepository();
     }
-    this.TransactionDetailsRepository = new TransactionDetailsRepository();
   }
 
   private async initializeRepository(): Promise<void> {
@@ -166,50 +165,10 @@ export class CustomersService {
       });
 
       const transactionItemsResponse = await this.TransactionDetailsRepository.findAllItems(transaction_id);
-      let transactionItems: Item[] = [];
       const transactionRepairsResponse = await this.TransactionDetailsRepository.findAllRepairs(transaction_id);
-      let transactionRepairs: Repair[] = [];
-      if (transactionItemsResponse && transactionItemsResponse.length > 0) {
-        transactionItems = transactionItemsResponse
-          .filter(
-            (item) =>
-              item.Item &&
-              item.Item !== null &&
-              item.Item.name !== undefined &&
-              item.Item.name !== null &&
-              item.Item.item_id !== undefined &&
-              item.Item.item_id !== null &&
-              item.Item.upc !== undefined &&
-              item.Item.upc !== null &&
-              item.Item.stock !== undefined &&
-              item.Item.stock !== null &&
-              item.Item.minimum_stock !== undefined &&
-              item.Item.standard_price !== undefined &&
-              item.Item.standard_price !== null &&
-              item.Item.wholesale_cost !== undefined &&
-              item.Item.wholesale_cost !== null,
-          )
-          .map((item) => ({
-            ...item!.Item,
-          })) as Item[];
-      }
-      if (transactionRepairsResponse && transactionRepairsResponse.length > 0) {
-        transactionRepairs = transactionRepairsResponse
-          .filter(
-            (repair) =>
-              repair.Repair &&
-              repair.Repair !== null &&
-              repair.Repair.repair_id !== undefined &&
-              repair.Repair.repair_id !== null &&
-              repair.Repair.description !== undefined &&
-              repair.Repair.description !== null &&
-              repair.Repair.price !== undefined &&
-              repair.Repair.price !== null,
-          )
-          .map((repair) => ({
-            ...repair!.Repair,
-          })) as Repair[];
-      }
+
+      const transactionItems: Item[] = (transactionItemsResponse ?? []).map((row) => row.Item as Item);
+      const transactionRepairs: Repair[] = (transactionRepairsResponse ?? []).map((row) => row.Repair as Repair);
       const processedMail = await render(
         RiceBikesReciept({
           username: `${customer.first_name} ${customer.last_name}`,

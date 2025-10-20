@@ -98,7 +98,7 @@ export class TransactionDetailsRepositoryDrizzle {
         })
         .from(transactionDetailsTable)
         .where(and(eq(transactionDetailsTable.transaction_id, transaction_id), isNull(transactionDetailsTable.item_id)))
-        .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+        .innerJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
       return result.length ? result : null;
@@ -131,7 +131,7 @@ export class TransactionDetailsRepositoryDrizzle {
         .where(
           and(eq(transactionDetailsTable.transaction_id, transaction_id), isNull(transactionDetailsTable.repair_id)),
         )
-        .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
+        .innerJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
       return result.length ? result : null;
