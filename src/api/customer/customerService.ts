@@ -2,7 +2,6 @@ import type { Customer } from "@/api/customer/customerModel";
 import type { CustomersRepositoryDrizzle } from "@/api/customer/customerRepositoryDrizzle";
 import { createCustomerRepository, createCustomerRepositorySync } from "@/api/customer/customerRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import { env } from "@/common/utils/envConfig";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { render } from "@react-email/components";
 import { OAuth2Client, auth } from "google-auth-library";
