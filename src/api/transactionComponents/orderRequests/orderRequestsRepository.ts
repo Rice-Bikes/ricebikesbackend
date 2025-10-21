@@ -105,7 +105,7 @@ export class OrderRequestsRepository {
         .innerJoin(usersTable, eq(orderRequestsTable.created_by, usersTable.user_id))
         .where(eq(orderRequestsTable.transaction_id, transaction_id));
 
-      if (rows.length === 0) return null;
+      if (rows.length === 0) return [];
 
       const result: AggOrderRequest[] = rows.map(({ orderRequest, Item, User }) => ({
         order_request_id: orderRequest.order_request_id,

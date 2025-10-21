@@ -36,13 +36,17 @@ export class OrderRequestsService {
     try {
       const item = await this.OrderRequestsRepository.findByIdAgg(id);
       if (!item) {
-        return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+        return ServiceResponse.failure("Transaction data not found", null, StatusCodes.NOT_FOUND);
       }
       return ServiceResponse.success<AggOrderRequest[]>("OrderRequest found", item);
     } catch (ex) {
-      const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error finding transaction with id ${id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
-      return ServiceResponse.failure("An error occurred while finding user.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+      return ServiceResponse.failure(
+        "An error occurred while finding transaction.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
