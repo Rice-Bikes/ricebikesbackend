@@ -55,12 +55,9 @@ export class RolesRepositoryDrizzle {
         .from(userRolesTable)
         .leftJoin(rolesTable, eq(userRolesTable.role_id, rolesTable.role_id))
         .where(eq(userRolesTable.user_id, username));
-
-      const roles = rows
-        .map((row: any) => row?.roles)
-        .filter((r: any) => r != null)
-        .map((r: any) => this.mapToRole(r));
-
+      logger.debug({ rows }, "Roles query result");
+      const roles = rows.map((role) => this.mapToRole(role));
+      logger.debug({ roles }, "Mapped roles");
       return roles.length > 0 ? roles : null;
     } catch (error) {
       logger.error({ error, username }, "Error finding roles by username");
@@ -241,10 +238,7 @@ export class RolesRepositoryDrizzle {
       throw new Error("Cannot map null or undefined record to Role");
     }
     // Minimal normalization: ensure role_id is a string
-    return {
-      ...record,
-      role_id: String(record.role_id),
-    } as Role;
+    return record.Roles as Role;
   }
 
   /**

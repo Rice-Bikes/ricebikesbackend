@@ -176,6 +176,18 @@ export class UsersRepositoryDrizzle {
   async attachRoleToUser(userId: string, roleId: string): Promise<UserRole> {
     try {
       logger.debug({ userId, roleId }, "Attaching role to user");
+
+      // Check for existing assignment to make this operation idempotent
+      const existing = await this.db
+        .select()
+        .from(userRoles)
+        .where(and(eq(userRoles.user_id, userId), eq(userRoles.role_id, roleId)));
+
+      if (existing.length > 0) {
+        logger.debug({ userId, roleId }, "UserRole already exists, skipping insert");
+        return existing[0];
+      }
+
       const result = await this.db
         .insert(userRoles)
         .values({
