@@ -56,7 +56,7 @@ export class RolesRepositoryDrizzle {
         .leftJoin(rolesTable, eq(userRolesTable.role_id, rolesTable.role_id))
         .where(eq(userRolesTable.user_id, username));
       logger.debug({ rows }, "Roles query result");
-      const roles = rows.map((role) => this.mapToRole(role));
+      const roles = rows.map((role) => this.mapToUserRole(role));
       logger.debug({ roles }, "Mapped roles");
       return roles.length > 0 ? roles : null;
     } catch (error) {
@@ -238,7 +238,10 @@ export class RolesRepositoryDrizzle {
       throw new Error("Cannot map null or undefined record to Role");
     }
     // Minimal normalization: ensure role_id is a string
-    return record.Roles as Role;
+    return {
+      ...record,
+      role_id: String(record.role_id),
+    } as Role;
   }
 
   /**
@@ -253,6 +256,12 @@ export class RolesRepositoryDrizzle {
       role_id: String(record.role_id),
       permission_id: Number(record.permission_id),
     } as RolePermissions;
+  }
+  private mapToUserRole(record: any): Role {
+    if (!record) {
+      throw new Error("Cannot map null or undefined record to UserRole");
+    }
+    return record.Roles as Role;
   }
 }
 
