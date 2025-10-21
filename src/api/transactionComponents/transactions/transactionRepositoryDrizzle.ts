@@ -202,7 +202,26 @@ export class TransactionRepositoryDrizzle {
   async updateById(transaction_id: string, transactionUpdate: UpdateTransaction): Promise<Transaction> {
     try {
       // If transactionUpdate is from a request body schema, extract just the body
-      const updateData = transactionUpdate.body ? transactionUpdate.body : transactionUpdate;
+      const rawUpdate = transactionUpdate.body ? transactionUpdate.body : (transactionUpdate as any);
+      const updateData: any = { ...rawUpdate };
+
+      // Do not allow updates to date_created
+      if ("date_created" in updateData) {
+        updateData.date_created = undefined;
+      }
+
+      // Coerce date_completed to a Date instance if provided as string/number
+      if ("date_completed" in updateData) {
+        const v = updateData.date_completed;
+        if (v !== null && !(v instanceof Date)) {
+          if (typeof v === "string" || typeof v === "number") {
+            const d = new Date(v);
+            if (!Number.isNaN(d.getTime())) {
+              updateData.date_completed = d;
+            }
+          }
+        }
+      }
 
       const result = await this.db
         .update(transactionsTable)
