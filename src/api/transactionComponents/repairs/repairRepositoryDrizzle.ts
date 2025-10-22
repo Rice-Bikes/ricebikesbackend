@@ -29,7 +29,8 @@ export class RepairRepositoryDrizzle implements RepairRepository {
         .select({
           repair: repairsTable,
         })
-        .from(repairsTable);
+        .from(repairsTable)
+        .where(eq(repairsTable.disabled, false));
 
       const results = await query.execute();
 
