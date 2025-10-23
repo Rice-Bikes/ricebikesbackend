@@ -188,7 +188,7 @@ export class ItemRepositoryDrizzle {
       logger.debug({ itemId: id }, "Enabling item");
 
       // Find the item first
-      const items = await this.db.select().from(itemsTable).where(eq(itemsTable.item_id, id));
+      const items = await this.db.select().from(itemsTable).where(eq(itemsTable.upc, id));
 
       if (items.length === 0) {
         logger.warn({ itemId: id }, "Attempted to enable non-existent item");
@@ -196,15 +196,15 @@ export class ItemRepositoryDrizzle {
       }
 
       // Update the item
-      await this.db
+      const newItem = await this.db
         .update(itemsTable)
         .set({
           disabled: false,
         })
-        .where(eq(itemsTable.item_id, id));
-
+        .where(eq(itemsTable.upc, id))
+        .returning();
       logger.debug({ itemId: id }, "Item enabled successfully");
-      return this.findByIdAsync(id);
+      return newItem[0];
     } catch (error) {
       logger.error({ error, itemId: id }, "Error enabling item");
       throw error;
