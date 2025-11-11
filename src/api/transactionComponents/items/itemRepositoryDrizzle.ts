@@ -4,8 +4,7 @@
  * This file implements the Item repository interface using Drizzle ORM.
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import { Readable } from "node:stream";
 import csvParserModule from "csv-parser";
 import { and, desc, eq, not, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
@@ -241,71 +240,124 @@ export class ItemRepositoryDrizzle {
   }
 
   /**
-   * Refresh items from a CSV catalog file
+   * Refresh items from CSV content (previously read from a file)
    */
-  async refreshItems(catalogFile: string): Promise<Item[]> {
-    logger.debug({ catalogFile }, "Refreshing items from catalog file");
+  async refreshItems(catalogCsv: string): Promise<Item[]> {
+    logger.debug({ providedLength: catalogCsv?.length ?? 0 }, "Refreshing items from CSV content");
 
-    const catalogPath = path.resolve(catalogFile);
-    if (!fs.existsSync(catalogPath)) {
-      const error = new Error(`Catalog file not found: ${catalogPath}`);
-      logger.error({ error, path: catalogPath }, "Catalog file not found");
+    if (!catalogCsv || typeof catalogCsv !== "string" || catalogCsv.trim().length === 0) {
+      const error = new Error("No CSV content provided");
+      logger.error({ error }, "Empty CSV content");
       throw error;
     }
 
-    const results: any[] = [];
+    const parsedRows: any[] = [];
 
-    // Read catalog file
+    const headers = [
+      "__skip_0",
+      "upc",
+      "category_1",
+      "brand",
+      "__skip_4",
+      "category_2",
+      "__skip_6",
+      "__skip_7",
+      "standard_price",
+      "__skip_9",
+      "wholesale_cost",
+      "__skip_11",
+      "__skip_12",
+      "__skip_13",
+      "__skip_14",
+      "__skip_15",
+      "__skip_16",
+      "__skip_17",
+      "__skip_18",
+      "__skip_19",
+      "name",
+      "__skip_21",
+      "__skip_22",
+      "__skip_23",
+    ];
+
+    // Parse CSV from the provided string using csv-parser
     await new Promise<void>((resolve, reject) => {
-      fs.createReadStream(catalogPath)
-        .pipe(csvParserModule())
-        .on("data", (data) => results.push(data))
-        .on("end", () => resolve())
-        .on("error", (err) => reject(err));
+      Readable.from([catalogCsv])
+        .pipe(
+          csvParserModule({
+            separator: "\t",
+            headers,
+            mapHeaders: ({ header }) => header, // keep names as provided in headers array
+            skipLines: 0,
+            strict: false,
+          }),
+        )
+        .on("data", (row: any) => {
+          try {
+            // Normalize numeric fields and fallbacks similar to parseQBPCatalog
+            const wholesale = Number.parseFloat(row.wholesale_cost ?? "") || 0;
+            let standard = Number.parseFloat(row.standard_price ?? "");
+            if (!Number.isFinite(standard) || standard === 0) {
+              standard = wholesale * 2;
+            }
+
+            const normalized = {
+              upc: (row.upc ?? "").toString().trim(),
+              name: row.name ?? "",
+              category_1: row.category_1 ?? null,
+              category_2: row.category_2 ?? null,
+              brand: row.brand ?? null,
+              standard_price: standard,
+              wholesale_cost: wholesale,
+              disabled: true,
+              stock: 0,
+              minimum_stock: null,
+              managed: false,
+            };
+
+            parsedRows.push(normalized);
+          } catch (err) {
+            // Log parsing transform errors and continue
+            logger.warn({ err, row }, "Error normalizing parsed CSV row; skipping row");
+          }
+        })
+        .on("end", () => {
+          logger.info({ parsedRows: parsedRows.length, sampleRow: parsedRows[0] }, "CSV parsed (csv-parser)");
+          resolve();
+        })
+        .on("error", (err: Error) => {
+          logger.error({ err }, "Error parsing CSV with csv-parser");
+          reject(err);
+        });
     });
+    logger.info({ parsedRows: parsedRows.length, sampleRow: parsedRows[0] }, "CSV parsed");
 
     try {
-      logger.info({ itemCount: results.length }, "Processing catalog items");
+      logger.info({ itemCount: parsedRows.length }, "Processing catalog items");
 
-      // Begin transaction
       const createdItems: Item[] = [];
 
-      // First, mark all items as disabled
-      await this.db.update(itemsTable).set({ disabled: true });
-
       // Process each row in the catalog
-      for (const row of results) {
+      for (const row of parsedRows) {
         // Check if item already exists by UPC
         let item: Item | null = null;
-
+        // skip rows with missing UPCs to avoid unique constraint failures and ambiguous inserts
+        const rawUpc = (row.upc ?? "").toString().trim();
+        if (!rawUpc) {
+          // logger.warn(
+          //   { row },
+          //   "Skipping CSV row because UPC is missing or empty",
+          // );
+          continue; // skip this row
+        }
         if (row.upc) {
           const items = await this.db.select().from(itemsTable).where(eq(itemsTable.upc, row.upc));
 
           if (items.length > 0) {
             item = this.mapToItem(items[0]);
           }
-        }
-
-        // Parse numeric values safely
-        const stock = Number.parseInt(row.stock) || 0;
-        const minimumStock = row.minimum_stock ? Number.parseInt(row.minimum_stock) : null;
-        const standardPrice = Number.parseFloat(row.standard_price) || 0;
-        const wholesaleCost = Number.parseFloat(row.wholesale_cost) || 0;
-        const managed = row.managed === "true" || Boolean(row.managed);
-
-        // Parse JSON fields safely
-        let specifications = null;
-        try {
-          specifications = row.specifications ? JSON.parse(row.specifications) : null;
-        } catch (e) {
-          logger.warn({ error: e, data: row.specifications }, "Failed to parse specifications as JSON");
-        }
-
-        let features = null;
-        try {
-          features = row.features ? JSON.parse(row.features) : null;
-        } catch (e) {
-          logger.warn({ error: e, data: row.features }, "Failed to parse features as JSON");
+        } else {
+          continue; // Skip rows without UPC
         }
 
         // Update existing or create new item
@@ -315,18 +367,18 @@ export class ItemRepositoryDrizzle {
           name: row.name || "Unknown Item",
           description: row.description || null,
           brand: row.brand || null,
-          stock: stock,
-          minimum_stock: minimumStock,
-          standard_price: standardPrice,
-          wholesale_cost: wholesaleCost,
+          stock: item?.stock || 0,
+          minimum_stock: item?.minimum_stock || 0,
+          standard_price: row.standard_price,
+          wholesale_cost: row.wholesale_cost,
           condition: row.condition || null,
-          disabled: false,
-          managed: managed,
+          disabled: item?.disabled ?? true,
+          managed: false,
           category_1: row.category_1 || null,
           category_2: row.category_2 || null,
           category_3: row.category_3 || null,
-          specifications: specifications,
-          features: features,
+          specifications: {},
+          features: {},
         };
 
         if (item) {
