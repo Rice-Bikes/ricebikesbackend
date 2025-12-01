@@ -10,6 +10,7 @@ import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema, getCateg
 /// help!!!!
 export const itemRegistry = new OpenAPIRegistry();
 export const itemRouter: Router = express.Router();
+/// help!!!!
 
 itemRegistry.register("Item", ItemSchema);
 
