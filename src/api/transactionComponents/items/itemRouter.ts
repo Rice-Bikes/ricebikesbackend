@@ -7,8 +7,11 @@ import { validateRequest } from "@/common/utils/httpHandlers";
 import { itemController } from "./itemController";
 import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema, getCategoriesSchema } from "./itemModel";
 
+/// help!!!!
 export const itemRegistry = new OpenAPIRegistry();
 export const itemRouter: Router = express.Router();
+/// help!!!!
+/// help!!!!
 
 itemRegistry.register("Item", ItemSchema);
 
