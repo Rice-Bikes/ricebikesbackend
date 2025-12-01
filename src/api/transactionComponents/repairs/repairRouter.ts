@@ -42,7 +42,7 @@ repairRegistry.registerPath({
     body: {
       description: "Repair object",
       content: {
-        "application/json": { schema: CreateRepairInputSchema },
+        "application/json": { schema: CreateRepairInputSchema.shape.body },
       },
     },
   },

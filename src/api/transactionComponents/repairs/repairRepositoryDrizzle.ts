@@ -64,28 +64,30 @@ export class RepairRepositoryDrizzle implements RepairRepository {
   async create(repairData: CreateRepairInput): Promise<Repair> {
     try {
       const newId = uuidv4();
-      const now = new Date();
 
-      await this.db.insert(repairsTable).values({
-        description: repairData.description,
-        price: repairData.price || 0,
-        disabled: repairData.disabled,
-        name: repairData.name,
-      });
+      const result = await this.db
+        .insert(repairsTable)
+        .values({
+          repair_id: newId,
+          description: repairData.description,
+          price: repairData.price || 0,
+          disabled: repairData.disabled,
+          name: repairData.name,
+        })
+        .returning();
 
-      const repair = await this.findById(newId);
-      if (!repair) {
-        throw new Error("Failed to retrieve created repair");
+      if (!result || result.length === 0) {
+        throw new Error("Failed to create repair");
       }
 
-      return repair;
+      return this.mapToRepair({ repair: result[0] });
     } catch (error) {
       logger.error(`Error creating repair: ${error}`);
       throw error;
     }
   }
 
-  async update(id: string, updateData: UpdateRepairInput): Promise<Repair | null> {
+  async update(id: string, updateData: Repair): Promise<Repair | null> {
     try {
       // First check if repair exists
       const existingRepair = await this.findById(id);
