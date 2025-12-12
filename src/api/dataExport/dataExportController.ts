@@ -90,6 +90,25 @@ class DataExportController {
     }
   };
 
+  public exportItemInventory: RequestHandler = async (req: Request, res: Response) => {
+    try {
+      const buffer = await dataExportService.generateItemInventoryExcel();
+
+      const timestamp = new Date().toISOString().split("T")[0];
+      const filename = `item-inventory-${timestamp}.xlsx`;
+
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", buffer.length);
+
+      res.send(buffer);
+    } catch (error) {
+      console.error("Error exporting item inventory:", error);
+      const serviceResponse = ServiceResponse.failure("Failed to export item inventory", null, 500);
+      return handleServiceResponse(serviceResponse, res);
+    }
+  };
+
   // JSON API Routes
   public getRepairMetrics: RequestHandler = async (req: Request, res: Response) => {
     try {
@@ -156,6 +175,19 @@ class DataExportController {
     } catch (error) {
       console.error("Error getting bike inventory:", error);
       const serviceResponse = ServiceResponse.failure("Failed to retrieve bike inventory", null, 500);
+      return handleServiceResponse(serviceResponse, res);
+    }
+  };
+
+  public getItemInventory: RequestHandler = async (req: Request, res: Response) => {
+    try {
+      const inventory = await dataExportService.getItemInventory();
+
+      const serviceResponse = ServiceResponse.success("Item inventory retrieved successfully", inventory);
+      return handleServiceResponse(serviceResponse, res);
+    } catch (error) {
+      console.error("Error getting item inventory:", error);
+      const serviceResponse = ServiceResponse.failure("Failed to retrieve item inventory", null, 500);
       return handleServiceResponse(serviceResponse, res);
     }
   };
