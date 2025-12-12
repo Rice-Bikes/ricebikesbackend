@@ -27,17 +27,17 @@ export class ItemRepositoryDrizzle {
   }
 
   /**
-   * Find all items that are not disabled
+   * Find all items, optionally including disabled items
    */
-  async findAllAsync(): Promise<Item[]> {
+  async findAllAsync(includeDisabled = false): Promise<Item[]> {
     try {
-      logger.debug("Finding all items");
+      logger.debug({ includeDisabled }, "Finding all items");
 
-      const items = await this.db
-        .select()
-        .from(itemsTable)
-        .where(and(eq(itemsTable.disabled, false), sql`${itemsTable.upc} IS NOT NULL`))
-        .orderBy(desc(itemsTable.upc));
+      const whereConditions = includeDisabled
+        ? sql`${itemsTable.upc} IS NOT NULL`
+        : and(eq(itemsTable.disabled, false), sql`${itemsTable.upc} IS NOT NULL`);
+
+      const items = await this.db.select().from(itemsTable).where(whereConditions).orderBy(desc(itemsTable.upc));
 
       return items.map((item) => this.mapToItem(item));
     } catch (error) {

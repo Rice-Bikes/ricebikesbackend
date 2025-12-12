@@ -6,8 +6,9 @@ import type { Item } from "./itemModel";
 import { itemsService } from "./itemService";
 
 class ItemController {
-  public getItems: RequestHandler = async (_req: Request, res: Response) => {
-    const serviceResponse = await itemsService.findAll();
+  public getItems: RequestHandler = async (req: Request, res: Response) => {
+    const includeDisabled = req.query.includeDisabled === "true" || req.query.includeDisabled === "1";
+    const serviceResponse = await itemsService.findAll(includeDisabled);
     return handleServiceResponse(serviceResponse, res);
   };
 
@@ -22,20 +23,20 @@ class ItemController {
     const item = {
       upc: body.upc,
       name: body.name,
-      description: body.description,
-      brand: body.brand,
-      stock: body.stock,
-      minimum_stock: body.minimum_stock,
+      description: body.description ?? null,
+      brand: body.brand ?? null,
+      stock: body.stock ?? 0,
+      minimum_stock: body.minimum_stock ?? null,
       standard_price: body.standard_price,
       wholesale_cost: body.wholesale_cost,
-      condition: body.condition,
-      disabled: false, // assume that it is not disabled on creation lol
-      managed: body.managed, // not sure what this does honestly (going to change into qbp vs created )
-      category_1: body.category_1,
-      category_2: body.category_2,
-      category_3: body.category_3,
-      specifications: body.specifications, // Assuming JSON can be any valid JSON
-      features: body.features, // Assuming JSON can be any valid JSON
+      condition: body.condition ?? null,
+      disabled: body.disabled ?? false,
+      managed: body.managed ?? true,
+      category_1: body.category_1 ?? null,
+      category_2: body.category_2 ?? null,
+      category_3: body.category_3 ?? null,
+      specifications: body.specifications ?? null,
+      features: body.features ?? null,
     } as Item;
     const serviceResponse = await itemsService.createItem(item);
     return handleServiceResponse(serviceResponse, res);

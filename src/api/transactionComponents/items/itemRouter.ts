@@ -5,13 +5,18 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { itemController } from "./itemController";
-import { CreateItemSchema, GetItemSchema, ItemSchema, PatchItemsSchema, getCategoriesSchema } from "./itemModel";
+import {
+  CreateItemSchema,
+  GetItemSchema,
+  GetItemsSchema,
+  ItemSchema,
+  PatchItemsSchema,
+  UpdateItemSchema,
+  getCategoriesSchema,
+} from "./itemModel";
 
-/// help!!!!
 export const itemRegistry = new OpenAPIRegistry();
 export const itemRouter: Router = express.Router();
-/// help!!!!
-/// help!!!!
 
 itemRegistry.register("Item", ItemSchema);
 
@@ -23,7 +28,7 @@ itemRegistry.registerPath({
   responses: createApiResponse(z.array(ItemSchema), "Success"),
 });
 
-itemRouter.get("/", itemController.getItems);
+itemRouter.get("/", [validateRequest(GetItemsSchema)], itemController.getItems);
 
 itemRegistry.registerPath({
   method: "post",
@@ -100,4 +105,4 @@ itemRegistry.registerPath({
 itemRouter.get("/:id", [validateRequest(GetItemSchema)], itemController.getItem);
 
 itemRouter.delete("/:id", [validateRequest(GetItemSchema)], itemController.deleteItem);
-itemRouter.patch("/:id", [validateRequest(GetItemSchema)], itemController.updateItem);
+itemRouter.patch("/:id", [validateRequest(UpdateItemSchema)], itemController.updateItem);
