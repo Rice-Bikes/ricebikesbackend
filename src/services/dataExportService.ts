@@ -616,6 +616,7 @@ class DataExportService {
         stock: itemsTable.stock,
       })
       .from(itemsTable)
+      .where(eq(itemsTable.disabled, false))
       .orderBy(asc(itemsTable.name));
 
     return rows.map((row) => ({
