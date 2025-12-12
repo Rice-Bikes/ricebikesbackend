@@ -13,9 +13,9 @@ export class ItemsService {
   }
 
   // Retrieves all items from the database
-  async findAll(): Promise<ServiceResponse<Item[] | null>> {
+  async findAll(includeDisabled = false): Promise<ServiceResponse<Item[] | null>> {
     try {
-      const items = await this.ItemsRepository.findAllAsync();
+      const items = await this.ItemsRepository.findAllAsync(includeDisabled);
       if (!items || items.length === 0) {
         return ServiceResponse.failure("No items found", null, StatusCodes.NOT_FOUND);
       }

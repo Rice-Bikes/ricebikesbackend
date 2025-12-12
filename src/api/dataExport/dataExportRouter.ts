@@ -153,7 +153,10 @@ dataExportRegistry.registerPath({
             type: "object",
             properties: {
               success: { type: "boolean", example: false },
-              message: { type: "string", example: "Failed to generate Excel report" },
+              message: {
+                type: "string",
+                example: "Failed to generate Excel report",
+              },
               statusCode: { type: "number", example: 500 },
             },
           },
@@ -188,7 +191,10 @@ dataExportRegistry.registerPath({
             type: "object",
             properties: {
               success: { type: "boolean", example: false },
-              message: { type: "string", example: "Failed to export bike inventory" },
+              message: {
+                type: "string",
+                example: "Failed to export bike inventory",
+              },
               statusCode: { type: "number", example: 500 },
             },
           },
@@ -226,7 +232,10 @@ dataExportRegistry.registerPath({
             type: "object",
             properties: {
               success: { type: "boolean", example: false },
-              message: { type: "string", example: "Failed to export repair history" },
+              message: {
+                type: "string",
+                example: "Failed to export repair history",
+              },
               statusCode: { type: "number", example: 500 },
             },
           },
@@ -237,6 +246,44 @@ dataExportRegistry.registerPath({
 });
 
 dataExportRouter.get("/excel/repair-history", dataExportController.exportRepairHistory);
+
+dataExportRegistry.registerPath({
+  method: "get",
+  path: "/data-export/excel/item-inventory",
+  tags: ["Data Export"],
+  summary: "Export item inventory to Excel",
+  description: "Generates an Excel file with item/parts inventory data including UPC, name, prices, and stock",
+  responses: {
+    200: {
+      description: "Excel file download",
+      content: {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+          schema: { type: "string", format: "binary" },
+        },
+      },
+    },
+    500: {
+      description: "Failed to export item inventory",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              success: { type: "boolean", example: false },
+              message: {
+                type: "string",
+                example: "Failed to export item inventory",
+              },
+              statusCode: { type: "number", example: 500 },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
+dataExportRouter.get("/excel/item-inventory", dataExportController.exportItemInventory);
 
 // JSON API Routes
 dataExportRegistry.registerPath({
@@ -305,3 +352,25 @@ dataExportRegistry.registerPath({
 });
 
 dataExportRouter.get("/bike-inventory", dataExportController.getBikeInventory);
+
+dataExportRegistry.registerPath({
+  method: "get",
+  path: "/data-export/item-inventory",
+  tags: ["Data Export"],
+  summary: "Get item inventory data",
+  description: "Returns item/parts inventory data as JSON",
+  responses: createApiResponse(
+    z.array(
+      z.object({
+        upc: z.string(),
+        name: z.string(),
+        standard_price: z.number(),
+        wholesale_cost: z.number(),
+        stock: z.number(),
+      }),
+    ),
+    "Item inventory retrieved successfully",
+  ),
+});
+
+dataExportRouter.get("/item-inventory", dataExportController.getItemInventory);

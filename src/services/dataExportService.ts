@@ -67,6 +67,14 @@ export interface BikeInventory {
   date_created: string;
 }
 
+export interface ItemInventory {
+  upc: string;
+  name: string;
+  standard_price: number;
+  wholesale_cost: number;
+  stock: number;
+}
+
 export interface ExportFilters {
   startDate?: string;
   endDate?: string;
@@ -593,6 +601,65 @@ class DataExportService {
         })),
       );
     }
+
+    const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+    return buffer;
+  }
+
+  async getItemInventory(): Promise<ItemInventory[]> {
+    const rows = await db
+      .select({
+        upc: itemsTable.upc,
+        name: itemsTable.name,
+        standard_price: itemsTable.standard_price,
+        wholesale_cost: itemsTable.wholesale_cost,
+        stock: itemsTable.stock,
+      })
+      .from(itemsTable)
+      .where(eq(itemsTable.disabled, false))
+      .orderBy(asc(itemsTable.name));
+
+    return rows.map((row) => ({
+      upc: row.upc,
+      name: row.name,
+      standard_price: Number(row.standard_price) || 0,
+      wholesale_cost: Number(row.wholesale_cost) || 0,
+      stock: row.stock || 0,
+    }));
+  }
+
+  async generateItemInventoryExcel(): Promise<Buffer> {
+    const inventory = await this.getItemInventory();
+
+    const workbook = new ExcelJS.Workbook();
+
+    // Item Inventory Sheet
+    const inventorySheet = workbook.addWorksheet("Item Inventory");
+    inventorySheet.columns = [
+      { header: "UPC", key: "upc", width: 15 },
+      { header: "Name", key: "name", width: 40 },
+      { header: "Standard Price", key: "standard_price", width: 15 },
+      { header: "Wholesale Cost", key: "wholesale_cost", width: 15 },
+      { header: "Stock", key: "stock", width: 10 },
+    ];
+
+    inventorySheet.addRows(
+      inventory.map((item) => ({
+        upc: item.upc,
+        name: item.name,
+        standard_price: item.standard_price,
+        wholesale_cost: item.wholesale_cost,
+        stock: item.stock,
+      })),
+    );
+
+    // Style the header row
+    inventorySheet.getRow(1).font = { bold: true };
+    inventorySheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    };
 
     const buffer = (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
     return buffer;
