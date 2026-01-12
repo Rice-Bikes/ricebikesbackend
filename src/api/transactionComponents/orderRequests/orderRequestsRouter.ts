@@ -29,7 +29,7 @@ OrderRequestsRouter.get("/", orderRequestsController.getOrderRequests);
 OrderRequestsRegistry.registerPath({
   method: "get",
   path: "/OrderRequests/{id}",
-  summary: "Get a OrderRequests from the database based on it's uuid",
+  summary: "Get OrderRequests by transaction UUID or transaction number (accepts UUID or numeric transaction_num)",
   tags: ["OrderRequests"],
   request: { params: GetOrderRequestsSchema.shape.params },
   responses: createApiResponse(OrderRequestSchema, "Success"),

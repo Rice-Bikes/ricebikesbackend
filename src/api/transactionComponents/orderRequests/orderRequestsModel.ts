@@ -28,9 +28,11 @@ export const AggOrderRequestSchema = z.object({
   User: UserSchema,
 });
 
-// Input Validation for 'GET users/:id' endpoint
+// Input Validation for 'GET /orderRequests/:id' endpoint
+// Accepts either a UUID transaction_id (e.g. 'c35515f3-b4ef-4ed4-baf0-1d055a020350')
+// or a numeric transaction_num (e.g. '17429')
 export const GetOrderRequestsSchema = z.object({
-  params: z.object({ id: z.string() }),
+  params: z.object({ id: z.string().uuid().or(z.string().regex(/^\d+$/)) }),
 });
 
 export const CreateOrderRequestsSchema = z.object({
