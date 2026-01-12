@@ -58,14 +58,14 @@ describe("CustomersService", () => {
   });
 
   it("sendEmail returns failure when required env vars are missing", async () => {
+    // Ensure env vars are not set before importing (set to empty string which is falsy)
+    process.env.GOOGLE_CLIENT_ID = "";
+    process.env.GOOGLE_CLIENT_SECRET = "";
+    process.env.GOOGLE_CLIENT_REFRESH_TOKEN = "";
+
     const fakeRepo: any = {};
     const { CustomersService } = await import("@/api/customer/customerService");
     const svc = new CustomersService(fakeRepo);
-
-    // Ensure env vars are not set
-    process.env.GOOGLE_CLIENT_ID = undefined;
-    process.env.GOOGLE_CLIENT_SECRET = undefined;
-    process.env.GOOGLE_CLIENT_REFRESH_TOKEN = undefined;
 
     const res = await svc.sendEmail({ first_name: "bob", email: "b@b.com" } as any, 123);
     expect(res.success).toBe(false);

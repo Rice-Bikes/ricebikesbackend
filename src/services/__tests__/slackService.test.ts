@@ -52,7 +52,7 @@ describe("SlackService", () => {
 
   it("returns webhook-missing error when enabled but webhook not set", async () => {
     process.env.SLACK_NOTIFICATIONS_ENABLED = "true";
-    process.env.SLACK_WEBHOOK_URL = undefined;
+    process.env.SLACK_WEBHOOK_URL = "";
     vi.resetModules();
 
     const slackModule = await import("@/services/slackService");
