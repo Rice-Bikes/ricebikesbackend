@@ -68,7 +68,7 @@ describe("SlackService", () => {
     process.env.SLACK_WEBHOOK_URL = "https://example.test/hook";
     vi.resetModules();
 
-    const fetchMock = (await import("node-fetch")).default as unknown as vi.Mock;
+    const fetchMock = (await import("node-fetch")).default as any;
     fetchMock.mockResolvedValue({ ok: true });
 
     const slackService = (await import("@/services/slackService")).default;
@@ -83,7 +83,7 @@ describe("SlackService", () => {
     process.env.SLACK_WEBHOOK_URL = "https://example.test/hook";
     vi.resetModules();
 
-    const fetchMock = (await import("node-fetch")).default as unknown as vi.Mock;
+    const fetchMock = (await import("node-fetch")).default as any;
     fetchMock.mockResolvedValue({
       ok: false,
       status: 500,
@@ -102,7 +102,7 @@ describe("SlackService", () => {
     process.env.SLACK_WEBHOOK_URL = "https://example.test/hook";
     vi.resetModules();
 
-    const fetchMock = (await import("node-fetch")).default as unknown as vi.Mock;
+    const fetchMock = (await import("node-fetch")).default as any;
     fetchMock.mockRejectedValue(new Error("network down"));
 
     const slackService = (await import("@/services/slackService")).default;

@@ -10,9 +10,10 @@ describe("createApiResponse", () => {
     const result = createApiResponse(dataSchema, "OK response", StatusCodes.OK);
 
     // Status code key should exist
-    expect(result).toHaveProperty(String(StatusCodes.OK));
+    const statusKey = String(StatusCodes.OK);
+    expect(result).toHaveProperty(statusKey);
 
-    const entry = result[String(StatusCodes.OK)];
+    const entry = (result as any)[statusKey];
     expect(entry).toHaveProperty("description", "OK response");
     expect(entry).toHaveProperty("content");
     expect(entry.content).toHaveProperty("application/json");
@@ -46,7 +47,8 @@ describe("createApiResponse", () => {
     const dataSchema = z.object({ name: z.string() });
     const result = createApiResponse(dataSchema, "Created", StatusCodes.CREATED);
 
-    const jsonSchema = result[String(StatusCodes.CREATED)].content["application/json"].schema;
+    const statusKey = String(StatusCodes.CREATED);
+    const jsonSchema = (result as any)[statusKey].content["application/json"].schema;
 
     // responseObject should be optional but, when present, must match provided dataSchema
     const ok = jsonSchema.safeParse({
