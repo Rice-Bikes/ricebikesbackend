@@ -2,6 +2,7 @@ import { serviceLogger as logger } from "@/common/utils/logger";
 import { db as drizzleDb } from "@/db/client";
 import type * as schema from "@/db/schema";
 import { items as itemsTable } from "@/db/schema/items";
+import { transactions as transactionsTable } from "@/db/schema/transactions";
 import { orderRequests as orderRequestsTable } from "@/db/schema/transactions";
 import { users as usersTable } from "@/db/schema/users";
 import { asc, eq } from "drizzle-orm";
@@ -50,6 +51,15 @@ export class OrderRequestsRepository {
   }
 
   /**
+   * Validate whether a string is a UUID
+   */
+  private isUuid(value: string): boolean {
+    if (!value || typeof value !== "string") return false;
+    // Basic UUID v4/v1/v3/v5 format check (case-insensitive)
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
+  /**
    * Get all order requests
    */
   async findAllAsync(): Promise<AggOrderRequest[]> {
@@ -87,13 +97,44 @@ export class OrderRequestsRepository {
 
   /**
    * Get order requests with aggregated Item and User by transaction_id
+   * Accepts either a UUID `transaction_id` or a numeric `transaction_num` (e.g., "123")
    */
   async findByIdAgg(transaction_id: string): Promise<AggOrderRequest[] | null> {
     try {
-      if (!transaction_id) {
+      if (!transaction_id || transaction_id.trim() === "") {
         logger.warn({ transaction_id }, "[OrderRequestsRepository] findByIdAgg called with empty transaction_id");
         return null;
       }
+
+      const tid = transaction_id.trim();
+
+      // Determine whether tid is a UUID or a numeric transaction number
+      let txUuid!: string;
+
+      if (this.isUuid(tid)) {
+        txUuid = tid;
+      } else if (/^\d+$/.test(tid)) {
+        // If a numeric transaction number was passed, look up the corresponding UUID
+        const txRows = await this.db
+          .select()
+          .from(transactionsTable)
+          .where(eq(transactionsTable.transaction_num, Number(tid)));
+
+        if (!txRows || txRows.length === 0) {
+          // No transaction found with that numeric id -> no order requests
+          return [];
+        }
+
+        txUuid = (txRows[0] as any).transaction_id;
+      } else {
+        // Unrecognized format - bail out safely with empty result
+        logger.warn(
+          { transaction_id: tid },
+          "[OrderRequestsRepository] findByIdAgg called with non-UUID, non-numeric transaction_id",
+        );
+        return [];
+      }
+
       const rows = await this.db
         .select({
           orderRequest: orderRequestsTable,
@@ -103,7 +144,7 @@ export class OrderRequestsRepository {
         .from(orderRequestsTable)
         .innerJoin(itemsTable, eq(orderRequestsTable.item_id, itemsTable.item_id))
         .innerJoin(usersTable, eq(orderRequestsTable.created_by, usersTable.user_id))
-        .where(eq(orderRequestsTable.transaction_id, transaction_id));
+        .where(eq(orderRequestsTable.transaction_id, txUuid));
 
       if (rows.length === 0) return [];
 

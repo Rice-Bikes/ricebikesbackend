@@ -17,6 +17,7 @@
     "lint:fix": "biome check src/ --fix",
     "format": "biome format src/",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "prepare": "husky",
     "email": "email dev",
     "observability:test": "BACKEND_URL=${BACKEND_URL:-http://localhost:7130} bash ../observability/test/check_site.sh",
@@ -28,7 +29,9 @@
     "db:init": "tsx src/db/initDrizzle.ts",
     "db:compare": "tsx src/repositories/compare-repos.ts",
     "flags:init": "tsx src/utils/init-feature-flags.ts",
-    "flags:repo-init": "tsx src/utils/init-repository-flags.ts"
+    "flags:repo-init": "tsx src/utils/init-repository-flags.ts",
+    "posttest": "node ./scripts/run-coverage-summary-if-coverage-present.js",
+    "test:ci": "vitest run --coverage && npm run coverage:summary"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.0.0",
@@ -78,6 +81,7 @@
     "@types/supertest": "^6.0.2",
     "@types/swagger-ui-express": "^4.1.6",
     "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^4.0.15",
     "drizzle-kit": "^0.24.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
@@ -90,7 +94,7 @@
     "tsx": "^4.7.2",
     "typescript": "^5.4.4",
     "vite-tsconfig-paths": "^5.0.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.15"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}": ["biome check --apply --no-errors-on-unmatched"]

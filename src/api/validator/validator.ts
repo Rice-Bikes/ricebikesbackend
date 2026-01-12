@@ -51,7 +51,7 @@ export type TypeGuard<T> = (data: unknown) => data is T;
  * @throws         an error if the fetch fails, there is no response body, or
  *                 the response is not valid JSON
  */
-function typedFetch<T>(
+export function typedFetch<T>(
   url: string,
   validate: TypeGuard<T>,
   options?: RequestInit,

@@ -1,8 +1,25 @@
 import fetch from "node-fetch";
 
-// Safe logger that falls back to console in test environments
-const safeLogger = {
+/**
+ * Safe logger that falls back to console in test environments.
+ * A test-only hook `_testLogger` can be set during tests to force the logger behavior
+ * without relying on requiring the real server module (useful for deterministic tests).
+ */
+export const safeLogger = {
+  /**
+   * Test hook: when set during tests, this logger will be used instead of requiring the server module.
+   * Example in tests:
+   *   import { safeLogger } from "@/services/slackService";
+   *   safeLogger._testLogger = { warn: vi.fn(), info: vi.fn(), error: vi.fn() };
+   */
+  _testLogger: undefined as any,
+
   warn: (message: string) => {
+    if (safeLogger._testLogger?.warn) {
+      safeLogger._testLogger.warn(message);
+      return;
+    }
+
     try {
       const { logger } = require("@/server");
       if (logger?.warn) {
@@ -14,7 +31,13 @@ const safeLogger = {
       console.warn(message);
     }
   },
+
   info: (message: string) => {
+    if (safeLogger._testLogger?.info) {
+      safeLogger._testLogger.info(message);
+      return;
+    }
+
     try {
       const { logger } = require("@/server");
       if (logger?.info) {
@@ -26,7 +49,13 @@ const safeLogger = {
       console.log(message);
     }
   },
+
   error: (message: string) => {
+    if (safeLogger._testLogger?.error) {
+      safeLogger._testLogger.error(message);
+      return;
+    }
+
     try {
       const { logger } = require("@/server");
       if (logger?.error) {

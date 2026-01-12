@@ -433,13 +433,51 @@ export class ItemRepositoryDrizzle {
       name: record.name || "Unnamed Item",
       description: record.description,
       brand: record.brand,
-      stock: typeof record.stock === "number" ? record.stock : 0,
-      minimum_stock: record.minimum_stock !== null ? Number(record.minimum_stock) : null,
-      standard_price: typeof record.standard_price === "number" ? record.standard_price : 0,
-      wholesale_cost: typeof record.wholesale_cost === "number" ? record.wholesale_cost : 0,
+      stock: ((): number => {
+        const v = record.stock;
+        if (typeof v === "number") return v;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      })(),
+      minimum_stock: ((): number | null => {
+        const v = record.minimum_stock;
+        if (v === null || v === undefined) return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      })(),
+      standard_price: ((): number => {
+        const v = record.standard_price;
+        if (typeof v === "number") return v;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      })(),
+      wholesale_cost: ((): number => {
+        const v = record.wholesale_cost;
+        if (typeof v === "number") return v;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      })(),
       condition: record.condition,
-      disabled: typeof record.disabled === "boolean" ? record.disabled : false,
-      managed: typeof record.managed === "boolean" ? record.managed : false,
+      disabled: ((): boolean => {
+        const v = record.disabled;
+        if (typeof v === "boolean") return v;
+        if (typeof v === "number") return v !== 0;
+        if (typeof v === "string") {
+          const s = v.trim().toLowerCase();
+          return s === "1" || s === "true" || s === "yes";
+        }
+        return false;
+      })(),
+      managed: ((): boolean => {
+        const v = record.managed;
+        if (typeof v === "boolean") return v;
+        if (typeof v === "number") return v !== 0;
+        if (typeof v === "string") {
+          const s = v.trim().toLowerCase();
+          return s === "1" || s === "true" || s === "yes";
+        }
+        return false;
+      })(),
       category_1: record.category_1,
       category_2: record.category_2,
       category_3: record.category_3,
