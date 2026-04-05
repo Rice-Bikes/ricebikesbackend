@@ -12,7 +12,7 @@ import { rolePermissions } from "./rolePermissions";
  */
 export const permissions = pgTable("Permissions", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull().unique("Permissions_name_key"),
   description: text("description"),
 });
 

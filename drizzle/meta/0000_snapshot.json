@@ -1,5 +1,5 @@
 {
-  "id": "2f3b0e90-c70e-4094-9eee-ff8532e6618e",
+  "id": "1c0a4e8a-9b4c-4acf-8569-6fe533422008",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -12,30 +12,36 @@
           "name": "bike_id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "make": {
           "name": "make",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "model": {
           "name": "model",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "date_created": {
           "name": "date_created",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
         },
-        "description": {
-          "name": "description",
-          "type": "text",
+        "customer_id": {
+          "name": "customer_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -56,7 +62,7 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false,
-          "default": "'Used'"
+          "default": "'New'"
         },
         "price": {
           "name": "price",
@@ -68,7 +74,7 @@
           "name": "is_available",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": true
         },
         "weight_kg": {
@@ -91,8 +97,8 @@
         }
       },
       "indexes": {
-        "idx_bike_type": {
-          "name": "idx_bike_type",
+        "idx_bikes_bike_type": {
+          "name": "idx_bikes_bike_type",
           "columns": [
             {
               "expression": "bike_type",
@@ -106,8 +112,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_size_cm": {
-          "name": "idx_size_cm",
+        "idx_bikes_size_cm": {
+          "name": "idx_bikes_size_cm",
           "columns": [
             {
               "expression": "size_cm",
@@ -121,8 +127,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_condition": {
-          "name": "idx_condition",
+        "idx_bikes_condition": {
+          "name": "idx_bikes_condition",
           "columns": [
             {
               "expression": "condition",
@@ -136,8 +142,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_is_available": {
-          "name": "idx_is_available",
+        "idx_bikes_is_available": {
+          "name": "idx_bikes_is_available",
           "columns": [
             {
               "expression": "is_available",
@@ -151,8 +157,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_reservation_customer_id": {
-          "name": "idx_reservation_customer_id",
+        "idx_bikes_reservation_customer": {
+          "name": "idx_bikes_reservation_customer",
           "columns": [
             {
               "expression": "reservation_customer_id",
@@ -168,8 +174,17 @@
         }
       },
       "foreignKeys": {
-        "Bikes_reservation_customer_id_Customers_customer_id_fk": {
-          "name": "Bikes_reservation_customer_id_Customers_customer_id_fk",
+        "Bikes_customer_id_fkey": {
+          "name": "Bikes_customer_id_fkey",
+          "tableFrom": "Bikes",
+          "tableTo": "Customers",
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["customer_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "fk_bikes_reservation_customer": {
+          "name": "fk_bikes_reservation_customer",
           "tableFrom": "Bikes",
           "tableTo": "Customers",
           "columnsFrom": ["reservation_customer_id"],
@@ -181,7 +196,20 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "bikes_deposit_check": {
+          "name": "bikes_deposit_check",
+          "value": "(\"Bikes\".\"deposit_amount\" IS NULL) OR (deposit_amount >= (0)::numeric)"
+        },
+        "bikes_price_check": {
+          "name": "bikes_price_check",
+          "value": "(\"Bikes\".\"price\" IS NULL) OR (price >= (0)::numeric)"
+        },
+        "bikes_weight_check": {
+          "name": "bikes_weight_check",
+          "value": "(\"Bikes\".\"weight_kg\" IS NULL) OR (weight_kg > (0)::numeric)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.Customers": {
@@ -197,21 +225,21 @@
         },
         "first_name": {
           "name": "first_name",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "last_name": {
           "name": "last_name",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "email": {
           "name": "email",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "phone": {
           "name": "phone",
@@ -220,7 +248,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_customer_id": {
+          "name": "idx_customer_id",
+          "columns": [
+            {
+              "expression": "customer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -228,15 +272,26 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.FeatureFlagAudit": {
-      "name": "FeatureFlagAudit",
+    "public.feature_flag_audit": {
+      "name": "feature_flag_audit",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
           "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "feature_flag_audit_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "flag_name": {
           "name": "flag_name",
@@ -264,9 +319,9 @@
         },
         "changed_at": {
           "name": "changed_at",
-          "type": "timestamp",
+          "type": "timestamp (6)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "reason": {
@@ -277,7 +332,7 @@
         },
         "details": {
           "name": "details",
-          "type": "json",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         }
@@ -290,8 +345,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.FeatureFlags": {
-      "name": "FeatureFlags",
+    "public.feature_flags": {
+      "name": "feature_flags",
       "schema": "",
       "columns": {
         "flag_name": {
@@ -321,16 +376,16 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp (6)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp (6)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "updated_by": {
@@ -348,68 +403,19 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Items": {
-      "name": "Items",
+    "public.Roles": {
+      "name": "Roles",
       "schema": "",
       "columns": {
-        "item_id": {
-          "name": "item_id",
+        "role_id": {
+          "name": "role_id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "upc": {
-          "name": "upc",
-          "type": "varchar",
-          "primaryKey": false,
           "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "brand": {
-          "name": "brand",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "stock": {
-          "name": "stock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "minimum_stock": {
-          "name": "minimum_stock",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "standard_price": {
-          "name": "standard_price",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "wholesale_cost": {
-          "name": "wholesale_cost",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "condition": {
-          "name": "condition",
-          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
@@ -419,92 +425,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "managed": {
-          "name": "managed",
-          "type": "boolean",
+        "description": {
+          "name": "description",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "category_1": {
-          "name": "category_1",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "category_2": {
-          "name": "category_2",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "category_3": {
-          "name": "category_3",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "specifications": {
-          "name": "specifications",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "features": {
-          "name": "features",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "Items_upc_unique": {
-          "name": "Items_upc_unique",
-          "nullsNotDistinct": false,
-          "columns": ["upc"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.order": {
-      "name": "order",
-      "schema": "",
-      "columns": {
-        "order_id": {
-          "name": "order_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "order_date": {
-          "name": "order_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "estimated_delivery": {
-          "name": "estimated_delivery",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "supplier": {
-          "name": "supplier",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ordered_by": {
-          "name": "ordered_by",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},
@@ -515,38 +440,38 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Repairs": {
-      "name": "Repairs",
+    "public.Users": {
+      "name": "Users",
       "schema": "",
       "columns": {
-        "repair_id": {
-          "name": "repair_id",
+        "user_id": {
+          "name": "user_id",
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "name": {
-          "name": "name",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "price": {
-          "name": "price",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "disabled": {
-          "name": "disabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
+        "username": {
+          "name": "username",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "firstname": {
+          "name": "firstname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastname": {
+          "name": "lastname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         }
@@ -565,13 +490,13 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": true,
           "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "varchar",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
@@ -579,15 +504,15 @@
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "Permissions_name_unique": {
-          "name": "Permissions_name_unique",
+        "Permissions_name_key": {
+          "name": "Permissions_name_key",
           "nullsNotDistinct": false,
           "columns": ["name"]
         }
@@ -613,71 +538,64 @@
           "notNull": true
         }
       },
-      "indexes": {},
-      "foreignKeys": {
-        "RolePermissions_role_id_Roles_role_id_fk": {
-          "name": "RolePermissions_role_id_Roles_role_id_fk",
-          "tableFrom": "RolePermissions",
-          "tableTo": "Roles",
-          "columnsFrom": ["role_id"],
-          "columnsTo": ["role_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+      "indexes": {
+        "RolePermissions_permission_id_idx": {
+          "name": "RolePermissions_permission_id_idx",
+          "columns": [
+            {
+              "expression": "permission_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         },
-        "RolePermissions_permission_id_Permissions_id_fk": {
-          "name": "RolePermissions_permission_id_Permissions_id_fk",
+        "RolePermissions_role_id_idx": {
+          "name": "RolePermissions_role_id_idx",
+          "columns": [
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "RolePermissions_permission_id_fkey": {
+          "name": "RolePermissions_permission_id_fkey",
           "tableFrom": "RolePermissions",
           "tableTo": "Permissions",
           "columnsFrom": ["permission_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "RolePermissions_role_id_fkey": {
+          "name": "RolePermissions_role_id_fkey",
+          "tableFrom": "RolePermissions",
+          "tableTo": "Roles",
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["role_id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "RolePermissions_role_id_permission_id_pk": {
-          "name": "RolePermissions_role_id_permission_id_pk",
+        "RolePermissions_pkey": {
+          "name": "RolePermissions_pkey",
           "columns": ["role_id", "permission_id"]
         }
       },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.Roles": {
-      "name": "Roles",
-      "schema": "",
-      "columns": {
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "disabled": {
-          "name": "disabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -700,10 +618,41 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "UserRoles_role_id_idx": {
+          "name": "UserRoles_role_id_idx",
+          "columns": [
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "UserRoles_user_id_idx": {
+          "name": "UserRoles_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "UserRoles_user_id_Users_user_id_fk": {
-          "name": "UserRoles_user_id_Users_user_id_fk",
+        "UserRoles_user_id_fkey": {
+          "name": "UserRoles_user_id_fkey",
           "tableFrom": "UserRoles",
           "tableTo": "Users",
           "columnsFrom": ["user_id"],
@@ -711,8 +660,8 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "UserRoles_role_id_Roles_role_id_fk": {
-          "name": "UserRoles_role_id_Roles_role_id_fk",
+        "UserRoles_role_id_fkey": {
+          "name": "UserRoles_role_id_fkey",
           "tableFrom": "UserRoles",
           "tableTo": "Roles",
           "columnsFrom": ["role_id"],
@@ -722,11 +671,192 @@
         }
       },
       "compositePrimaryKeys": {
-        "UserRoles_user_id_role_id_pk": {
-          "name": "UserRoles_user_id_role_id_pk",
+        "UserRoles_pkey": {
+          "name": "UserRoles_pkey",
           "columns": ["user_id", "role_id"]
         }
       },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Items": {
+      "name": "Items",
+      "schema": "",
+      "columns": {
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "upc": {
+          "name": "upc",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "brand": {
+          "name": "brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "desired_stock": {
+          "name": "desired_stock",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stock": {
+          "name": "stock",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "minimum_stock": {
+          "name": "minimum_stock",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "standard_price": {
+          "name": "standard_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wholesale_cost": {
+          "name": "wholesale_cost",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "condition": {
+          "name": "condition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disabled": {
+          "name": "disabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "managed": {
+          "name": "managed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "size": {
+          "name": "size",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_1": {
+          "name": "category_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_2": {
+          "name": "category_2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_3": {
+          "name": "category_3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "features": {
+          "name": "features",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "specifications": {
+          "name": "specifications",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unique_upc": {
+          "name": "unique_upc",
+          "nullsNotDistinct": false,
+          "columns": ["upc"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Repairs": {
+      "name": "Repairs",
+      "schema": "",
+      "columns": {
+        "repair_id": {
+          "name": "repair_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disabled": {
+          "name": "disabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -753,7 +883,7 @@
           "name": "transaction_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "item_id": {
           "name": "item_id",
@@ -783,36 +913,37 @@
           "name": "ordered",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false,
+          "default": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "OrderRequests_created_by_Users_user_id_fk": {
-          "name": "OrderRequests_created_by_Users_user_id_fk",
+        "fk_created_by": {
+          "name": "fk_created_by",
           "tableFrom": "OrderRequests",
           "tableTo": "Users",
           "columnsFrom": ["created_by"],
           "columnsTo": ["user_id"],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "OrderRequests_transaction_id_Transactions_transaction_id_fk": {
-          "name": "OrderRequests_transaction_id_Transactions_transaction_id_fk",
+        "fk_transaction": {
+          "name": "fk_transaction",
           "tableFrom": "OrderRequests",
           "tableTo": "Transactions",
           "columnsFrom": ["transaction_id"],
           "columnsTo": ["transaction_id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "OrderRequests_item_id_Items_item_id_fk": {
-          "name": "OrderRequests_item_id_Items_item_id_fk",
+        "fk_item": {
+          "name": "fk_item",
           "tableFrom": "OrderRequests",
           "tableTo": "Items",
           "columnsFrom": ["item_id"],
           "columnsTo": ["item_id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -830,15 +961,13 @@
           "name": "transaction_detail_id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "transaction_id": {
           "name": "transaction_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "item_id": {
           "name": "item_id",
@@ -852,17 +981,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "completed": {
+          "name": "completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "changed_by": {
           "name": "changed_by",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
-        },
-        "completed": {
-          "name": "completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
         },
         "quantity": {
           "name": "quantity",
@@ -879,31 +1009,40 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "TransactionDetails_transaction_id_Transactions_transaction_id_fk": {
-          "name": "TransactionDetails_transaction_id_Transactions_transaction_id_fk",
+        "fk_transaction": {
+          "name": "fk_transaction",
           "tableFrom": "TransactionDetails",
           "tableTo": "Transactions",
           "columnsFrom": ["transaction_id"],
           "columnsTo": ["transaction_id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "TransactionDetails_item_id_Items_item_id_fk": {
-          "name": "TransactionDetails_item_id_Items_item_id_fk",
+        "fk_item": {
+          "name": "fk_item",
           "tableFrom": "TransactionDetails",
           "tableTo": "Items",
           "columnsFrom": ["item_id"],
           "columnsTo": ["item_id"],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "TransactionDetails_repair_id_Repairs_repair_id_fk": {
-          "name": "TransactionDetails_repair_id_Repairs_repair_id_fk",
+        "fk_repair": {
+          "name": "fk_repair",
           "tableFrom": "TransactionDetails",
           "tableTo": "Repairs",
           "columnsFrom": ["repair_id"],
           "columnsTo": ["repair_id"],
-          "onDelete": "no action",
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "fk_changed_by": {
+          "name": "fk_changed_by",
+          "tableFrom": "TransactionDetails",
+          "tableTo": "Users",
+          "columnsFrom": ["changed_by"],
+          "columnsTo": ["user_id"],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -921,13 +1060,6 @@
           "name": "log_id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "date_modified": {
-          "name": "date_modified",
-          "type": "timestamp",
-          "primaryKey": false,
           "notNull": true
         },
         "transaction_num": {
@@ -942,9 +1074,15 @@
           "primaryKey": false,
           "notNull": true
         },
+        "date_modified": {
+          "name": "date_modified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
         "change_type": {
           "name": "change_type",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -957,22 +1095,22 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "TransactionLogs_transaction_num_Transactions_transaction_num_fk": {
-          "name": "TransactionLogs_transaction_num_Transactions_transaction_num_fk",
+        "TransactionLogs_transaction_num_fkey": {
+          "name": "TransactionLogs_transaction_num_fkey",
           "tableFrom": "TransactionLogs",
           "tableTo": "Transactions",
           "columnsFrom": ["transaction_num"],
           "columnsTo": ["transaction_num"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "TransactionLogs_changed_by_Users_user_id_fk": {
-          "name": "TransactionLogs_changed_by_Users_user_id_fk",
+        "TransactionLogs_changed_by_fkey": {
+          "name": "TransactionLogs_changed_by_fkey",
           "tableFrom": "TransactionLogs",
           "tableTo": "Users",
           "columnsFrom": ["changed_by"],
           "columnsTo": ["user_id"],
-          "onDelete": "no action",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -996,29 +1134,23 @@
           "name": "transaction_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "gen_random_uuid()"
         },
         "date_created": {
           "name": "date_created",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "transaction_type": {
           "name": "transaction_type",
-          "type": "varchar",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "customer_id": {
           "name": "customer_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "bike_id": {
-          "name": "bike_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -1027,11 +1159,11 @@
           "name": "total_cost",
           "type": "double precision",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "description": {
-          "name": "description",
-          "type": "text",
+        "is_paid": {
+          "name": "is_paid",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
@@ -1039,28 +1171,22 @@
           "name": "is_completed",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "is_paid": {
-          "name": "is_paid",
-          "type": "boolean",
+        "description": {
+          "name": "description",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_refurb": {
           "name": "is_refurb",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_urgent": {
           "name": "is_urgent",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_nuclear": {
-          "name": "is_nuclear",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false
@@ -1069,37 +1195,61 @@
           "name": "is_beer_bike",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_employee": {
           "name": "is_employee",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_reserved": {
           "name": "is_reserved",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_waiting_on_email": {
           "name": "is_waiting_on_email",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "date_completed": {
           "name": "date_completed",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
+        },
+        "completed": {
+          "name": "completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_status": {
+          "name": "is_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_nuclear": {
+          "name": "is_nuclear",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bike_id": {
+          "name": "bike_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "Transactions_customer_id_Customers_customer_id_fk": {
-          "name": "Transactions_customer_id_Customers_customer_id_fk",
+        "Transactions_customer_id_fkey": {
+          "name": "Transactions_customer_id_fkey",
           "tableFrom": "Transactions",
           "tableTo": "Customers",
           "columnsFrom": ["customer_id"],
@@ -1107,8 +1257,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "Transactions_bike_id_Bikes_bike_id_fk": {
-          "name": "Transactions_bike_id_Bikes_bike_id_fk",
+        "Transactions_bike_id_fkey": {
+          "name": "Transactions_bike_id_fkey",
           "tableFrom": "Transactions",
           "tableTo": "Bikes",
           "columnsFrom": ["bike_id"],
@@ -1119,8 +1269,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "Transactions_transaction_id_unique": {
-          "name": "Transactions_transaction_id_unique",
+        "Transactions_transaction_id_key": {
+          "name": "Transactions_transaction_id_key",
           "nullsNotDistinct": false,
           "columns": ["transaction_id"]
         }
@@ -1129,38 +1279,39 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.Users": {
-      "name": "Users",
+    "public.order": {
+      "name": "order",
       "schema": "",
       "columns": {
-        "user_id": {
-          "name": "user_id",
+        "order_id": {
+          "name": "order_id",
           "type": "uuid",
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "firstname": {
-          "name": "firstname",
-          "type": "varchar",
+        "order_date": {
+          "name": "order_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "estimated_delivery": {
+          "name": "estimated_delivery",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "lastname": {
-          "name": "lastname",
-          "type": "varchar",
+        "supplier": {
+          "name": "supplier",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "username": {
-          "name": "username",
-          "type": "varchar",
+        "ordered_by": {
+          "name": "ordered_by",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -1168,13 +1319,7 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "Users_username_unique": {
-          "name": "Users_username_unique",
-          "nullsNotDistinct": false,
-          "columns": ["username"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1235,28 +1380,28 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp(6)",
           "primaryKey": false,
           "notNull": true,
-          "default": "now()"
+          "default": "CURRENT_TIMESTAMP"
         },
         "completed_at": {
           "name": "completed_at",
-          "type": "timestamp",
+          "type": "timestamp(6)",
           "primaryKey": false,
           "notNull": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp(6)",
           "primaryKey": false,
           "notNull": true,
-          "default": "now()"
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {
-        "transaction_workflow_step_order_unique": {
-          "name": "transaction_workflow_step_order_unique",
+        "WorkflowSteps_transaction_id_workflow_type_step_order_key": {
+          "name": "WorkflowSteps_transaction_id_workflow_type_step_order_key",
           "columns": [
             {
               "expression": "transaction_id",
@@ -1282,8 +1427,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_workflow_steps_transaction_id": {
-          "name": "idx_workflow_steps_transaction_id",
+        "WorkflowSteps_transaction_id_idx": {
+          "name": "WorkflowSteps_transaction_id_idx",
           "columns": [
             {
               "expression": "transaction_id",
@@ -1297,23 +1442,8 @@
           "method": "btree",
           "with": {}
         },
-        "idx_workflow_steps_workflow_type": {
-          "name": "idx_workflow_steps_workflow_type",
-          "columns": [
-            {
-              "expression": "workflow_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_workflow_steps_transaction_workflow": {
-          "name": "idx_workflow_steps_transaction_workflow",
+        "WorkflowSteps_transaction_id_workflow_type_idx": {
+          "name": "WorkflowSteps_transaction_id_workflow_type_idx",
           "columns": [
             {
               "expression": "transaction_id",
@@ -1332,41 +1462,65 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "WorkflowSteps_workflow_type_idx": {
+          "name": "WorkflowSteps_workflow_type_idx",
+          "columns": [
+            {
+              "expression": "workflow_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
-        "WorkflowSteps_transaction_id_Transactions_transaction_id_fk": {
-          "name": "WorkflowSteps_transaction_id_Transactions_transaction_id_fk",
+        "WorkflowSteps_transaction_id_fkey": {
+          "name": "WorkflowSteps_transaction_id_fkey",
           "tableFrom": "WorkflowSteps",
           "tableTo": "Transactions",
           "columnsFrom": ["transaction_id"],
           "columnsTo": ["transaction_id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "cascade"
         },
-        "WorkflowSteps_created_by_Users_user_id_fk": {
-          "name": "WorkflowSteps_created_by_Users_user_id_fk",
-          "tableFrom": "WorkflowSteps",
-          "tableTo": "Users",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["user_id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "WorkflowSteps_completed_by_Users_user_id_fk": {
-          "name": "WorkflowSteps_completed_by_Users_user_id_fk",
+        "WorkflowSteps_completed_by_fkey": {
+          "name": "WorkflowSteps_completed_by_fkey",
           "tableFrom": "WorkflowSteps",
           "tableTo": "Users",
           "columnsFrom": ["completed_by"],
           "columnsTo": ["user_id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "WorkflowSteps_created_by_fkey": {
+          "name": "WorkflowSteps_created_by_fkey",
+          "tableFrom": "WorkflowSteps",
+          "tableTo": "Users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["user_id"],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "WorkflowSteps_step_order_positive": {
+          "name": "WorkflowSteps_step_order_positive",
+          "value": "\"WorkflowSteps\".\"step_order\" > 0"
+        },
+        "WorkflowSteps_workflow_type_valid": {
+          "name": "WorkflowSteps_workflow_type_valid",
+          "value": "(\"WorkflowSteps\".\"workflow_type\")::text = ANY (ARRAY[('bike_sales'::character varying)::text, ('repair_process'::character varying)::text, ('order_fulfillment'::character varying)::text, ('custom_workflow'::character varying)::text])"
+        }
+      },
       "isRLSEnabled": false
     }
   },

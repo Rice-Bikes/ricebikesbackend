@@ -28,6 +28,7 @@
     "db:studio": "drizzle-kit studio",
     "db:init": "tsx src/db/initDrizzle.ts",
     "db:compare": "tsx src/repositories/compare-repos.ts",
+    "db:introspect": "drizzle-kit introspect",
     "flags:init": "tsx src/utils/init-feature-flags.ts",
     "flags:repo-init": "tsx src/utils/init-repository-flags.ts",
     "posttest": "node ./scripts/run-coverage-summary-if-coverage-present.js",

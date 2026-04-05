@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
+import { foreignKey, index, pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
 import { roles } from "./roles";
 import { users } from "./users";
 
@@ -20,15 +20,26 @@ import { users } from "./users";
 export const userRoles = pgTable(
   "UserRoles",
   {
-    user_id: uuid("user_id")
-      .notNull()
-      .references(() => users.user_id, { onDelete: "cascade" }),
-    role_id: uuid("role_id")
-      .notNull()
-      .references(() => roles.role_id, { onDelete: "cascade" }),
+    user_id: uuid("user_id").notNull(),
+    role_id: uuid("role_id").notNull(),
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.user_id, table.role_id] }),
+    pk: primaryKey({
+      columns: [table.user_id, table.role_id],
+      name: "UserRoles_pkey",
+    }),
+    user_id_fk: foreignKey({
+      columns: [table.user_id],
+      foreignColumns: [users.user_id],
+      name: "UserRoles_user_id_fkey",
+    }).onDelete("cascade"),
+    role_id_fk: foreignKey({
+      columns: [table.role_id],
+      foreignColumns: [roles.role_id],
+      name: "UserRoles_role_id_fkey",
+    }).onDelete("cascade"),
+    role_id_idx: index("UserRoles_role_id_idx").using("btree", table.role_id),
+    user_id_idx: index("UserRoles_user_id_idx").using("btree", table.user_id),
   }),
 );
 

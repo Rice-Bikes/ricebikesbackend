@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { integer, pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
+import { foreignKey, index, integer, pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
 import { permissions } from "./permissions";
 import { roles } from "./roles";
 
@@ -15,16 +15,29 @@ import { roles } from "./roles";
 export const rolePermissions = pgTable(
   "RolePermissions",
   {
-    role_id: uuid("role_id")
-      .notNull()
-      .references(() => roles.role_id, { onDelete: "cascade" }),
-    permission_id: integer("permission_id")
-      .notNull()
-      .references(() => permissions.id, { onDelete: "cascade" }),
+    role_id: uuid("role_id").notNull(),
+    permission_id: integer("permission_id").notNull(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.role_id, table.permission_id] }),
-  }),
+  (table) => {
+    return {
+      permission_id_fk: foreignKey({
+        columns: [table.permission_id],
+        foreignColumns: [permissions.id],
+        name: "RolePermissions_permission_id_fkey",
+      }).onDelete("cascade"),
+      role_id_fk: foreignKey({
+        columns: [table.role_id],
+        foreignColumns: [roles.role_id],
+        name: "RolePermissions_role_id_fkey",
+      }).onDelete("cascade"),
+      pk: primaryKey({
+        columns: [table.role_id, table.permission_id],
+        name: "RolePermissions_pkey",
+      }),
+      permissions_id_idx: index("RolePermissions_permission_id_idx").using("btree", table.permission_id),
+      role_id_idx: index("RolePermissions_role_id_idx").using("btree", table.role_id),
+    };
+  },
 );
 
 // Export select type
