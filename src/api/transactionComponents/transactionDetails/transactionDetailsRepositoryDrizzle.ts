@@ -70,7 +70,7 @@ export class TransactionDetailsRepositoryDrizzle {
         // .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
-      return result.length ? result : null;
+      return result.length ? result.map((record) => this.mapToTransactionDetailsWithForeignKeys(record)) : null;
     } catch (error) {
       logger.error({ error, transaction_id }, "Error finding transaction details by transaction ID");
       throw error;
@@ -101,7 +101,7 @@ export class TransactionDetailsRepositoryDrizzle {
         .innerJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
-      return result.length ? result : null;
+      return result.length ? result.map((record) => this.mapToTransactionDetailsWithForeignKeys(record)) : null;
     } catch (error) {
       logger.error({ error, transaction_id }, "Error finding repair transaction details");
       throw error;
@@ -134,7 +134,7 @@ export class TransactionDetailsRepositoryDrizzle {
         .innerJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
-      return result.length ? result : null;
+      return result.length ? result.map((record) => this.mapToTransactionDetailsWithForeignKeys(record)) : null;
     } catch (error) {
       logger.error({ error, transaction_id }, "Error finding item transaction details");
       throw error;
@@ -267,5 +267,34 @@ export class TransactionDetailsRepositoryDrizzle {
       quantity: Number(record.quantity),
       date_modified: record.date_modified,
     };
+  }
+
+  /**
+   * Helper method to map database record to TransactionDetails model
+   */
+  private mapToTransactionDetailsWithForeignKeys(record: any): TransactionDetailsWithForeignKeys {
+    if (!record) {
+      throw new Error("Cannot map null or undefined record to TransactionDetailsWithForeignKeys");
+    }
+
+    if (record.Item) {
+      return {
+        ...this.mapToTransactionDetails(record),
+        Item: ((): number => {
+          return {
+            ...record.Item,
+            standard_price: Number(record.Item.standard_price),
+            wholesale_cost: Number(record.Item.wholesale_cost),
+          };
+        })(),
+      };
+    }
+    if (record.Repair) {
+      return {
+        ...this.mapToTransactionDetails(record),
+        Repair: record.Repair,
+      };
+    }
+    return this.mapToTransactionDetails(record);
   }
 }

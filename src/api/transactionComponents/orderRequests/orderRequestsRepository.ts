@@ -84,7 +84,11 @@ export class OrderRequestsRepository {
         quantity: Number(orderRequest.quantity),
         notes: orderRequest.notes ?? null,
         ordered: Boolean(orderRequest.ordered),
-        Item,
+        Item: {
+          ...Item,
+          standard_price: Number(Item.standard_price),
+          wholesale_cost: Number(Item.wholesale_cost),
+        },
         User,
       }));
 
@@ -157,7 +161,11 @@ export class OrderRequestsRepository {
         quantity: Number(orderRequest.quantity),
         notes: orderRequest.notes ?? null,
         ordered: Boolean(orderRequest.ordered),
-        Item,
+        Item: {
+          ...Item,
+          standard_price: Number(Item.standard_price),
+          wholesale_cost: Number(Item.wholesale_cost),
+        },
         User,
       }));
 
