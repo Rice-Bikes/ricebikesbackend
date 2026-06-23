@@ -85,10 +85,10 @@ export class UsersRepositoryDrizzle {
       // Construct the final user object
       return {
         user_id: user.user_id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        username: user.username,
-        active: user.active,
+        firstname: user.firstname!,
+        lastname: user.lastname!,
+        username: user.username!,
+        active: user.active!,
         permissions: Array.from(permissionSet) as Permission[],
       };
     } catch (error) {

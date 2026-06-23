@@ -28,12 +28,12 @@ export const RiceBikesReciept = ({ username, transaction_num, items = [], repair
   const previewText = `Rice Bikes - Your bike is ready for pickup - ${transaction_num}`;
 
   const total =
-    (items.reduce((sum, item) => sum + item.standard_price, 0) +
+    (items.reduce((sum, item) => sum + item.standard_price!, 0) +
       repairs.reduce((sum, repair) => sum + repair.price, 0)) *
     SALES_TAX;
   const salesTax =
     total -
-    (items.reduce((sum, item) => sum + item.standard_price, 0) +
+    (items.reduce((sum, item) => sum + item.standard_price!, 0) +
       repairs.reduce((sum, repair) => sum + repair.price, 0));
   const formattedDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   return (
@@ -61,7 +61,7 @@ export const RiceBikesReciept = ({ username, transaction_num, items = [], repair
                   <Section>
                     {items.map((itm, i) => (
                       <Text key={i} className="text-black text-[14px] leading-[20px] mb-2">
-                        • {`${itm.name.trim()} - $${itm.standard_price.toFixed(2)}`}
+                        • {`${itm.name!.trim()} - $${itm.standard_price!.toFixed(2)}`}
                       </Text>
                     ))}
                   </Section>

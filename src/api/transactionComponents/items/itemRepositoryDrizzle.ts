@@ -95,6 +95,7 @@ export class ItemRepositoryDrizzle {
         features: item.features || null,
       };
 
+      // @ts-ignore
       await this.db.insert(itemsTable).values(newItem);
       logger.debug({ itemId: newId }, "Item created successfully");
 
@@ -139,6 +140,7 @@ export class ItemRepositoryDrizzle {
         features: item.features,
       };
 
+      // @ts-ignore
       await this.db.update(itemsTable).set(updateData).where(eq(itemsTable.item_id, id));
 
       logger.debug({ itemId: id }, "Item updated successfully");
@@ -203,6 +205,7 @@ export class ItemRepositoryDrizzle {
         .where(eq(itemsTable.upc, id))
         .returning();
       logger.debug({ itemId: id }, "Item enabled successfully");
+      // @ts-ignore
       return newItem[0];
     } catch (error) {
       logger.error({ error, itemId: id }, "Error enabling item");

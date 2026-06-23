@@ -19,8 +19,8 @@ export class CustomersRepositoryDrizzle {
 
       // Iterate through all customers and keep only the latest entry for each email
       for (const customer of allCustomers) {
-        if (!uniqueCustomersMap.has(customer.email)) {
-          uniqueCustomersMap.set(customer.email, customer);
+        if (!uniqueCustomersMap.has(customer.email!)) {
+          uniqueCustomersMap.set(customer.email!, customer);
         }
       }
 

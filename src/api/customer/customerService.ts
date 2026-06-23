@@ -179,7 +179,7 @@ export class CustomersService {
 
       mailStatus = await transporter.sendMail({
         from: "ricebikes@gmail.com",
-        to: customer.email,
+        to: customer.email!,
         subject: `Transaction Receipt - ${transaction_num}`,
         html: processedMail,
       });
@@ -269,18 +269,18 @@ export class CustomersService {
         );
       }
 
-      const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
+      const name = customer.first_name!.charAt(0).toUpperCase() + customer.first_name!.slice(1);
       const processedMail = await render(
         RiceBikesEmail({
           username: name,
           transaction_num,
-          email: customer.email,
+          email: customer.email!,
         }),
       );
 
       mailStatus = await transporter.sendMail({
         from: "ricebikes@gmail.com",
-        to: customer.email,
+        to: customer.email!,
         subject: `Bike Ready for Pickup - ${transaction_num}`,
         html: processedMail,
       });
@@ -381,7 +381,7 @@ export class CustomersService {
         );
       }
 
-      const name = customer.first_name.charAt(0).toUpperCase() + customer.first_name.slice(1);
+      const name = customer.first_name!.charAt(0).toUpperCase() + customer.first_name!.slice(1);
       const processedMail = await render(
         RiceBikesNewBikeEmail({
           username: name,
@@ -393,7 +393,7 @@ export class CustomersService {
 
       mailStatus = await transporter.sendMail({
         from: "ricebikes@gmail.com",
-        to: customer.email,
+        to: customer.email!,
         subject: `Your New Bike is Ready - ${transaction_num}`,
         html: processedMail,
       });

@@ -620,8 +620,8 @@ class DataExportService {
       .orderBy(asc(itemsTable.name));
 
     return rows.map((row) => ({
-      upc: row.upc,
-      name: row.name,
+      upc: row.upc!,
+      name: row.name!,
       standard_price: Number(row.standard_price) || 0,
       wholesale_cost: Number(row.wholesale_cost) || 0,
       stock: row.stock || 0,

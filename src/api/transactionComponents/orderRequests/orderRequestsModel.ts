@@ -14,7 +14,7 @@ export type AggOrderRequest = z.infer<typeof AggOrderRequestSchema>;
 export const OrderRequestSchema = z.object({
   order_request_id: z.string().uuid(),
   created_by: z.string().uuid(),
-  transaction_id: z.string().uuid(),
+  transaction_id: z.string().uuid().nullable(),
   item_id: z.string().uuid(),
   date_created: z.date(),
   quantity: z.number().int(),

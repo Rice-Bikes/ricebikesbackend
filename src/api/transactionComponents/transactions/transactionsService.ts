@@ -164,7 +164,7 @@ export class TransactionsService {
 
       // Only send notification if payment status changed from false to true (avoiding duplicates)
       if (
-        updatedTransaction.transaction_type.toLowerCase() === "retrospec" &&
+        updatedTransaction.transaction_type!.toLowerCase() === "retrospec" &&
         detailedTransaction &&
         updatedTransaction.is_paid &&
         oldTransaction &&
@@ -174,9 +174,9 @@ export class TransactionsService {
           transaction: {
             transaction_num: updatedTransaction.transaction_num,
             transaction_id: updatedTransaction.transaction_id,
-            total_cost: updatedTransaction.total_cost,
-            is_completed: updatedTransaction.is_completed,
-            is_reserved: updatedTransaction.is_reserved,
+            total_cost: updatedTransaction.total_cost!,
+            is_completed: updatedTransaction.is_completed!,
+            is_reserved: updatedTransaction.is_reserved!,
           },
           bike: detailedTransaction.bike,
           customer: detailedTransaction.customer,

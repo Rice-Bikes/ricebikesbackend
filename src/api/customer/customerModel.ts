@@ -9,9 +9,9 @@ export type Customer = z.infer<typeof CustomerSchema>;
 
 export const CustomerSchema = z.object({
   customer_id: z.string().uuid(),
-  first_name: z.string(),
-  last_name: z.string(),
-  email: z.string().email(),
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable(),
+  email: z.string().email().nullable(),
   phone: z.string().nullable(),
 });
 

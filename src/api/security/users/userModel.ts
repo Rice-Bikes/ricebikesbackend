@@ -11,10 +11,10 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const UserSchema = z.object({
   user_id: z.string().uuid(),
-  username: z.string(),
-  firstname: z.string(),
-  lastname: z.string(),
-  active: z.boolean(),
+  username: z.string().nullable(),
+  firstname: z.string().nullable(),
+  lastname: z.string().nullable(),
+  active: z.boolean().nullable(),
   permissions: z.array(PermissionSchema).optional(),
 });
 

@@ -155,7 +155,7 @@ export class TransactionDetailsRepositoryDrizzle {
         if (item.length > 0) {
           await this.db
             .update(itemsTable)
-            .set({ stock: item[0].stock - (transactionDetail.quantity || 1) })
+            .set({ stock: item[0].stock! - (transactionDetail.quantity || 1) })
             .where(eq(itemsTable.item_id, transactionDetail.item_id));
         }
       }
@@ -227,7 +227,7 @@ export class TransactionDetailsRepositoryDrizzle {
         if (item.length > 0) {
           await this.db
             .update(itemsTable)
-            .set({ stock: item[0].stock + (detail[0].quantity || 1) })
+            .set({ stock: item[0].stock! + (detail[0].quantity || 1) })
             .where(eq(itemsTable.item_id, detail[0].item_id));
         }
       }
@@ -280,7 +280,7 @@ export class TransactionDetailsRepositoryDrizzle {
     if (record.Item) {
       return {
         ...this.mapToTransactionDetails(record),
-        Item: ((): number => {
+        Item: (() => {
           return {
             ...record.Item,
             standard_price: Number(record.Item.standard_price),

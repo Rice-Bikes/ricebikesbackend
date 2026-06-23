@@ -155,8 +155,6 @@ export async function updateFeatureFlag(
         changed_by: updatedBy,
         reason: reason || "No reason provided",
         changed_at: new Date(),
-        // ID is auto-incremented, but we need to provide it for TypeScript
-        id: 0,
         details: null,
       });
 
