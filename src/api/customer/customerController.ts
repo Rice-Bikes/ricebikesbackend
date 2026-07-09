@@ -3,7 +3,7 @@ import type { Request, RequestHandler, Response } from "express";
 import { customersService } from "@/api/customer/customerService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import { serviceLogger as logger } from "@/common/utils/logger";
-import type { Customer } from "./customerModel";
+import type { Customer, UpdateCustomerInput } from "./customerModel";
 
 class CustomerController {
   public getCustomers: RequestHandler = async (_req: Request, res: Response) => {
@@ -33,14 +33,8 @@ class CustomerController {
   public updateCustomer: RequestHandler = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const body = req.body;
-    const customer = {
-      customer_id: id,
-      first_name: body.first_name,
-      last_name: body.last_name,
-      email: body.email,
-      phone: body.phone,
-    } as Customer;
-    const serviceResponse = await customersService.updateCustomer(customer);
+    const updateData: UpdateCustomerInput = { ...req.body };
+    const serviceResponse = await customersService.updateCustomer(id, updateData);
     return handleServiceResponse(serviceResponse, res);
   };
 

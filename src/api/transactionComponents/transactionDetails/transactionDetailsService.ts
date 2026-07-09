@@ -36,11 +36,7 @@ export class TransactionDetailsService {
     try {
       const singeTransactionDetails = await this.TransactionDetailsRepository.findAllTransactionDetails(transaction_id);
       if (!singeTransactionDetails) {
-        return ServiceResponse.success(
-          `transaction details for ${transaction_id} do not exist`,
-          null,
-          StatusCodes.NO_CONTENT,
-        );
+        return ServiceResponse.success<TransactionDetails[]>("no transaction details found", []);
       }
       // console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
@@ -59,11 +55,7 @@ export class TransactionDetailsService {
     try {
       const singeTransactionDetails = await this.TransactionDetailsRepository.findAllItems(transaction_id);
       if (!singeTransactionDetails) {
-        return ServiceResponse.success(
-          `transaction details for ${transaction_id} do not exist`,
-          null,
-          StatusCodes.NO_CONTENT,
-        );
+        return ServiceResponse.success<TransactionDetails[]>("no transaction details found", []);
       }
       // console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);
@@ -82,11 +74,7 @@ export class TransactionDetailsService {
     try {
       const singeTransactionDetails = await this.TransactionDetailsRepository.findAllRepairs(transaction_id);
       if (!singeTransactionDetails) {
-        return ServiceResponse.success(
-          `transaction details for ${transaction_id} do not exist`,
-          null,
-          StatusCodes.NO_CONTENT,
-        );
+        return ServiceResponse.success<TransactionDetails[]>("no transaction details found", []);
       }
       console.log(singeTransactionDetails);
       return ServiceResponse.success<TransactionDetails[]>("transaction details found", singeTransactionDetails);

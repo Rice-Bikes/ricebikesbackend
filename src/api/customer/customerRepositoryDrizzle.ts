@@ -1,4 +1,4 @@
-import type { Customer } from "@/api/customer/customerModel";
+import type { Customer, UpdateCustomerInput } from "@/api/customer/customerModel";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { db } from "@/db/client";
 import { customers } from "@/db/schema/customers";
@@ -63,13 +63,9 @@ export class CustomersRepositoryDrizzle {
   /**
    * Update an existing customer
    */
-  async update(customer: Customer): Promise<Customer> {
+  async update(id: string, customer: UpdateCustomerInput): Promise<Customer> {
     try {
-      const result = await db
-        .update(customers)
-        .set(customer)
-        .where(eq(customers.customer_id, customer.customer_id))
-        .returning();
+      const result = await db.update(customers).set(customer).where(eq(customers.customer_id, id)).returning();
 
       if (result.length === 0) {
         throw new Error(`Customer with ID ${customer.customer_id} not found`);

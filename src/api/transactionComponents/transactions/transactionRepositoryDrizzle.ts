@@ -61,7 +61,13 @@ export class TransactionRepositoryDrizzle {
         .from(transactionsTable)
         .leftJoin(bikesTable, eq(transactionsTable.bike_id, bikesTable.bike_id))
         .leftJoin(customersTable, eq(transactionsTable.customer_id, customersTable.customer_id))
-        .where(lt(transactionsTable.transaction_num, after_id))
+        .where(
+          and(
+            lt(transactionsTable.transaction_num, after_id),
+            eq(transactionsTable.is_completed, false),
+            eq(transactionsTable.is_paid, false),
+          ),
+        )
         .orderBy(
           desc(transactionsTable.is_urgent),
           desc(transactionsTable.is_beer_bike),

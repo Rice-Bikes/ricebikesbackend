@@ -61,7 +61,7 @@ transactionRegistry.registerPath({
 transactionRouter.post("/", [validateRequest(CreateTransactionSchema)], transactionsController.createTransaction);
 
 transactionRegistry.registerPath({
-  method: "put",
+  method: "patch",
   path: "/transactions/{transaction_id}",
   summary: "Updates a transaction in the database",
   tags: ["Transactions"],
@@ -77,7 +77,7 @@ transactionRegistry.registerPath({
   responses: createApiResponse(TransactionSchema, "Success"),
 });
 
-transactionRouter.put(
+transactionRouter.patch(
   "/:transaction_id",
   [validateRequest(PatchTransactionSchema)],
   transactionsController.updateTransaction,

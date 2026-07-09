@@ -32,10 +32,10 @@ export const CreateCustomerSchema = z.object({
 export const UpdateCustomerSchema = z.object({
   params: z.object({ id: commonValidations.uuid }),
   body: z.object({
-    first_name: z.string(),
-    last_name: z.string(),
-    email: z.string().email(),
-    phone: z.string().nullable(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    email: z.string().email().optional(),
+    phone: z.string().nullable().optional(),
   }),
 });
 
@@ -53,3 +53,5 @@ export const SendReceiptSchema = z.object({
     customer: CustomerSchema,
   }),
 });
+
+export type UpdateCustomerInput = Partial<Omit<Customer, "customer_id">>;

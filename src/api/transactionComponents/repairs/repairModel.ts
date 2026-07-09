@@ -10,7 +10,7 @@ export const RepairSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   price: z.number().int().nonnegative(),
-  disabled: z.boolean(),
+  disabled: z.boolean().default(false),
 });
 export const CreateRepairInputSchema = z.object({
   body: RepairSchema.omit({ repair_id: true }),

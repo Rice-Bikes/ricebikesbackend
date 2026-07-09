@@ -49,15 +49,15 @@ export const CreateItemSchema = z.object({
     description: z.string().nullable(),
     brand: z.string().nullable(),
     stock: z.coerce.number().int().default(0), // stock should start at 0
-    minimum_stock: z.coerce.number().int().nullable(),
+    minimum_stock: z.coerce.number().int().nullable().optional(),
     standard_price: z.coerce.number(),
     wholesale_cost: z.coerce.number(),
-    condition: z.string().nullable(),
+    condition: z.string().nullable().optional(),
     disabled: z.boolean().default(false), // assume that it is not disabled on creation
-    managed: z.boolean(), // not sure what this does honestly (going to change into qbp vs created)
-    category_1: z.string().nullable(),
-    category_2: z.string().nullable(),
-    category_3: z.string().nullable(),
+    managed: z.boolean().default(false), // not sure what this does honestly (going to change into qbp vs created)
+    category_1: z.string().nullable().optional(),
+    category_2: z.string().nullable().optional(),
+    category_3: z.string().nullable().optional(),
     specifications: z.any().nullable().optional(), // Assuming JSON can be any valid JSON
     features: z.any().nullable().optional(), // Assuming JSON can be any valid JSON
   }),

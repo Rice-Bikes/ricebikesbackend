@@ -1,4 +1,4 @@
-import type { Customer } from "@/api/customer/customerModel";
+import type { Customer, UpdateCustomerInput } from "@/api/customer/customerModel";
 import type { CustomersRepositoryDrizzle } from "@/api/customer/customerRepositoryDrizzle";
 import { createCustomerRepository, createCustomerRepositorySync } from "@/api/customer/customerRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
@@ -106,10 +106,10 @@ export class CustomersService {
     }
   }
 
-  async updateCustomer(customer: Customer): Promise<ServiceResponse<Customer | null>> {
+  async updateCustomer(id: string, customer: UpdateCustomerInput): Promise<ServiceResponse<Customer | null>> {
     try {
       await this.ensureRepository();
-      const updatedCustomer = await this.CustomersRepository.update(customer);
+      const updatedCustomer = await this.CustomersRepository.update(id, customer);
       return ServiceResponse.success<Customer>("Customer updated", updatedCustomer);
     } catch (ex) {
       const errorMessage = `Error updating customer: ${(ex as Error).message}`;
