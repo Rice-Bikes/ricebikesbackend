@@ -47,6 +47,7 @@ class TransactionsController {
       is_beer_bike: false,
       is_reserved: false,
       is_waiting_on_email: false,
+      is_employee: false,
     } as Transaction;
     const serviceResponse = await transactionsService.createTransaction(newTransaction);
     return handleServiceResponse(serviceResponse, res);

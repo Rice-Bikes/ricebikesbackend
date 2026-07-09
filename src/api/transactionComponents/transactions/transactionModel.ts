@@ -86,7 +86,7 @@ export const CreateTransactionSchema = z.object({
     // is_urgent: z.boolean(), added posthumously
     // is_nuclear: z.boolean().nullable(), added posthumously
     // is_beer_bike: z.boolean(), added posthumously
-    is_employee: z.boolean(),
+    // is_employee: z.boolean(),
     // is_reserved: z.boolean(), added posthumously
     // is_waiting_on_email: z.boolean(), added posthumously
     // date_completed: z.date().nullable(), will be updated after

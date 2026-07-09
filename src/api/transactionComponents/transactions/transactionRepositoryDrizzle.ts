@@ -15,6 +15,7 @@ import type * as schema from "@/db/schema";
 import { bikes as bikesTable } from "@/db/schema/bikes";
 import { customers as customersTable } from "@/db/schema/customers";
 import { orderRequests as orderRequestsTable, transactions as transactionsTable } from "@/db/schema/transactions";
+import { users as usersTable } from "@/db/schema/users";
 import type { AggTransaction, Transaction, TransactionsSummary, UpdateTransaction } from "./transactionModel";
 
 export class TransactionRepositoryDrizzle {
@@ -167,9 +168,23 @@ export class TransactionRepositoryDrizzle {
         date_created: transaction.date_created || new Date(),
       };
 
+      const [customer] = await this.db
+        .select()
+        .from(customersTable)
+        .where(eq(customersTable.customer_id, transactionWithId.customer_id))
+        .limit(1);
+      const username = customer?.email.split("@")[0];
+      const employeeResult = username
+        ? await this.db
+            .select({ id: usersTable.user_id })
+            .from(usersTable)
+            .where(eq(usersTable.username, username))
+            .limit(1)
+        : [];
+
       const result = await this.db
         .insert(transactionsTable)
-        .values(transactionWithId as any)
+        .values({ ...transactionWithId, is_employee: employeeResult.length > 0 })
         .returning();
 
       // Ensure transaction_id is never null
