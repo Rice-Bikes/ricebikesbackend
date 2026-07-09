@@ -32,8 +32,8 @@ export const GetBikeSchema = z.object({
 
 export const CreateBikeSchema = z.object({
   body: z.object({
-    make: z.string().min(1, "Make is required"),
-    model: z.string().min(1, "Model is required"),
+    make: z.string(),
+    model: z.string(),
     description: z.string().nullable().optional(),
     bike_type: z.string().max(50).nullable().optional(),
     size_cm: z.coerce.number().nullable().optional(),
