@@ -13,7 +13,6 @@ import type * as schema from "@/db/schema";
 import { items as itemsTable } from "@/db/schema/items";
 import { repairs as repairsTable } from "@/db/schema/repairs";
 import { transactionDetails as transactionDetailsTable } from "@/db/schema/transactions";
-import { tuneUps as tuneUpsTable } from "@/db/schema/tuneUps";
 import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 /**
@@ -63,14 +62,13 @@ export class TransactionDetailsRepositoryDrizzle {
           completed: transactionDetailsTable.completed,
           quantity: transactionDetailsTable.quantity,
           date_modified: transactionDetailsTable.date_modified,
-          // Item: itemsTable,
-          // Repair: repairsTable,
-          // TuneUp: tuneUpsTable,
+          Item: itemsTable,
+          Repair: repairsTable,
         })
         .from(transactionDetailsTable)
         .where(eq(transactionDetailsTable.transaction_id, transaction_id))
-        // .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
-        // .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+        .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
+        .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
         .orderBy(desc(transactionDetailsTable.date_modified));
 
       return result.length ? result.map((record) => this.mapToTransactionDetailsWithForeignKeys(record)) : null;
