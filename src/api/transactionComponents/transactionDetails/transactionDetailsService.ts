@@ -96,6 +96,7 @@ export class TransactionDetailsService {
     quantity: number,
     item_id?: string,
     repair_id?: string,
+    tune_up_id?: string,
   ): Promise<ServiceResponse<TransactionDetails | null>> {
     try {
       const transactionDetail = {
@@ -103,8 +104,9 @@ export class TransactionDetailsService {
         transaction_id: transaction_id,
         item_id: item_id ? item_id.trim() : undefined,
         repair_id: repair_id ? repair_id.trim() : undefined,
+        tune_up_id: tune_up_id ? tune_up_id.trim() : undefined,
         changed_by: created_by,
-        completed: repair_id === null, // always want items to be true but want repairs to start as false
+        completed: repair_id === null, // always want items to be true but want repairs/tune ups to start as false
         quantity: quantity,
         date_modified: new Date(),
       } as TransactionDetails;

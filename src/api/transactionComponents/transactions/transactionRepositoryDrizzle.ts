@@ -168,23 +168,11 @@ export class TransactionRepositoryDrizzle {
         date_created: transaction.date_created || new Date(),
       };
 
-      const [customer] = await this.db
-        .select()
-        .from(customersTable)
-        .where(eq(customersTable.customer_id, transactionWithId.customer_id))
-        .limit(1);
-      const username = customer?.email.split("@")[0];
-      const employeeResult = username
-        ? await this.db
-            .select({ id: usersTable.user_id })
-            .from(usersTable)
-            .where(eq(usersTable.username, username))
-            .limit(1)
-        : [];
+      const isEmployee = await this.isEmployee(transactionWithId.customer_id);
 
       const result = await this.db
         .insert(transactionsTable)
-        .values({ ...transactionWithId, is_employee: employeeResult.length > 0 })
+        .values({ ...transactionWithId, is_employee: isEmployee })
         .returning();
 
       // Ensure transaction_id is never null
@@ -244,6 +232,10 @@ export class TransactionRepositoryDrizzle {
         }
       }
 
+      if ("customer_id" in updateData) {
+        updateData.is_employee = await this.isEmployee(updateData.customer_id);
+      }
+
       const result = await this.db
         .update(transactionsTable)
         .set(updateData as any)
@@ -297,6 +289,23 @@ export class TransactionRepositoryDrizzle {
       logger.error(`Error getting transactions summary: ${error}`);
       throw error;
     }
+  }
+
+  private async isEmployee(customer_id: string): Promise<boolean> {
+    const [customer] = await this.db
+      .select()
+      .from(customersTable)
+      .where(eq(customersTable.customer_id, customer_id))
+      .limit(1);
+    const username = customer?.email.split("@")[0];
+    const employeeResult = username
+      ? await this.db
+          .select({ id: usersTable.user_id })
+          .from(usersTable)
+          .where(eq(usersTable.username, username))
+          .limit(1)
+      : [];
+    return employeeResult.length > 0;
   }
 }
 

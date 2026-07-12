@@ -16,6 +16,7 @@ import { bikes } from "./bikes";
 import { customers } from "./customers";
 import { items } from "./items";
 import { repairs } from "./repairs";
+import { tuneUps } from "./tuneUps";
 import { users } from "./users";
 
 export const transactions = pgTable(
@@ -91,6 +92,7 @@ export const transactionDetails = pgTable(
     transaction_id: uuid("transaction_id").notNull(),
     item_id: uuid("item_id"),
     repair_id: uuid("repair_id"),
+    tune_up_id: uuid("tune_up_id"),
     completed: boolean("completed").notNull().default(true),
     changed_by: uuid("changed_by"),
     quantity: integer("quantity").notNull(),
@@ -112,6 +114,11 @@ export const transactionDetails = pgTable(
         columns: [table.repair_id],
         foreignColumns: [repairs.repair_id],
         name: "fk_repair",
+      }).onDelete("set null"),
+      tune_up_id_fk: foreignKey({
+        columns: [table.tune_up_id],
+        foreignColumns: [tuneUps.tune_up_id],
+        name: "fk_tune_up",
       }).onDelete("set null"),
       changed_by_fk: foreignKey({
         columns: [table.changed_by],
@@ -218,4 +225,12 @@ export const transactionDetailsRelations = relations(transactionDetails, ({ one 
     fields: [transactionDetails.repair_id],
     references: [repairs.repair_id],
   }),
+  tuneUp: one(tuneUps, {
+    fields: [transactionDetails.tune_up_id],
+    references: [tuneUps.tune_up_id],
+  }),
+}));
+
+export const tuneUpsToTransactionDetailsRelations = relations(tuneUps, ({ many }) => ({
+  transactionDetails: many(transactionDetails),
 }));

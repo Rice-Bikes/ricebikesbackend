@@ -16,6 +16,7 @@ const transactionDetailRequestSchema = {
     transaction_id: { type: "number" },
     item_id: { type: ["string", "null"] },
     repair_id: { type: ["string", "null"] },
+    tune_up_id: { type: ["string", "null"] },
     changed_by: { type: "string" },
     quantity: { type: "number" },
   },

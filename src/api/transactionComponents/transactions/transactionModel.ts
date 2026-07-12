@@ -77,7 +77,12 @@ export const CreateTransactionSchema = z.object({
   body: z.object({
     // transaction_num: z.number().int().positive(), // created with serial on backend
     transaction_type: z.string(),
-    customer_id: z.string().uuid(),
+    customer_id: z.string().uuid().nullable(),
+    // If provided, the step bundle's steps are copied onto the newly
+    // created transaction (see POST /stepBundles/{id}/apply).
+    step_bundle_id: z.string().uuid().optional(),
+    // If provided, will apply the tune up to the transaction on creation
+    tune_up_id: z.string().uuid().optional(),
     // total_cost: z.number().int(), will be 0
     // description: z.string().nullable(), will be ""
     // is_completed: z.boolean(), will be false

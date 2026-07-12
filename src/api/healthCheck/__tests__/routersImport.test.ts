@@ -21,6 +21,8 @@ describe("API routers and related modules smoke import", () => {
     "../../security/permissions/permissionRouter",
     "../../security/roles/roleRouter",
     "../../security/users/userRouter",
+    "../../stepBundles/stepBundleRouter",
+    "../../steps/stepsRouter",
     "../../summary/summaryRouter",
     "../../transactionComponents/items/itemRouter",
     "../../transactionComponents/orderRequests/orderRequestsRouter",
@@ -28,6 +30,8 @@ describe("API routers and related modules smoke import", () => {
     "../../transactionComponents/transactionDetails/transactionDetailsRouter",
     "../../transactionComponents/transactionLogs/transactionLogsRouter",
     "../../transactionComponents/transactions/transactionRouter",
+    "../../tuneUpComponents/tuneUpItems/tuneUpItemRouter",
+    "../../tuneUpComponents/tuneUps/tuneUpRouter",
     "../../workflowSteps/workflowStepsRouter",
     "../../../api-docs/openAPIRouter",
 

@@ -13,6 +13,7 @@ import type * as schema from "@/db/schema";
 import { items as itemsTable } from "@/db/schema/items";
 import { repairs as repairsTable } from "@/db/schema/repairs";
 import { transactionDetails as transactionDetailsTable } from "@/db/schema/transactions";
+import { tuneUps as tuneUpsTable } from "@/db/schema/tuneUps";
 import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
 
 /**
@@ -57,12 +58,14 @@ export class TransactionDetailsRepositoryDrizzle {
           transaction_id: transactionDetailsTable.transaction_id,
           item_id: transactionDetailsTable.item_id,
           repair_id: transactionDetailsTable.repair_id,
+          tune_up_id: transactionDetailsTable.tune_up_id,
           changed_by: transactionDetailsTable.changed_by,
           completed: transactionDetailsTable.completed,
           quantity: transactionDetailsTable.quantity,
           date_modified: transactionDetailsTable.date_modified,
           // Item: itemsTable,
           // Repair: repairsTable,
+          // TuneUp: tuneUpsTable,
         })
         .from(transactionDetailsTable)
         .where(eq(transactionDetailsTable.transaction_id, transaction_id))
@@ -90,6 +93,7 @@ export class TransactionDetailsRepositoryDrizzle {
           transaction_id: transactionDetailsTable.transaction_id,
           item_id: transactionDetailsTable.item_id,
           repair_id: transactionDetailsTable.repair_id,
+          tune_up_id: transactionDetailsTable.tune_up_id,
           changed_by: transactionDetailsTable.changed_by,
           completed: transactionDetailsTable.completed,
           quantity: transactionDetailsTable.quantity,
@@ -121,6 +125,7 @@ export class TransactionDetailsRepositoryDrizzle {
           transaction_id: transactionDetailsTable.transaction_id,
           item_id: transactionDetailsTable.item_id,
           repair_id: transactionDetailsTable.repair_id,
+          tune_up_id: transactionDetailsTable.tune_up_id,
           changed_by: transactionDetailsTable.changed_by,
           completed: transactionDetailsTable.completed,
           quantity: transactionDetailsTable.quantity,
@@ -262,6 +267,7 @@ export class TransactionDetailsRepositoryDrizzle {
       transaction_id: record.transaction_id,
       item_id: record.item_id || null,
       repair_id: record.repair_id || null,
+      tune_up_id: record.tune_up_id || null,
       changed_by: record.changed_by || null,
       completed: Boolean(record.completed),
       quantity: Number(record.quantity),
@@ -293,6 +299,12 @@ export class TransactionDetailsRepositoryDrizzle {
       return {
         ...this.mapToTransactionDetails(record),
         Repair: record.Repair,
+      };
+    }
+    if (record.TuneUp) {
+      return {
+        ...this.mapToTransactionDetails(record),
+        TuneUp: record.TuneUp,
       };
     }
     return this.mapToTransactionDetails(record);

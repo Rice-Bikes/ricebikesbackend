@@ -1,6 +1,7 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 
+import { TuneUpSchema } from "@/api/tuneUpComponents/tuneUps/tuneUpModel";
 import { commonValidations } from "@/common/utils/commonValidation";
 import { ItemSchema } from "../items/itemModel";
 import { RepairSchema } from "../repairs/repairModel";
@@ -16,6 +17,7 @@ export const TransactionDetailsSchema = z.object({
   transaction_id: z.string().uuid(),
   item_id: z.string().nullable(), // upc
   repair_id: z.string().uuid().nullable(),
+  tune_up_id: z.string().uuid().nullable(),
   changed_by: z.string().uuid().nullable(),
   quantity: z.number().int(),
   completed: z.boolean(),
@@ -25,6 +27,7 @@ export const TransactionDetailsSchema = z.object({
 export const TransactionDetailsWithForeignKeysSchema = TransactionDetailsSchema.extend({
   Item: ItemSchema.optional().nullable(),
   Repair: RepairSchema.optional().nullable(),
+  TuneUp: TuneUpSchema.optional().nullable(),
 });
 
 // Input Validation for 'GET transactionDetails/:id' endpoint

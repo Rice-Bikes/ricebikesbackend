@@ -1,6 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 
 import { CustomersService, customersService } from "@/api/customer/customerService";
+import { stepBundleService } from "@/api/stepBundles/stepBundleService";
+import { tuneUpService } from "@/api/tuneUpComponents/tuneUps/tuneUpService";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import notificationTriggerService from "@/services/notificationTriggerService";
@@ -104,14 +106,51 @@ export class TransactionsService {
     }
   }
 
-  // Creates a Transaction
-  async createTransaction(transaction: Transaction): Promise<ServiceResponse<Transaction | null>> {
+  // Creates a Transaction. If stepBundleId is provided, that bundle's steps
+  // are copied onto the newly created transaction.
+  async createTransaction(
+    transaction: Transaction,
+    stepBundleId?: string,
+    tuneUpId?: string,
+  ): Promise<ServiceResponse<Transaction | null>> {
     try {
       await this.ensureRepository();
+
+      if (stepBundleId) {
+        const bundle = await stepBundleService.findById(stepBundleId);
+        if (!bundle.success) {
+          return ServiceResponse.failure("Step bundle not found", null, StatusCodes.NOT_FOUND);
+        }
+      }
+      if (tuneUpId) {
+        const tuneUp = await tuneUpService.findById(tuneUpId);
+        if (!tuneUp.success) {
+          return ServiceResponse.failure("Tune up not found", null, StatusCodes.NOT_FOUND);
+        }
+      }
+
       const newTransaction = await this.TransactionRepository.createTransaction(transaction);
       if (!newTransaction) {
         return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
       }
+
+      if (stepBundleId) {
+        const applyResult = await stepBundleService.applyToTransaction(stepBundleId, newTransaction.transaction_id);
+        if (!applyResult.success) {
+          logger.error(
+            `Failed to apply step bundle ${stepBundleId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
+          );
+        }
+      }
+      if (tuneUpId) {
+        const applyResult = await tuneUpService.applyToTransaction(tuneUpId, null, newTransaction.transaction_id);
+        if (!applyResult.success) {
+          logger.error(
+            `Failed to apply tune up ${tuneUpId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
+          );
+        }
+      }
+
       return ServiceResponse.success<Transaction>("Transaction found", newTransaction);
     } catch (ex) {
       const errorMessage = `Error creating Transaction with content ${transaction}:, ${(ex as Error).message}`;

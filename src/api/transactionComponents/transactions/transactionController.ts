@@ -34,8 +34,9 @@ class TransactionsController {
   };
 
   public createTransaction: RequestHandler = async (req: Request, res: Response) => {
+    const { step_bundle_id, tune_up_id, ...body } = req.body;
     const newTransaction = {
-      ...req.body,
+      ...body,
       date_created: new Date(),
       total_cost: 0,
       description: "",
@@ -49,7 +50,7 @@ class TransactionsController {
       is_waiting_on_email: false,
       is_employee: false,
     } as Transaction;
-    const serviceResponse = await transactionsService.createTransaction(newTransaction);
+    const serviceResponse = await transactionsService.createTransaction(newTransaction, step_bundle_id, tune_up_id);
     return handleServiceResponse(serviceResponse, res);
   };
 
