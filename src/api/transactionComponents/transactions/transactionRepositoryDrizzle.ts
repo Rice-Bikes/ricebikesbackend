@@ -168,7 +168,7 @@ export class TransactionRepositoryDrizzle {
         date_created: transaction.date_created || new Date(),
       };
 
-      const isEmployee = await this.isEmployee(transactionWithId.customer_id);
+      const isEmployee = transactionWithId.customer_id ? await this.isEmployee(transactionWithId.customer_id) : false;
 
       const result = await this.db
         .insert(transactionsTable)
@@ -297,7 +297,10 @@ export class TransactionRepositoryDrizzle {
       .from(customersTable)
       .where(eq(customersTable.customer_id, customer_id))
       .limit(1);
-    const username = customer?.email.split("@")[0];
+    if (!customer || !customer.email) {
+      return false;
+    }
+    const username = customer.email.split("@")[0];
     const employeeResult = username
       ? await this.db
           .select({ id: usersTable.user_id })

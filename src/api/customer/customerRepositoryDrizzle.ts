@@ -68,7 +68,7 @@ export class CustomersRepositoryDrizzle {
       const result = await db.update(customers).set(customer).where(eq(customers.customer_id, id)).returning();
 
       if (result.length === 0) {
-        throw new Error(`Customer with ID ${customer.customer_id} not found`);
+        throw new Error(`Customer with ID ${id} not found`);
       }
 
       return result[0];
