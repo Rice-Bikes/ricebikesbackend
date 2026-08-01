@@ -107,12 +107,16 @@ export class TransactionsService {
   }
 
   // Creates a Transaction. If stepBundleId is provided, that bundle's steps
-  // are copied onto the newly created transaction.
+  // are copied onto the newly created transaction. If quantity is greater
+  // than 1, that many independent copies of the transaction are created
+  // (each with its own step bundle/tune up applied), and an array is
+  // returned instead of a single transaction.
   async createTransaction(
     transaction: Transaction,
     stepBundleId?: string,
     tuneUpId?: string,
-  ): Promise<ServiceResponse<Transaction | null>> {
+    quantity = 1,
+  ): Promise<ServiceResponse<Transaction | Transaction[] | null>> {
     try {
       await this.ensureRepository();
 
@@ -129,29 +133,37 @@ export class TransactionsService {
         }
       }
 
-      const newTransaction = await this.TransactionRepository.createTransaction(transaction);
-      if (!newTransaction) {
-        return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
+      const createdTransactions: Transaction[] = [];
+      for (let i = 0; i < quantity; i++) {
+        const newTransaction = await this.TransactionRepository.createTransaction(transaction);
+        if (!newTransaction) {
+          return ServiceResponse.failure("Transaction not found", null, StatusCodes.NOT_FOUND);
+        }
+
+        if (stepBundleId) {
+          const applyResult = await stepBundleService.applyToTransaction(stepBundleId, newTransaction.transaction_id);
+          if (!applyResult.success) {
+            logger.error(
+              `Failed to apply step bundle ${stepBundleId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
+            );
+          }
+        }
+        if (tuneUpId) {
+          const applyResult = await tuneUpService.applyToTransaction(tuneUpId, null, newTransaction.transaction_id);
+          if (!applyResult.success) {
+            logger.error(
+              `Failed to apply tune up ${tuneUpId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
+            );
+          }
+        }
+
+        createdTransactions.push(newTransaction);
       }
 
-      if (stepBundleId) {
-        const applyResult = await stepBundleService.applyToTransaction(stepBundleId, newTransaction.transaction_id);
-        if (!applyResult.success) {
-          logger.error(
-            `Failed to apply step bundle ${stepBundleId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
-          );
-        }
+      if (createdTransactions.length === 1) {
+        return ServiceResponse.success<Transaction>("Transaction found", createdTransactions[0]);
       }
-      if (tuneUpId) {
-        const applyResult = await tuneUpService.applyToTransaction(tuneUpId, null, newTransaction.transaction_id);
-        if (!applyResult.success) {
-          logger.error(
-            `Failed to apply tune up ${tuneUpId} to transaction ${newTransaction.transaction_id}: ${applyResult.message}`,
-          );
-        }
-      }
-
-      return ServiceResponse.success<Transaction>("Transaction found", newTransaction);
+      return ServiceResponse.success<Transaction[]>("Transactions created", createdTransactions);
     } catch (ex) {
       const errorMessage = `Error creating Transaction with content ${transaction}:, ${(ex as Error).message}`;
       logger.error(errorMessage);

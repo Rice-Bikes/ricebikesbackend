@@ -63,7 +63,7 @@ transactionDetailsRegistry.registerPath({
       },
     },
   },
-  responses: createApiResponse(TransactionDetailsSchema, "Success"),
+  responses: createApiResponse(TransactionDetailsWithForeignKeysSchema, "Success"),
 });
 
 transactionDetailsRouter.post(

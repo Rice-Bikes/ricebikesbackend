@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
-import type { AggOrderRequest, CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
+import type { AggOrderRequest, CreateOrderRequests, OrderRequest, PatchOrderRequest } from "./orderRequestsModel";
 import { OrderRequestsRepository } from "./orderRequestsRepository";
 
 export class OrderRequestsService {
@@ -51,14 +51,28 @@ export class OrderRequestsService {
   }
 
   // Creates a item
-  async createOrderRequest(item: OrderRequest): Promise<ServiceResponse<OrderRequest | null>> {
+  async createOrderRequest(item: OrderRequest): Promise<ServiceResponse<AggOrderRequest | null>> {
     try {
       const newOrderRequest = await this.OrderRequestsRepository.create(item);
-      return ServiceResponse.success<OrderRequest>("OrderRequest created", newOrderRequest);
+      return ServiceResponse.success<AggOrderRequest>("OrderRequest created", newOrderRequest);
     } catch (ex) {
       const errorMessage = `Error creating item: ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure("An error occurred while creating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async patchOrderRequest(
+    order_request_id: string,
+    patch: PatchOrderRequest["body"],
+  ): Promise<ServiceResponse<AggOrderRequest | null>> {
+    try {
+      const updatedOrderRequest = await this.OrderRequestsRepository.patch(order_request_id, patch);
+      return ServiceResponse.success<AggOrderRequest>("OrderRequest updated", updatedOrderRequest);
+    } catch (ex) {
+      const errorMessage = `Error patching order request ${order_request_id}: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure("An error occurred while updating item.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
 

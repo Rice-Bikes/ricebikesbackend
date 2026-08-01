@@ -8,13 +8,20 @@ import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import orderRequestsController from "./orderRequestsController";
-import { CreateOrderRequestsSchema, GetOrderRequestsSchema, OrderRequestSchema } from "./orderRequestsModel";
+import {
+  AggOrderRequestSchema,
+  CreateOrderRequestsSchema,
+  GetOrderRequestsSchema,
+  OrderRequestSchema,
+  PatchOrderRequestSchema,
+} from "./orderRequestsModel";
 
 export const OrderRequestsRegistry = new OpenAPIRegistry();
 export const OrderRequestsRouter: Router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 OrderRequestsRegistry.register("OrderRequest", OrderRequestSchema);
+OrderRequestsRegistry.register("AggOrderRequest", AggOrderRequestSchema);
 
 OrderRequestsRegistry.registerPath({
   method: "get",
@@ -50,7 +57,7 @@ OrderRequestsRegistry.registerPath({
       },
     },
   },
-  responses: createApiResponse(OrderRequestSchema, "Success"),
+  responses: createApiResponse(AggOrderRequestSchema, "Success"),
 });
 
 OrderRequestsRouter.post(
@@ -79,6 +86,29 @@ OrderRequestsRouter.put(
   "/:request_id",
   [validateRequest(CreateOrderRequestsSchema)],
   orderRequestsController.updateOrderRequests,
+);
+
+OrderRequestsRegistry.registerPath({
+  method: "patch",
+  path: "/OrderRequests/{order_request_id}",
+  summary: "Partially update an OrderRequests in the database",
+  tags: ["OrderRequests"],
+  request: {
+    params: PatchOrderRequestSchema.shape.params,
+    body: {
+      description: "Partial OrderRequest object",
+      content: {
+        "application/json": { schema: PatchOrderRequestSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(AggOrderRequestSchema, "Success"),
+});
+
+OrderRequestsRouter.patch(
+  "/:order_request_id",
+  [validateRequest(PatchOrderRequestSchema)],
+  orderRequestsController.patchOrderRequests,
 );
 
 OrderRequestsRegistry.registerPath({

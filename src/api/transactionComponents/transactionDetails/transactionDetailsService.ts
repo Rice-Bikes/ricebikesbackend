@@ -2,7 +2,10 @@ import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
-import type { TransactionDetails } from "../transactionDetails/transactionDetailsModel";
+import type {
+  TransactionDetails,
+  TransactionDetailsWithForeignKeys,
+} from "../transactionDetails/transactionDetailsModel";
 import { TransactionDetailsRepositoryDrizzle } from "./transactionDetailsRepositoryDrizzle";
 
 export class TransactionDetailsService {
@@ -97,7 +100,7 @@ export class TransactionDetailsService {
     item_id?: string,
     repair_id?: string,
     tune_up_id?: string,
-  ): Promise<ServiceResponse<TransactionDetails | null>> {
+  ): Promise<ServiceResponse<TransactionDetailsWithForeignKeys | null>> {
     try {
       const transactionDetail = {
         transaction_detail_id: crypto.randomUUID(),
@@ -117,7 +120,10 @@ export class TransactionDetailsService {
       }
       console.log(singeTransactionDetails);
 
-      return ServiceResponse.success<TransactionDetails>("singeTransactionDetails created", singeTransactionDetails);
+      return ServiceResponse.success<TransactionDetailsWithForeignKeys>(
+        "singeTransactionDetails created",
+        singeTransactionDetails,
+      );
     } catch (ex) {
       const errorMessage = `Error creating singeTransactionDetails with id ${transaction_id}:, ${(ex as Error).message}`;
       logger.error(errorMessage);

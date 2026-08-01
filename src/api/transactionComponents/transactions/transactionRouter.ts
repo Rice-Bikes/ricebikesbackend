@@ -45,7 +45,8 @@ transactionRouter.get("/:id", validateRequest(GetTransactionSchema), transaction
 transactionRegistry.registerPath({
   method: "post",
   path: "/transactions",
-  summary: "Create a transaction in the database",
+  summary:
+    "Create a transaction in the database. If quantity is greater than 1, creates that many copies and returns an array instead of a single transaction.",
   tags: ["Transactions"],
   request: {
     body: {
@@ -55,7 +56,7 @@ transactionRegistry.registerPath({
       },
     },
   },
-  responses: createApiResponse(TransactionSchema, "Success"),
+  responses: createApiResponse(z.union([TransactionSchema, z.array(TransactionSchema)]), "Success"),
 });
 
 transactionRouter.post("/", [validateRequest(CreateTransactionSchema)], transactionsController.createTransaction);

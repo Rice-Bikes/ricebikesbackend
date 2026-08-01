@@ -1,3 +1,4 @@
+import { serviceLogger as logger } from "@/common/utils/logger";
 import type { Request, RequestHandler, Response } from "express";
 import { Router } from "express";
 import multer from "multer";
@@ -5,7 +6,7 @@ import multer from "multer";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import { Or } from "@prisma/client/runtime/library";
 import { orderRequestsService } from "./orderRequestService";
-import type { CreateOrderRequests, OrderRequest } from "./orderRequestsModel";
+import type { CreateOrderRequests, OrderRequest, PatchOrderRequest } from "./orderRequestsModel";
 
 const upload = multer();
 const router = Router();
@@ -29,6 +30,13 @@ class OrderRequestsController {
       date_created: new Date(),
     } as OrderRequest;
     const serviceResponse = await orderRequestsService.createOrderRequest(orderRequests);
+    return handleServiceResponse(serviceResponse, res);
+  };
+
+  public patchOrderRequests: RequestHandler = async (req: Request, res: Response) => {
+    const order_request_id = req.params.order_request_id as string;
+    const patch = req.body as PatchOrderRequest["body"];
+    const serviceResponse = await orderRequestsService.patchOrderRequest(order_request_id, patch);
     return handleServiceResponse(serviceResponse, res);
   };
 

@@ -3,7 +3,7 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { TransactionDetailsSchema } from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
+import { TransactionDetailsWithForeignKeysSchema } from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { tuneUpController } from "./tuneUpController";
 import {
@@ -103,7 +103,7 @@ tuneUpRegistry.registerPath({
       },
     },
   },
-  responses: createApiResponse(z.array(TransactionDetailsSchema), "Success"),
+  responses: createApiResponse(z.array(TransactionDetailsWithForeignKeysSchema), "Success"),
 });
 
 tuneUpRouter.post("/:id/apply", validateRequest(ApplyTuneUpSchema), tuneUpController.applyTuneUp);

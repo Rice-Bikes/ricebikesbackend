@@ -147,7 +147,7 @@ export class TransactionDetailsRepositoryDrizzle {
   /**
    * Create a new transaction detail
    */
-  async createAsync(transactionDetail: TransactionDetails): Promise<TransactionDetails> {
+  async createAsync(transactionDetail: TransactionDetails): Promise<TransactionDetailsWithForeignKeys> {
     try {
       logger.debug({ transactionDetail }, "Creating transaction detail");
 
@@ -177,8 +177,27 @@ export class TransactionDetailsRepositoryDrizzle {
         throw new Error("Failed to create transaction detail");
       }
 
+      const [withForeignKeys] = await this.db
+        .select({
+          transaction_detail_id: transactionDetailsTable.transaction_detail_id,
+          transaction_id: transactionDetailsTable.transaction_id,
+          item_id: transactionDetailsTable.item_id,
+          repair_id: transactionDetailsTable.repair_id,
+          tune_up_id: transactionDetailsTable.tune_up_id,
+          changed_by: transactionDetailsTable.changed_by,
+          completed: transactionDetailsTable.completed,
+          quantity: transactionDetailsTable.quantity,
+          date_modified: transactionDetailsTable.date_modified,
+          Item: itemsTable,
+          Repair: repairsTable,
+        })
+        .from(transactionDetailsTable)
+        .where(eq(transactionDetailsTable.transaction_detail_id, result[0].transaction_detail_id))
+        .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
+        .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id));
+
       logger.debug({ transactionDetailId: result[0].transaction_detail_id }, "Transaction detail created successfully");
-      return this.mapToTransactionDetails(result[0]);
+      return this.mapToTransactionDetailsWithForeignKeys(withForeignKeys);
     } catch (error) {
       logger.error({ error }, "Error creating transaction detail");
       throw error;

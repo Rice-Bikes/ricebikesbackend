@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-import type { TransactionDetails } from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
+import type { TransactionDetailsWithForeignKeys } from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
 import type { CreateTuneUpInput, TuneUp, UpdateTuneUpInput } from "@/api/tuneUpComponents/tuneUps/tuneUpModel";
 import type { TuneUpRepositoryDrizzle } from "@/api/tuneUpComponents/tuneUps/tuneUpRepositoryDrizzle";
 import {
@@ -130,7 +130,7 @@ export class TuneUpService {
     tune_up_id: string,
     changed_by: string | null,
     transaction_id: string,
-  ): Promise<ServiceResponse<TransactionDetails[] | null>> {
+  ): Promise<ServiceResponse<TransactionDetailsWithForeignKeys[] | null>> {
     try {
       await this.ensureRepository();
 
@@ -145,7 +145,7 @@ export class TuneUpService {
       }
 
       const createdRepairs = await this.TuneUpRepository.applyToTransaction(tune_up_id, changed_by, transaction_id);
-      return ServiceResponse.success<TransactionDetails[]>(
+      return ServiceResponse.success<TransactionDetailsWithForeignKeys[]>(
         "Tune up applied successfully",
         createdRepairs,
         StatusCodes.CREATED,

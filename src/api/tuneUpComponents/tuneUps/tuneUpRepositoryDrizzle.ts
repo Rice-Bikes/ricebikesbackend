@@ -1,4 +1,7 @@
-import type { TransactionDetails } from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
+import type {
+  TransactionDetails,
+  TransactionDetailsWithForeignKeys,
+} from "@/api/transactionComponents/transactionDetails/transactionDetailsModel";
 import type { CreateTuneUpInput, TuneUp, UpdateTuneUpInput } from "@/api/tuneUpComponents/tuneUps/tuneUpModel";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { db } from "@/db/client";
@@ -7,7 +10,7 @@ import { repairs } from "@/db/schema/repairs";
 import { transactionDetails, transactions } from "@/db/schema/transactions";
 import { tuneUpItems } from "@/db/schema/tuneUpItems";
 import { tuneUps } from "@/db/schema/tuneUps";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 export class TuneUpRepositoryDrizzle {
@@ -135,16 +138,16 @@ export class TuneUpRepositoryDrizzle {
     tune_up_id: string,
     changed_by: string | null,
     transaction_id: string,
-  ): Promise<TransactionDetails[]> {
+  ): Promise<TransactionDetailsWithForeignKeys[]> {
     try {
       return await this.db.transaction(async (tx) => {
-        const items = await tx.select().from(tuneUpItems).where(eq(tuneUpItems.tune_up_id, tune_up_id));
+        const tuneUpItemRecords = await tx.select().from(tuneUpItems).where(eq(tuneUpItems.tune_up_id, tune_up_id));
 
-        if (items.length === 0) {
+        if (tuneUpItemRecords.length === 0) {
           return [];
         }
 
-        const values = items.map((item) => {
+        const values = tuneUpItemRecords.map((item) => {
           return {
             transaction_detail_id: crypto.randomUUID(),
             transaction_id,
@@ -160,7 +163,23 @@ export class TuneUpRepositoryDrizzle {
 
         const inserted = await tx.insert(transactionDetails).values(values).returning();
 
-        return inserted.map((record) => this.mapToTransactionDetails(record));
+        const repairRecords = await tx
+          .select()
+          .from(repairs)
+          .where(
+            inArray(
+              repairs.repair_id,
+              tuneUpItemRecords.map((item) => item.repair_id),
+            ),
+          );
+        const repairsById = new Map(repairRecords.map((repair) => [repair.repair_id, repair]));
+
+        return inserted.map((record) =>
+          this.mapToTransactionDetailsWithForeignKeys({
+            ...record,
+            Repair: record.repair_id ? repairsById.get(record.repair_id) : null,
+          }),
+        );
       });
     } catch (error) {
       logger.error({ error, tune_up_id, transaction_id }, "[TuneUpsRepositoryDrizzle] applyToTransaction error");
@@ -184,5 +203,15 @@ export class TuneUpRepositoryDrizzle {
       quantity: Number(record.quantity),
       date_modified: record.date_modified,
     };
+  }
+
+  private mapToTransactionDetailsWithForeignKeys(record: any): TransactionDetailsWithForeignKeys {
+    if (record.Repair) {
+      return {
+        ...this.mapToTransactionDetails(record),
+        Repair: record.Repair,
+      };
+    }
+    return this.mapToTransactionDetails(record);
   }
 }

@@ -83,6 +83,10 @@ export const CreateTransactionSchema = z.object({
     step_bundle_id: z.string().uuid().optional(),
     // If provided, will apply the tune up to the transaction on creation
     tune_up_id: z.string().uuid().optional(),
+    // If provided and greater than 1, creates that many independent copies
+    // of this transaction (each gets its own transaction_id/transaction_num
+    // and, if requested, its own step bundle/tune up applied).
+    quantity: z.coerce.number().int().positive().max(100).optional(),
     // total_cost: z.number().int(), will be 0
     // description: z.string().nullable(), will be ""
     // is_completed: z.boolean(), will be false
