@@ -2,7 +2,7 @@ import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
 import { StatusCodes } from "http-status-codes";
 
-import type { User, UserRole } from "./userModel";
+import type { UpdateUserInput, User, UserRole } from "./userModel";
 // Removed unused Prisma repository import
 import type { UsersRepositoryDrizzle } from "./userRepositoryDrizzle";
 import { createUserRepository, createUserRepositorySync } from "./userRepositoryFactory";
@@ -93,7 +93,7 @@ export class UsersService {
   }
 
   // Updates a user
-  async updateUser(id: string, user: User): Promise<ServiceResponse<User | null>> {
+  async updateUser(id: string, user: UpdateUserInput): Promise<ServiceResponse<User | null>> {
     try {
       await this.ensureRepository();
       const updatedUser = await this.UsersRepository.update(id, user);

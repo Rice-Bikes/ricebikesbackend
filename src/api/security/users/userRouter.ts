@@ -59,15 +59,19 @@ userRouter.post("/", [validateRequest(CreateUserSchema)], userController.createU
 userRegistry.registerPath({
   method: "patch",
   path: "/users/{id}",
-  summary: "Update the active status of a user in the database (wip)",
-  tags: ["User"],
+  summary: "Update the active status of a user in the database",
   request: {
     params: PatchUserSchema.shape.params,
+    body: {
+      content: {
+        "application/json": { schema: PatchUserSchema.shape.body },
+      },
+    },
   },
   responses: createApiResponse(UserSchema, "Success"),
 });
 
-userRouter.patch("/:id", [requestLogger[1], validateRequest(CreateUserSchema)], userController.updateUser);
+userRouter.patch("/:id", [requestLogger[1], validateRequest(PatchUserSchema)], userController.updateUser);
 
 userRegistry.registerPath({
   method: "delete",

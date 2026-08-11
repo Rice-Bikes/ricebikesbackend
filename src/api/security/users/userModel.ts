@@ -35,10 +35,10 @@ export const CreateUserSchema = z.object({
 export const PatchUserSchema = z.object({
   params: z.object({ id: commonValidations.uuid }),
   body: z.object({
-    username: z.string(),
-    firstname: z.string(),
-    lastname: z.string(),
-    active: z.boolean(),
+    username: z.string().optional(),
+    firstname: z.string().optional(),
+    lastname: z.string().optional(),
+    active: z.boolean().optional(),
   }),
 });
 
@@ -46,3 +46,5 @@ export const UserRoleSchema = z.object({
   user_id: z.string().uuid(),
   role_id: z.string().uuid(),
 });
+
+export type UpdateUserInput = Partial<Omit<User, "user_id">>;

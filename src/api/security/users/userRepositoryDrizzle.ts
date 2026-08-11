@@ -9,7 +9,7 @@ import { permissions, rolePermissions, roles, userRoles, users } from "@/db/sche
 import { and, eq, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type { Permission } from "../permissions/permissionModel";
-import type { User, UserRole } from "./userModel";
+import type { UpdateUserInput, User, UserRole } from "./userModel";
 
 export class UsersRepositoryDrizzle {
   private db: PostgresJsDatabase<typeof schema>;
@@ -118,7 +118,7 @@ export class UsersRepositoryDrizzle {
     }
   }
 
-  async update(id: string, userData: User): Promise<User> {
+  async update(id: string, userData: UpdateUserInput): Promise<User> {
     try {
       logger.debug(
         {
