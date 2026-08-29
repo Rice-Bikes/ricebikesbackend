@@ -116,7 +116,7 @@ export const PatchTransactionSchema = z.object({
     is_beer_bike: z.boolean().optional(),
     is_reserved: z.boolean().optional(),
     is_waiting_on_email: z.boolean().optional(),
-    date_completed: z.string().datetime().optional(),
+    date_completed: z.string().datetime().nullable().optional(),
   }),
 });
 
