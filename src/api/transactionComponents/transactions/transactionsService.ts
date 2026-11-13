@@ -13,7 +13,7 @@ import type {
   TransactionsSummary,
   UpdateTransaction,
 } from "../transactions/transactionModel";
-import type { TransactionRepositoryDrizzle } from "../transactions/transactionRepositoryDrizzle";
+import type { TransactionFilters, TransactionRepositoryDrizzle } from "../transactions/transactionRepositoryDrizzle";
 import {
   createTransactionRepository,
   createTransactionRepositorySync,
@@ -67,10 +67,14 @@ export class TransactionsService {
     }
   }
 
-  async findAllAgg(after_id: number, page_limit: number): Promise<ServiceResponse<AggTransaction[] | null>> {
+  async findAllAgg(
+    after_id: number,
+    page_limit: number,
+    filters: TransactionFilters = {},
+  ): Promise<ServiceResponse<AggTransaction[] | null>> {
     try {
       await this.ensureRepository();
-      const transactions = await this.TransactionRepository.findAllAggregate(after_id, page_limit);
+      const transactions = await this.TransactionRepository.findAllAggregate(after_id, page_limit, filters);
       if (!transactions || transactions.length === 0) {
         return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
       }

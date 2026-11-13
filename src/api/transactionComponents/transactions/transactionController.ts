@@ -5,6 +5,20 @@ import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import type { AggTransaction, Transaction, UpdateTransaction } from "../transactions/transactionModel";
 import { transactionsService } from "../transactions/transactionsService";
 
+// "all" (or any other unrecognized value) leaves the column unfiltered.
+function parseBooleanQuery(value: unknown, fallback: boolean | undefined): boolean | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  return undefined;
+}
+
 class TransactionsController {
   public getTransactions: RequestHandler = async (_req: Request, res: Response) => {
     let after_id: number;
@@ -18,9 +32,16 @@ class TransactionsController {
     }
     const page_limit = Number.parseInt(_req.query.page_limit as string, 10);
 
+    // Both default to false so the listing keeps returning open transactions
+    // when the caller does not ask for anything else.
+    const filters = {
+      is_completed: parseBooleanQuery(_req.query.is_completed, false),
+      is_paid: parseBooleanQuery(_req.query.is_paid, false),
+    };
+
     let serviceResponse: ServiceResponse<Transaction[] | AggTransaction[] | null>;
     if (_req.query.aggregate) {
-      serviceResponse = await transactionsService.findAllAgg(after_id, page_limit);
+      serviceResponse = await transactionsService.findAllAgg(after_id, page_limit, filters);
     } else {
       serviceResponse = await transactionsService.findAll(after_id, page_limit);
     }

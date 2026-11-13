@@ -66,6 +66,9 @@ export const GetAllTransactionSchema = z.object({
     after_id: z.number().int().positive().optional(),
     type: z.string().optional(),
     aggregate: z.boolean(),
+    // Filter on the column; omitted defaults to false.
+    is_completed: z.boolean().optional(),
+    is_paid: z.boolean().optional(),
   }),
 });
 

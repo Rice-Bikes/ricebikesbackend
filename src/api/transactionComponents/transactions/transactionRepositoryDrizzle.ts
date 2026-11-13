@@ -18,6 +18,11 @@ import { orderRequests as orderRequestsTable, transactions as transactionsTable 
 import { users as usersTable } from "@/db/schema/users";
 import type { AggTransaction, Transaction, TransactionsSummary, UpdateTransaction } from "./transactionModel";
 
+export interface TransactionFilters {
+  is_completed?: boolean;
+  is_paid?: boolean;
+}
+
 export class TransactionRepositoryDrizzle {
   private db: PostgresJsDatabase<typeof schema>;
 
@@ -51,8 +56,20 @@ export class TransactionRepositoryDrizzle {
     }
   }
 
-  async findAllAggregate(after_id: number, page_limit: number): Promise<AggTransaction[]> {
+  async findAllAggregate(
+    after_id: number,
+    page_limit: number,
+    filters: TransactionFilters = {},
+  ): Promise<AggTransaction[]> {
     try {
+      const conditions = [lt(transactionsTable.transaction_num, after_id)];
+      if (filters.is_completed !== undefined) {
+        conditions.push(eq(transactionsTable.is_completed, filters.is_completed));
+      }
+      if (filters.is_paid !== undefined) {
+        conditions.push(eq(transactionsTable.is_paid, filters.is_paid));
+      }
+
       const transactions = await this.db
         .select({
           transaction: transactionsTable,
@@ -62,13 +79,7 @@ export class TransactionRepositoryDrizzle {
         .from(transactionsTable)
         .leftJoin(bikesTable, eq(transactionsTable.bike_id, bikesTable.bike_id))
         .leftJoin(customersTable, eq(transactionsTable.customer_id, customersTable.customer_id))
-        .where(
-          and(
-            lt(transactionsTable.transaction_num, after_id),
-            eq(transactionsTable.is_completed, false),
-            eq(transactionsTable.is_paid, false),
-          ),
-        )
+        .where(and(...conditions))
         .orderBy(
           desc(transactionsTable.is_urgent),
           desc(transactionsTable.is_beer_bike),
