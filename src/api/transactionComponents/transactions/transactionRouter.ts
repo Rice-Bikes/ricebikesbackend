@@ -23,7 +23,7 @@ transactionRegistry.registerPath({
   method: "get",
   path: "/transactions",
   summary:
-    "Get all transactions from the database, with optional query parameters for number of transactions and offset",
+    "Get a page of transactions. The optional `view` selects a named filter (main, refurbs, beerBikes, builds, waiting, paid) and its ordering: waiting/paid show finished work ordered most-recently-completed first, the others show outstanding work ordered urgent first, waiting-on-email last, oldest first in between. Pass the response's next_cursor back as `cursor` for the following page; a cursor is only valid for the view that issued it.",
   tags: ["Transactions"],
   request: { query: GetAllTransactionSchema.shape.query },
   responses: createApiResponse(z.array(TransactionSchema), "Success"),

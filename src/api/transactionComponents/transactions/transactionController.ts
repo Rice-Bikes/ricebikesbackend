@@ -2,48 +2,59 @@ import type { Request, RequestHandler, Response } from "express";
 
 import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
+import { InvalidCursorError, type TransactionCursor, decodeCursor } from "../transactions/transactionCursor";
 import type { AggTransaction, Transaction, UpdateTransaction } from "../transactions/transactionModel";
+import { TRANSACTION_VIEWS, type TransactionView, isTransactionView } from "../transactions/transactionViews";
 import { transactionsService } from "../transactions/transactionsService";
-
-// "all" (or any other unrecognized value) leaves the column unfiltered.
-function parseBooleanQuery(value: unknown, fallback: boolean | undefined): boolean | undefined {
-  if (value === undefined) {
-    return fallback;
-  }
-  if (value === "true") {
-    return true;
-  }
-  if (value === "false") {
-    return false;
-  }
-  return undefined;
-}
 
 class TransactionsController {
   public getTransactions: RequestHandler = async (_req: Request, res: Response) => {
-    let after_id: number;
-    if (!_req.query.after_id) {
-      after_id = 2147483647;
-    } else {
-      after_id = Number.parseInt(_req.query.after_id as string, 10);
-    }
     if (!_req.query.page_limit) {
-      return res.status(400).send("Invalid url params, requires page limit and cursor");
+      return res.status(400).send("Invalid url params, requires page limit");
     }
     const page_limit = Number.parseInt(_req.query.page_limit as string, 10);
+    if (!Number.isInteger(page_limit) || page_limit <= 0) {
+      return res.status(400).send("page_limit must be a positive integer");
+    }
 
-    // Both default to false so the listing keeps returning open transactions
-    // when the caller does not ask for anything else.
-    const filters = {
-      is_completed: parseBooleanQuery(_req.query.is_completed, false),
-      is_paid: parseBooleanQuery(_req.query.is_paid, false),
-    };
+    // The view selects both the filter and the ordering. Omitting it applies
+    // no filter at all rather than guessing at one.
+    let view: TransactionView | null = null;
+    if (_req.query.view !== undefined) {
+      if (!isTransactionView(_req.query.view)) {
+        return res.status(400).send(`view must be one of: ${TRANSACTION_VIEWS.join(", ")}`);
+      }
+      view = _req.query.view;
+    }
+
+    // Employee transactions are hidden unless explicitly asked for.
+    let show_employees = false;
+    if (_req.query.show_employees !== undefined) {
+      if (_req.query.show_employees !== "true" && _req.query.show_employees !== "false") {
+        return res.status(400).send('show_employees must be "true" or "false"');
+      }
+      show_employees = _req.query.show_employees === "true";
+    }
+
+    let cursor: TransactionCursor | null = null;
+    if (_req.query.cursor) {
+      try {
+        cursor = decodeCursor(_req.query.cursor as string, view, show_employees);
+      } catch (err) {
+        if (err instanceof InvalidCursorError) {
+          return res.status(400).send(err.message);
+        }
+        throw err;
+      }
+    }
+
+    const options = { page_limit, cursor, view, show_employees };
 
     let serviceResponse: ServiceResponse<Transaction[] | AggTransaction[] | null>;
     if (_req.query.aggregate) {
-      serviceResponse = await transactionsService.findAllAgg(after_id, page_limit, filters);
+      serviceResponse = await transactionsService.findAllAgg(options);
     } else {
-      serviceResponse = await transactionsService.findAll(after_id, page_limit);
+      serviceResponse = await transactionsService.findAll(options);
     }
     return handleServiceResponse(serviceResponse, res);
   };

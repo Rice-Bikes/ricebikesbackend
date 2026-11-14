@@ -13,7 +13,10 @@ import type {
   TransactionsSummary,
   UpdateTransaction,
 } from "../transactions/transactionModel";
-import type { TransactionFilters, TransactionRepositoryDrizzle } from "../transactions/transactionRepositoryDrizzle";
+import type {
+  ListTransactionsOptions,
+  TransactionRepositoryDrizzle,
+} from "../transactions/transactionRepositoryDrizzle";
 import {
   createTransactionRepository,
   createTransactionRepositorySync,
@@ -48,14 +51,17 @@ export class TransactionsService {
 
   // Retrieves all Transactions from the database
 
-  async findAll(after_id: number, page_limit: number): Promise<ServiceResponse<Transaction[] | null>> {
+  async findAll(options: ListTransactionsOptions): Promise<ServiceResponse<Transaction[] | null>> {
     try {
       await this.ensureRepository();
-      const transactions = await this.TransactionRepository.findAll(after_id, page_limit);
-      if (!transactions || transactions.length === 0) {
-        return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
-      }
-      return ServiceResponse.success<Transaction[]>("Transactions found", transactions);
+      const { transactions, next_cursor, total } = await this.TransactionRepository.findAll(options);
+      // An empty page is a valid result for a collection, not a missing
+      // resource: a filter that matches nothing, or paging past the end,
+      // returns 200 with an empty list rather than 404.
+      return ServiceResponse.success<Transaction[]>("Transactions found", transactions ?? [], StatusCodes.OK, {
+        next_cursor,
+        total,
+      });
     } catch (ex) {
       const errorMessage = `Error finding all Transactions: $${(ex as Error).message}`;
       logger.error(errorMessage);
@@ -67,18 +73,15 @@ export class TransactionsService {
     }
   }
 
-  async findAllAgg(
-    after_id: number,
-    page_limit: number,
-    filters: TransactionFilters = {},
-  ): Promise<ServiceResponse<AggTransaction[] | null>> {
+  async findAllAgg(options: ListTransactionsOptions): Promise<ServiceResponse<AggTransaction[] | null>> {
     try {
       await this.ensureRepository();
-      const transactions = await this.TransactionRepository.findAllAggregate(after_id, page_limit, filters);
-      if (!transactions || transactions.length === 0) {
-        return ServiceResponse.failure("No transactions found", null, StatusCodes.NOT_FOUND);
-      }
-      return ServiceResponse.success<AggTransaction[]>("Transactions found", transactions);
+      const { transactions, next_cursor, total } = await this.TransactionRepository.findAllAggregate(options);
+      // See findAll: an empty page is a 200 with an empty list, not a 404.
+      return ServiceResponse.success<AggTransaction[]>("Transactions found", transactions ?? [], StatusCodes.OK, {
+        next_cursor,
+        total,
+      });
     } catch (ex) {
       const errorMessage = `Error finding all Transactions: $${(ex as Error).message}`;
       logger.error(errorMessage);

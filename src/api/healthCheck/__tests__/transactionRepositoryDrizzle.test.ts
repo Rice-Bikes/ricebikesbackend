@@ -24,30 +24,41 @@ describe("TransactionRepositoryDrizzle", () => {
     } as any;
 
     const mockDb: any = {
-      select: () => ({
-        from: () => ({
-          where: () => ({
-            orderBy: () => ({
-              limit: () => Promise.resolve([txRow]),
-            }),
-          }),
-        }),
-      }),
+      // select({ count }) is the total query; select({ transaction }) is the page.
+      select: (arg?: any) =>
+        arg?.count
+          ? { from: () => ({ where: () => Promise.resolve([{ count: 42 }]) }) }
+          : {
+              from: () => ({
+                where: () => ({
+                  orderBy: () => ({
+                    // Rows carry the computed sort key alongside the transaction.
+                    limit: () => Promise.resolve([{ transaction: txRow, bucket: 1, sort_key: "2026-01-01 00:00:00" }]),
+                  }),
+                }),
+              }),
+            },
     };
 
     const repo = new TransactionRepositoryDrizzle(mockDb);
-    const results = await repo.findAll(1000, 10);
+    const { transactions, next_cursor, total } = await repo.findAll({ page_limit: 10 });
 
-    expect(Array.isArray(results)).toBe(true);
-    expect(results.length).toBe(1);
-    expect(results[0].transaction_num).toBe(1);
+    expect(Array.isArray(transactions)).toBe(true);
+    expect(transactions.length).toBe(1);
+    expect(transactions[0].transaction_num).toBe(1);
     // transaction_id should be coalesced to empty string
-    expect(results[0].transaction_id).toBe("");
+    expect(transactions[0].transaction_id).toBe("");
+    // Fewer rows came back than the look-ahead limit, so this is the last page.
+    expect(next_cursor).toBeNull();
+    // total comes from the separate count query, not from the page length.
+    expect(total).toBe(42);
   });
 
   it("findAllAggregate returns aggregated transactions and converts numeric bike fields", async () => {
     // The aggregate query returns rows like { transaction, bike, customer }
     const aggregateRow = {
+      bucket: 1,
+      sort_key: "2026-01-01 00:00:00",
       transaction: {
         transaction_id: "tx-123",
         transaction_num: 123,
@@ -90,6 +101,10 @@ describe("TransactionRepositoryDrizzle", () => {
           };
         }
 
+        if (arg?.count) {
+          return { from: () => ({ where: () => Promise.resolve([{ count: 7 }]) }) };
+        }
+
         // default: select() for orderRequests or other simple selects
         return {
           from: () => ({
@@ -100,7 +115,7 @@ describe("TransactionRepositoryDrizzle", () => {
     };
 
     const repo = new TransactionRepositoryDrizzle(mockDb);
-    const results = await repo.findAllAggregate(1000, 10);
+    const { transactions: results, total } = await repo.findAllAggregate({ page_limit: 10 });
 
     expect(Array.isArray(results)).toBe(true);
     expect(results.length).toBe(1);
@@ -116,6 +131,7 @@ describe("TransactionRepositoryDrizzle", () => {
     // OrderRequests should be returned as an array (not null)
     expect(Array.isArray(agg.OrderRequests)).toBe(true);
     expect(agg.OrderRequests[0].order_request_id).toBe("or-1");
+    expect(total).toBe(7);
   });
 
   it("createTransaction inserts and returns created transaction (ensures transaction_id present)", async () => {

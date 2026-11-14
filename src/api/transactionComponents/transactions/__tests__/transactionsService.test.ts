@@ -22,51 +22,60 @@ describe("TransactionsService", () => {
     vi.restoreAllMocks();
   });
 
-  it("findAll returns 404 when there are no transactions", async () => {
+  it("findAll returns an empty list, not a 404, when nothing matches", async () => {
     const repo = makeRepo();
-    repo.findAll.mockResolvedValue([]);
+    repo.findAll.mockResolvedValue({ transactions: [], next_cursor: null, total: 0 });
     const svc = new TransactionsService(repo as any);
-    const res = await svc.findAll(0, 10);
-    expect(res.success).toBe(false);
-    expect(res.statusCode).toBe(StatusCodes.NOT_FOUND);
+    const res = await svc.findAll({ page_limit: 10 });
+    expect(res.success).toBe(true);
+    expect(res.statusCode).toBe(StatusCodes.OK);
+    expect(res.responseObject).toEqual([]);
+    expect(res.next_cursor).toBeNull();
+    expect(res.total).toBe(0);
   });
 
   it("findAll returns transactions when present", async () => {
     const repo = makeRepo();
     const txs = [{ id: "t1" }];
-    repo.findAll.mockResolvedValue(txs);
+    repo.findAll.mockResolvedValue({ transactions: txs, next_cursor: "cursor-1", total: 57 });
     const svc = new TransactionsService(repo as any);
-    const res = await svc.findAll(0, 10);
+    const res = await svc.findAll({ page_limit: 10 });
     expect(res.success).toBe(true);
     expect(res.responseObject).toEqual(txs);
+    expect(res.next_cursor).toBe("cursor-1");
+    // total counts every match, not just the rows on this page.
+    expect(res.total).toBe(57);
   });
 
   it("findAll returns 500 on repository error", async () => {
     const repo = makeRepo();
     repo.findAll.mockRejectedValue(new Error("db down"));
     const svc = new TransactionsService(repo as any);
-    const res = await svc.findAll(0, 10);
+    const res = await svc.findAll({ page_limit: 10 });
     expect(res.success).toBe(false);
     expect(res.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
   });
 
-  it("findAllAgg returns 404 when empty", async () => {
+  it("findAllAgg returns an empty list, not a 404, when nothing matches", async () => {
     const repo = makeRepo();
-    repo.findAllAggregate.mockResolvedValue([]);
+    repo.findAllAggregate.mockResolvedValue({ transactions: [], next_cursor: null, total: 0 });
     const svc = new TransactionsService(repo as any);
-    const res = await svc.findAllAgg(0, 10);
-    expect(res.success).toBe(false);
-    expect(res.statusCode).toBe(StatusCodes.NOT_FOUND);
+    const res = await svc.findAllAgg({ page_limit: 10 });
+    expect(res.success).toBe(true);
+    expect(res.statusCode).toBe(StatusCodes.OK);
+    expect(res.responseObject).toEqual([]);
   });
 
   it("findAllAgg returns data when present", async () => {
     const repo = makeRepo();
     const agg = [{ id: "agg1" }];
-    repo.findAllAggregate.mockResolvedValue(agg);
+    repo.findAllAggregate.mockResolvedValue({ transactions: agg, next_cursor: null, total: 1 });
     const svc = new TransactionsService(repo as any);
-    const res = await svc.findAllAgg(0, 10);
+    const res = await svc.findAllAgg({ page_limit: 10 });
     expect(res.success).toBe(true);
     expect(res.responseObject).toEqual(agg);
+    expect(res.next_cursor).toBeNull();
+    expect(res.total).toBe(1);
   });
 
   it("findById returns 404 when not found", async () => {

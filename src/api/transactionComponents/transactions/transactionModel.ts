@@ -5,6 +5,7 @@ import { commonValidations } from "@/common/utils/commonValidation";
 import { BikeSchema } from "../../bikes/bikesModel";
 import { CustomerSchema } from "../../customer/customerModel";
 import { OrderRequestSchema } from "../orderRequests/orderRequestsModel";
+import { TRANSACTION_VIEWS } from "./transactionViews";
 
 extendZodWithOpenApi(z);
 
@@ -63,12 +64,20 @@ export const GetAllTransactionSchema = z.object({
   // params: z.object({ id: commonValidations.id }),
   query: z.object({
     page_limit: z.number().int().positive(),
-    after_id: z.number().int().positive().optional(),
+    // Opaque cursor from a previous response's `next_cursor`. Omit for the
+    // first page. A cursor is only valid for the ordering it was issued under,
+    // so it cannot be carried across a change in is_completed/is_paid.
+    cursor: z.string().optional(),
     type: z.string().optional(),
     aggregate: z.boolean(),
-    // Filter on the column; omitted defaults to false.
-    is_completed: z.boolean().optional(),
-    is_paid: z.boolean().optional(),
+    // Named view to filter by. Omitted applies no filter. "waiting" and "paid"
+    // show finished work and are ordered most-recently-completed first; the
+    // rest show outstanding work and are ordered urgent first, waiting-on-email
+    // last, oldest first in between.
+    view: z.enum(TRANSACTION_VIEWS).optional(),
+    // Whether transactions belonging to employees are included. Defaults to
+    // false, which hides them from both the rows and the total.
+    show_employees: z.boolean().optional(),
   }),
 });
 
