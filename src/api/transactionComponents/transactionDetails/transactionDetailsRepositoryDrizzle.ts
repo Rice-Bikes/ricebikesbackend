@@ -12,8 +12,25 @@ import { db as drizzleDb } from "@/db/client";
 import type * as schema from "@/db/schema";
 import { items as itemsTable } from "@/db/schema/items";
 import { repairs as repairsTable } from "@/db/schema/repairs";
-import { transactionDetails as transactionDetailsTable } from "@/db/schema/transactions";
+import {
+  transactionDetails as transactionDetailsTable,
+  transactions as transactionsTable,
+} from "@/db/schema/transactions";
+import { tuneUps as tuneUpsTable } from "@/db/schema/tuneUps";
 import type { TransactionDetails, TransactionDetailsWithForeignKeys } from "./transactionDetailsModel";
+
+/**
+ * What the history needs to describe a change to a detail: which transaction it
+ * belongs to, what it refers to by name, and whether it is currently complete.
+ */
+export interface DetailHistoryContext {
+  transaction_num: number;
+  item_name: string | null;
+  repair_name: string | null;
+  tune_up_name: string | null;
+  quantity: number;
+  completed: boolean;
+}
 
 /**
  * TransactionDetails Repository implementation using Drizzle ORM
@@ -200,6 +217,51 @@ export class TransactionDetailsRepositoryDrizzle {
       return this.mapToTransactionDetailsWithForeignKeys(withForeignKeys);
     } catch (error) {
       logger.error({ error }, "Error creating transaction detail");
+      throw error;
+    }
+  }
+
+  /**
+   * Everything the history needs about one detail, in a single query.
+   *
+   * The history is keyed by transaction number while a detail only knows its
+   * transaction's uuid, and describing the change needs the name of whatever
+   * the detail points at, so both are fetched together. Callers that are about
+   * to delete a detail have to call this first, while the row still exists.
+   */
+  async findHistoryContext(transaction_detail_id: string): Promise<DetailHistoryContext | null> {
+    try {
+      const rows = await this.db
+        .select({
+          transaction_num: transactionsTable.transaction_num,
+          item_name: itemsTable.name,
+          repair_name: repairsTable.name,
+          tune_up_name: tuneUpsTable.name,
+          quantity: transactionDetailsTable.quantity,
+          completed: transactionDetailsTable.completed,
+        })
+        .from(transactionDetailsTable)
+        .where(eq(transactionDetailsTable.transaction_detail_id, transaction_detail_id))
+        .innerJoin(transactionsTable, eq(transactionDetailsTable.transaction_id, transactionsTable.transaction_id))
+        .leftJoin(itemsTable, eq(transactionDetailsTable.item_id, itemsTable.item_id))
+        .leftJoin(repairsTable, eq(transactionDetailsTable.repair_id, repairsTable.repair_id))
+        .leftJoin(tuneUpsTable, eq(transactionDetailsTable.tune_up_id, tuneUpsTable.tune_up_id))
+        .limit(1);
+
+      if (rows.length === 0) {
+        return null;
+      }
+
+      return {
+        transaction_num: Number(rows[0].transaction_num),
+        item_name: rows[0].item_name ?? null,
+        repair_name: rows[0].repair_name ?? null,
+        tune_up_name: rows[0].tune_up_name ?? null,
+        quantity: Number(rows[0].quantity),
+        completed: Boolean(rows[0].completed),
+      };
+    } catch (error) {
+      logger.error({ error, transaction_detail_id }, "Error finding history context for transaction detail");
       throw error;
     }
   }

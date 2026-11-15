@@ -55,9 +55,17 @@ export const updateTransactionDetailsSchema = z.object({
   params: z.object({ transaction_detail_id: commonValidations.uuid }),
   body: z.object({
     completed: z.boolean(),
+    // The user checking the repair off. Required because completing a repair is
+    // recorded in the transaction's history, and a history row has to name
+    // someone.
+    changed_by: z.string().uuid(),
   }),
 });
 
 export const DeleteTransactionDetailsSchema = z.object({
   params: z.object({ transaction_detail_id: commonValidations.uuid }),
+  // Taken from the query string rather than a body: a DELETE carries no body by
+  // convention, and intermediaries are free to drop one. Required because
+  // removing a part or repair is recorded in the transaction's history.
+  query: z.object({ changed_by: z.string().uuid() }),
 });

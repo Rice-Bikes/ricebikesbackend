@@ -50,7 +50,8 @@ class OrderRequestsController {
 
   public deleteOrderRequests: RequestHandler = async (req: Request, res: Response) => {
     const id = req.params.request_id as string;
-    const serviceResponse = await orderRequestsService.deleteOrderRequest(id);
+    // changed_by arrives in the query string, since a DELETE carries no body.
+    const serviceResponse = await orderRequestsService.deleteOrderRequest(id, req.query.changed_by as string);
     return handleServiceResponse(serviceResponse, res);
   };
 

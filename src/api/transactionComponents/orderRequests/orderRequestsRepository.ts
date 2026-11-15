@@ -185,7 +185,13 @@ export class OrderRequestsRepository {
   /**
    * Fetch a single order request with Item, User, and Transaction inlined
    */
-  private async findAggById(order_request_id: string): Promise<AggOrderRequest> {
+  /**
+   * One order request with its item, user and transaction inlined.
+   *
+   * Public because the service reads an order's state before patching it, to
+   * tell a real change of order status from a repeat of the same value.
+   */
+  async findAggById(order_request_id: string): Promise<AggOrderRequest> {
     const rows = await this.db
       .select({
         orderRequest: orderRequestsTable,

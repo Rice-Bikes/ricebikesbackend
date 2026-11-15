@@ -66,7 +66,9 @@ class TransactionsController {
   };
 
   public createTransaction: RequestHandler = async (req: Request, res: Response) => {
-    const { step_bundle_id, tune_up_id, quantity, ...body } = req.body;
+    // changed_by names the user for the history entry; it is not a column on
+    // the transaction, so it is kept out of the row being created.
+    const { step_bundle_id, tune_up_id, quantity, changed_by, ...body } = req.body;
     const newTransaction = {
       ...body,
       date_created: new Date(),
@@ -84,6 +86,7 @@ class TransactionsController {
     } as Transaction;
     const serviceResponse = await transactionsService.createTransaction(
       newTransaction,
+      changed_by,
       step_bundle_id,
       tune_up_id,
       quantity,
@@ -92,10 +95,13 @@ class TransactionsController {
   };
 
   public updateTransaction: RequestHandler = async (req: Request, res: Response) => {
-    // console.log("pinging update transaction", req.body.description);
+    // changed_by names the user for the history entries this edit produces; it
+    // is not a column on the transaction, so it is kept out of the update.
+    const { changed_by, ...update } = req.body;
     const serviceResponse = await transactionsService.updateTransactionByID(
       req.params.transaction_id,
-      req.body as UpdateTransaction,
+      update as UpdateTransaction,
+      changed_by,
     );
     return handleServiceResponse(serviceResponse, res);
   };

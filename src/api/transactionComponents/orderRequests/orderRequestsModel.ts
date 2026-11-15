@@ -53,9 +53,20 @@ export const CreateOrderRequestsSchema = z.object({
   }),
 });
 
+export const DeleteOrderRequestSchema = z.object({
+  params: z.object({ request_id: z.string().uuid() }),
+  // In the query string rather than a body, as for deleting a transaction
+  // detail: a DELETE carries no body by convention.
+  query: z.object({ changed_by: z.string().uuid() }),
+});
+
 export const PatchOrderRequestSchema = z.object({
   params: z.object({ order_request_id: z.string().uuid() }),
   body: z.object({
+    // The user making the change. Required because confirming an order is
+    // recorded in the transaction's history, and a history row has to name
+    // someone. It is not a column on the order request and is never stored.
+    changed_by: z.string().uuid(),
     transaction_id: z.string().uuid().optional(),
     item_id: z.string().uuid().optional(),
     quantity: z.number().int().optional(),

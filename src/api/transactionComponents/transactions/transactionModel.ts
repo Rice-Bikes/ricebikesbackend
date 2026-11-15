@@ -90,6 +90,9 @@ export const CreateTransactionSchema = z.object({
     // transaction_num: z.number().int().positive(), // created with serial on backend
     transaction_type: z.string(),
     customer_id: z.string().uuid().nullable(),
+    // The user creating the transaction. Required because the backend writes
+    // the transaction's history itself, and a history row has to name someone.
+    changed_by: z.string().uuid(),
     // If provided, the step bundle's steps are copied onto the newly
     // created transaction (see POST /stepBundles/{id}/apply).
     step_bundle_id: z.string().uuid().optional(),
@@ -117,6 +120,10 @@ export const CreateTransactionSchema = z.object({
 export const PatchTransactionSchema = z.object({
   params: z.object({ transaction_id: commonValidations.uuid }),
   body: z.object({
+    // The user making the edit. Required because the backend logs every edit
+    // to the transaction's history itself, and a history row has to name
+    // someone. It is not a column on the transaction and is never stored on it.
+    changed_by: z.string().uuid(),
     transaction_type: z.string().optional(),
     total_cost: z.number().optional(),
     description: z.string().optional(),

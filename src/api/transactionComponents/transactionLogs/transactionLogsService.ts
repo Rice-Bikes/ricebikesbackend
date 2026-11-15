@@ -71,12 +71,10 @@ export class TransactionLogService {
         description,
         change_type,
       } as TransactionLog;
-      console.log("transaction detail in service", transactionDetail);
       const singeTransactionLog = await this.TransactionLogsRepository.createAsync(transactionDetail);
       if (!singeTransactionLog) {
         return ServiceResponse.failure("singeTransactionLog not created", null, StatusCodes.NOT_FOUND);
       }
-      console.log(singeTransactionLog);
 
       return ServiceResponse.success<TransactionLog>("singeTransactionLog created", singeTransactionLog);
     } catch (ex) {

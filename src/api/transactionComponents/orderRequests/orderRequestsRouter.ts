@@ -11,6 +11,7 @@ import orderRequestsController from "./orderRequestsController";
 import {
   AggOrderRequestSchema,
   CreateOrderRequestsSchema,
+  DeleteOrderRequestSchema,
   GetOrderRequestsSchema,
   OrderRequestSchema,
   PatchOrderRequestSchema,
@@ -47,7 +48,8 @@ OrderRequestsRouter.get("/:id", [validateRequest(GetOrderRequestsSchema)], order
 OrderRequestsRegistry.registerPath({
   method: "post",
   path: "/OrderRequests",
-  summary: "Create a OrderRequests in the database",
+  summary:
+    "Create a OrderRequests in the database. The request is recorded in the transaction's history automatically, attributed to the `created_by` user.",
   tags: ["OrderRequests"],
   request: {
     body: {
@@ -91,7 +93,8 @@ OrderRequestsRouter.put(
 OrderRequestsRegistry.registerPath({
   method: "patch",
   path: "/OrderRequests/{order_request_id}",
-  summary: "Partially update an OrderRequests in the database",
+  summary:
+    "Partially update an OrderRequests in the database. A change to `ordered` is recorded in the transaction's history automatically, attributed to the `changed_by` user.",
   tags: ["OrderRequests"],
   request: {
     params: PatchOrderRequestSchema.shape.params,
@@ -114,15 +117,21 @@ OrderRequestsRouter.patch(
 OrderRequestsRegistry.registerPath({
   method: "delete",
   path: "/OrderRequests/{request_id}",
-  summary: "Create a OrderRequests in the database",
+  summary:
+    "Delete an OrderRequest. The removal is recorded in the transaction's history automatically, attributed to the `changed_by` query parameter.",
   tags: ["OrderRequests"],
   request: {
-    params: z.object({ id: z.string().uuid() }),
+    params: DeleteOrderRequestSchema.shape.params,
+    query: DeleteOrderRequestSchema.shape.query,
   },
   responses: createApiResponse(OrderRequestSchema, "Success"),
 });
 
-OrderRequestsRouter.delete("/:request_id", orderRequestsController.deleteOrderRequests);
+OrderRequestsRouter.delete(
+  "/:request_id",
+  [validateRequest(DeleteOrderRequestSchema)],
+  orderRequestsController.deleteOrderRequests,
+);
 
 const uploadMiddleware = (req: express.Request, res: express.Response, next: NextFunction) => {
   upload.single("pdf")(req, res, (err) => {

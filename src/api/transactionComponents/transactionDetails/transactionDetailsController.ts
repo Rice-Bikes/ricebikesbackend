@@ -78,12 +78,17 @@ class TransactionDetailsController {
     const serviceResponse = await transactionDetailsService.updateById(
       req.params.transaction_detail_id,
       req.body.completed,
+      req.body.changed_by,
     );
     return handleServiceResponse(serviceResponse, res);
   };
 
   public deleteTransactionDetails: RequestHandler = async (req: Request, res: Response) => {
-    const serviceResponse = await transactionDetailsService.deleteById(req.params.transaction_detail_id);
+    // changed_by arrives in the query string, since a DELETE carries no body.
+    const serviceResponse = await transactionDetailsService.deleteById(
+      req.params.transaction_detail_id,
+      req.query.changed_by as string,
+    );
     return handleServiceResponse(serviceResponse, res);
   };
 }

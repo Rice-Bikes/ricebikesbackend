@@ -5,8 +5,10 @@ import { stepBundleService } from "@/api/stepBundles/stepBundleService";
 import { tuneUpService } from "@/api/tuneUpComponents/tuneUps/tuneUpService";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
+import { diffTransaction, transactionCreatedEntry } from "@/common/utils/transactionLogging";
 import notificationTriggerService from "@/services/notificationTriggerService";
 import { getTransactionWithDetails } from "@/services/transactionHelpers";
+import { transactionHistoryService } from "@/services/transactionHistoryService";
 import type {
   AggTransaction,
   Transaction,
@@ -120,6 +122,7 @@ export class TransactionsService {
   // returned instead of a single transaction.
   async createTransaction(
     transaction: Transaction,
+    changed_by?: string,
     stepBundleId?: string,
     tuneUpId?: string,
     quantity = 1,
@@ -164,6 +167,10 @@ export class TransactionsService {
           }
         }
 
+        await transactionHistoryService.record(newTransaction.transaction_num, changed_by, [
+          transactionCreatedEntry(newTransaction),
+        ]);
+
         createdTransactions.push(newTransaction);
       }
 
@@ -206,6 +213,7 @@ export class TransactionsService {
   async updateTransactionByID(
     transaction_id: string,
     transaction: UpdateTransaction,
+    changed_by?: string,
   ): Promise<ServiceResponse<Transaction | null>> {
     try {
       await this.ensureRepository();
@@ -213,9 +221,21 @@ export class TransactionsService {
       const oldTransaction = await this.TransactionRepository.findByIdAggregate(transaction_id);
 
       const updatedTransaction = await this.TransactionRepository.updateById(transaction_id, transaction);
-      console.log("updated transaction", updatedTransaction);
+      logger.debug(`Updated transaction ${transaction_id}`);
       if (!updatedTransaction) {
         return ServiceResponse.failure("Transaction not updated", null, StatusCodes.NOT_FOUND);
+      }
+
+      // The history is written here rather than by the client so that every
+      // edit is recorded, whichever client made it, and only once the edit has
+      // actually landed. Comparing the stored rows rather than the request body
+      // means a field set to the value it already had is not logged as a change.
+      if (oldTransaction) {
+        await transactionHistoryService.record(
+          updatedTransaction.transaction_num,
+          changed_by,
+          diffTransaction(oldTransaction, updatedTransaction),
+        );
       }
 
       const detailedTransaction = await getTransactionWithDetails(transaction_id);

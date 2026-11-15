@@ -9,6 +9,8 @@ import {
 } from "@/api/tuneUpComponents/tuneUps/tuneUpRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
+import { tuneUpAppliedEntry } from "@/common/utils/transactionLogging";
+import { transactionHistoryService } from "@/services/transactionHistoryService";
 
 export class TuneUpService {
   private TuneUpRepository: TuneUpRepositoryDrizzle;
@@ -145,6 +147,14 @@ export class TuneUpService {
       }
 
       const createdRepairs = await this.TuneUpRepository.applyToTransaction(tune_up_id, changed_by, transaction_id);
+
+      // One entry for the tune up as a whole rather than one per repair it
+      // copied in: applying a tune up is a single action, and the repairs it
+      // brings are visible on the transaction itself.
+      await transactionHistoryService.recordByTransactionId(transaction_id, changed_by ?? undefined, [
+        tuneUpAppliedEntry(tuneUp.name, createdRepairs.length),
+      ]);
+
       return ServiceResponse.success<TransactionDetailsWithForeignKeys[]>(
         "Tune up applied successfully",
         createdRepairs,

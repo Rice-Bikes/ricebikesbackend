@@ -46,7 +46,7 @@ transactionRegistry.registerPath({
   method: "post",
   path: "/transactions",
   summary:
-    "Create a transaction in the database. If quantity is greater than 1, creates that many copies and returns an array instead of a single transaction.",
+    "Create a transaction in the database. If quantity is greater than 1, creates that many copies and returns an array instead of a single transaction. Creation is recorded in each transaction's history automatically, attributed to the `changed_by` user.",
   tags: ["Transactions"],
   request: {
     body: {
@@ -64,7 +64,8 @@ transactionRouter.post("/", [validateRequest(CreateTransactionSchema)], transact
 transactionRegistry.registerPath({
   method: "patch",
   path: "/transactions/{transaction_id}",
-  summary: "Updates a transaction in the database",
+  summary:
+    "Updates a transaction in the database. Every field this changes is recorded in the transaction's history automatically, attributed to the `changed_by` user, so clients do not post those logs themselves.",
   tags: ["Transactions"],
   request: {
     params: PatchTransactionSchema.shape.params,

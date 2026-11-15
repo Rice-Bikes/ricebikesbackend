@@ -2,6 +2,12 @@ import { StatusCodes } from "http-status-codes";
 
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
+import {
+  partOrderRemovedEntry,
+  partOrderRequestedEntry,
+  partOrderStatusEntry,
+} from "@/common/utils/transactionLogging";
+import { transactionHistoryService } from "@/services/transactionHistoryService";
 import type { AggOrderRequest, CreateOrderRequests, OrderRequest, PatchOrderRequest } from "./orderRequestsModel";
 import { OrderRequestsRepository } from "./orderRequestsRepository";
 
@@ -54,6 +60,20 @@ export class OrderRequestsService {
   async createOrderRequest(item: OrderRequest): Promise<ServiceResponse<AggOrderRequest | null>> {
     try {
       const newOrderRequest = await this.OrderRequestsRepository.create(item);
+
+      // Putting a part on order is part of the transaction's story, so it is
+      // recorded against the transaction the order was raised from.
+      await transactionHistoryService.recordByTransactionId(
+        newOrderRequest.transaction_id,
+        newOrderRequest.created_by,
+        [
+          partOrderRequestedEntry({
+            item_name: newOrderRequest.Item?.name ?? null,
+            quantity: newOrderRequest.quantity,
+          }),
+        ],
+      );
+
       return ServiceResponse.success<AggOrderRequest>("OrderRequest created", newOrderRequest);
     } catch (ex) {
       const errorMessage = `Error creating item: ${(ex as Error).message}`;
@@ -67,7 +87,29 @@ export class OrderRequestsService {
     patch: PatchOrderRequest["body"],
   ): Promise<ServiceResponse<AggOrderRequest | null>> {
     try {
-      const updatedOrderRequest = await this.OrderRequestsRepository.patch(order_request_id, patch);
+      // changed_by names the person for the history row; it is not a column on
+      // the order request, so it is kept out of the update.
+      const { changed_by, ...fields } = patch;
+
+      // Read the current status first, so that confirming an order that is
+      // already confirmed is not recorded as a change.
+      let wasOrdered: boolean | null = null;
+      if (fields.ordered !== undefined) {
+        try {
+          wasOrdered = (await this.OrderRequestsRepository.findAggById(order_request_id)).ordered;
+        } catch (ex) {
+          logger.error(`Could not read order request ${order_request_id} before patching: ${(ex as Error).message}`);
+        }
+      }
+
+      const updatedOrderRequest = await this.OrderRequestsRepository.patch(order_request_id, fields);
+
+      if (fields.ordered !== undefined && fields.ordered !== wasOrdered) {
+        await transactionHistoryService.recordByTransactionId(updatedOrderRequest.transaction_id, changed_by, [
+          partOrderStatusEntry({ item_name: updatedOrderRequest.Item?.name ?? null }, fields.ordered),
+        ]);
+      }
+
       return ServiceResponse.success<AggOrderRequest>("OrderRequest updated", updatedOrderRequest);
     } catch (ex) {
       const errorMessage = `Error patching order request ${order_request_id}: ${(ex as Error).message}`;
@@ -87,9 +129,25 @@ export class OrderRequestsService {
     }
   }
 
-  async deleteOrderRequest(id: string): Promise<ServiceResponse<OrderRequest | null>> {
+  async deleteOrderRequest(id: string, changed_by?: string): Promise<ServiceResponse<OrderRequest | null>> {
     try {
+      // Read before deleting: afterwards the item's name and the transaction it
+      // belonged to are both gone.
+      let previous: AggOrderRequest | null = null;
+      try {
+        previous = await this.OrderRequestsRepository.findAggById(id);
+      } catch (ex) {
+        logger.error(`Could not read order request ${id} before deleting: ${(ex as Error).message}`);
+      }
+
       const newOrderRequest = await this.OrderRequestsRepository.delete(id);
+
+      if (previous) {
+        await transactionHistoryService.recordByTransactionId(previous.transaction_id, changed_by, [
+          partOrderRemovedEntry({ item_name: previous.Item?.name ?? null }),
+        ]);
+      }
+
       return ServiceResponse.success<OrderRequest>("OrderRequest deleted", newOrderRequest);
     } catch (ex) {
       const errorMessage = `Error deleting item: ${(ex as Error).message}`;

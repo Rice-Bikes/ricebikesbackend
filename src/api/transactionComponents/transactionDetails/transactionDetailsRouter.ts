@@ -51,7 +51,8 @@ transactionDetailsRegistry.registerPath({
   method: "post",
   path: "/transactionDetails/{transaction_id}",
   tags: ["TransactionDetail"],
-  summary: "Create transaction details for a specific transaction, including an id of either a repair or an item",
+  summary:
+    "Create transaction details for a specific transaction, including an id of either a repair or an item. The addition is recorded in the transaction's history automatically, attributed to the `changed_by` user.",
   request: {
     params: CreateTransactionDetailsSchema.shape.params,
     body: {
@@ -76,7 +77,8 @@ transactionDetailsRegistry.registerPath({
   method: "patch",
   path: "/transactionDetails/{transaction_detail_id}",
   tags: ["TransactionDetail"],
-  summary: "Update completion for a specific transaction, including an id of either a repair or an item",
+  summary:
+    "Update completion for a specific transaction, including an id of either a repair or an item. A change of status is recorded in the transaction's history automatically, attributed to the `changed_by` user.",
   request: {
     params: updateTransactionDetailsSchema.shape.params,
     body: {
@@ -101,9 +103,11 @@ transactionDetailsRegistry.registerPath({
   method: "delete",
   path: "/transactionDetails/{transaction_detail_id}",
   tags: ["TransactionDetail"],
-  summary: "Delete repair/item for a specific transaction, including an id of either a repair or an item",
+  summary:
+    "Delete repair/item for a specific transaction, including an id of either a repair or an item. The removal is recorded in the transaction's history automatically, attributed to the `changed_by` query parameter.",
   request: {
     params: DeleteTransactionDetailsSchema.shape.params,
+    query: DeleteTransactionDetailsSchema.shape.query,
   },
   responses: createApiResponse(TransactionDetailsSchema, "Success"),
 });
