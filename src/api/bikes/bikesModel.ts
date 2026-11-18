@@ -49,6 +49,10 @@ export const CreateBikeSchema = z.object({
 export const UpdateBikeSchema = z.object({
   params: z.object({ id: commonValidations.uuid }),
   body: z.object({
+    // The user making the edit. Required because a change to a bike is recorded
+    // in the history of the transaction it belongs to, and a history row has to
+    // name someone. It is not a column on the bike and is never stored on it.
+    changed_by: z.string().uuid(),
     make: z.string().min(1).optional(),
     model: z.string().min(1).optional(),
     description: z.string().nullable().optional(),

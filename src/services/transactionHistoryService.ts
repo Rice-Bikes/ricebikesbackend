@@ -98,6 +98,49 @@ export class TransactionHistoryService {
     await this.record(transaction_num, changed_by, entries);
   }
 
+  /**
+   * Records entries against every transaction a bike belongs to.
+   *
+   * A bike is reached through its own endpoint, which knows nothing about
+   * transactions, so the transactions holding it are looked up here. Normally
+   * that is exactly one, but nothing stops a bike from coming back on a second
+   * visit, and an edit to it is equally part of both transactions' stories, so
+   * each one gets the entries.
+   */
+  async recordByBikeId(
+    bike_id: string | null | undefined,
+    changed_by: string | undefined,
+    entries: TransactionLogEntry[],
+  ): Promise<void> {
+    if (entries.length === 0 || !bike_id) {
+      return;
+    }
+
+    let transaction_nums: number[];
+    try {
+      transaction_nums = await this.findTransactionNumsForBike(bike_id);
+    } catch (ex) {
+      logger.error(`Skipping history for bike ${bike_id}: ${(ex as Error).message}`);
+      return;
+    }
+
+    // A bike that no transaction refers to has nowhere to record this. That is
+    // a normal state for sale stock that has not been sold yet, not an error.
+    for (const transaction_num of transaction_nums) {
+      await this.record(transaction_num, changed_by, entries);
+    }
+  }
+
+  /** The numbers of every transaction that refers to this bike. */
+  async findTransactionNumsForBike(bike_id: string): Promise<number[]> {
+    const rows = await this.db
+      .select({ transaction_num: transactionsTable.transaction_num })
+      .from(transactionsTable)
+      .where(eq(transactionsTable.bike_id, bike_id));
+
+    return rows.map((row) => Number(row.transaction_num));
+  }
+
   /** The number of the transaction with this uuid, or null if there is none. */
   async findTransactionNum(transaction_id: string): Promise<number | null> {
     const rows = await this.db

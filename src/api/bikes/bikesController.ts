@@ -91,7 +91,10 @@ class BikeController {
     if (req.body.deposit_amount !== undefined)
       updateData.deposit_amount = req.body.deposit_amount !== null ? Number(req.body.deposit_amount) : null;
     logger.info(`Update Data:  ${updateData}`);
-    const serviceResponse = await bikesService.updateBike(bike_id, updateData);
+    // changed_by names the user for the history entries this edit produces. It
+    // is deliberately not copied into updateData above, since the bike has no
+    // such column.
+    const serviceResponse = await bikesService.updateBike(bike_id, updateData, req.body.changed_by);
     return handleServiceResponse(serviceResponse, res);
   };
 

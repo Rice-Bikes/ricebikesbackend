@@ -85,7 +85,8 @@ bikesRouter.post("/", validateRequest(CreateBikeSchema), bikeController.createBi
 bikeRegistry.registerPath({
   method: "patch",
   path: "/bikes/{id}",
-  summary: "Update a bike",
+  summary:
+    "Update a bike. Every detail this changes is recorded in the history of the transaction the bike belongs to, attributed to the `changed_by` user.",
   tags: ["Bike"],
   request: {
     params: GetBikeSchema.shape.params,

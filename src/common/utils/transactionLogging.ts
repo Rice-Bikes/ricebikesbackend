@@ -60,6 +60,7 @@ const CHANGE_TYPE = {
   repair: "repair",
   tuneUp: "tune up",
   order: "order",
+  bike: "bike",
 } as const;
 
 /** Longest note excerpt written into a description, to keep rows readable. */
@@ -107,6 +108,20 @@ function isUnset(value: unknown): boolean {
   return value === null || value === undefined;
 }
 
+/**
+ * Whether two values are the same for the purpose of the history.
+ *
+ * A snapshot can leave a field out where another holds an explicit null, which
+ * is the same absence described two ways. Comparing with `!==` would read that
+ * as a change, and report a field as cleared when nothing happened to it.
+ */
+function sameValue(before: unknown, after: unknown): boolean {
+  if (isUnset(before) && isUnset(after)) {
+    return true;
+  }
+  return before === after;
+}
+
 function timestampOf(value: Date | string | null | undefined): number | null {
   if (isUnset(value)) {
     return null;
@@ -144,21 +159,21 @@ function describeNotesChange(before: string | null | undefined, after: string | 
 export function diffTransaction(before: TransactionSnapshot, after: TransactionSnapshot): TransactionLogEntry[] {
   const entries: TransactionLogEntry[] = [];
 
-  if (after.transaction_type !== before.transaction_type && !isUnset(after.transaction_type)) {
+  if (!sameValue(before.transaction_type, after.transaction_type) && !isUnset(after.transaction_type)) {
     entries.push({
       change_type: CHANGE_TYPE.updated,
       description: `changed the transaction type to ${after.transaction_type}`,
     });
   }
 
-  if (after.total_cost !== before.total_cost) {
+  if (!sameValue(before.total_cost, after.total_cost)) {
     entries.push({
       change_type: CHANGE_TYPE.updated,
       description: `changed the total cost to ${formatDollars(after.total_cost)}`,
     });
   }
 
-  if (after.description !== before.description) {
+  if (!sameValue(before.description, after.description)) {
     entries.push({
       change_type: CHANGE_TYPE.note,
       description: describeNotesChange(before.description, after.description),
@@ -168,7 +183,7 @@ export function diffTransaction(before: TransactionSnapshot, after: TransactionS
   for (const tag of TAG_FIELDS) {
     const previous = before[tag.field];
     const current = after[tag.field];
-    if (current === previous || isUnset(current)) {
+    if (sameValue(previous, current) || isUnset(current)) {
       continue;
     }
     entries.push({
@@ -177,7 +192,7 @@ export function diffTransaction(before: TransactionSnapshot, after: TransactionS
     });
   }
 
-  if (after.is_reserved !== before.is_reserved && !isUnset(after.is_reserved)) {
+  if (!sameValue(before.is_reserved, after.is_reserved) && !isUnset(after.is_reserved)) {
     entries.push({
       change_type: CHANGE_TYPE.updated,
       description: after.is_reserved ? "reserved the transaction" : "removed the reservation",
@@ -199,7 +214,7 @@ export function diffTransaction(before: TransactionSnapshot, after: TransactionS
   // Completion and checkout are the two milestones the shop reads the history
   // for, so they are reported as events and named after the buttons that cause
   // them ("Complete"/"Uncomplete", "Checkout"/"Uncheckout").
-  if (after.is_completed !== before.is_completed && !isUnset(after.is_completed)) {
+  if (!sameValue(before.is_completed, after.is_completed) && !isUnset(after.is_completed)) {
     entries.push(
       after.is_completed
         ? { change_type: CHANGE_TYPE.completed, description: "completed the transaction" }
@@ -207,7 +222,7 @@ export function diffTransaction(before: TransactionSnapshot, after: TransactionS
     );
   }
 
-  if (after.is_paid !== before.is_paid && !isUnset(after.is_paid)) {
+  if (!sameValue(before.is_paid, after.is_paid) && !isUnset(after.is_paid)) {
     entries.push(
       after.is_paid
         ? {
@@ -349,4 +364,92 @@ export function partOrderRemovedEntry(subject: DetailSubject): TransactionLogEnt
     change_type: CHANGE_TYPE.order,
     description: `removed the order for the part "${subjectName(subject)}"`,
   };
+}
+
+/**
+ * The bike fields an edit can touch.
+ *
+ * A bike is not part of a transaction, but the transaction is where the shop
+ * works on it, so changing its details belongs in that transaction's history.
+ * Numbers are numbers here because the repository already normalises the
+ * decimal columns it reads them from.
+ */
+export interface BikeSnapshot {
+  make?: string | null;
+  model?: string | null;
+  description?: string | null;
+  bike_type?: string | null;
+  size_cm?: number | null;
+  condition?: string | null;
+  price?: number | null;
+  is_available?: boolean | null;
+  weight_kg?: number | null;
+  reservation_customer_id?: string | null;
+  deposit_amount?: number | null;
+}
+
+/** A text field's new value, quoted, or a note that it was emptied. */
+function describeText(label: string, value: string | null | undefined): string {
+  const text = (value ?? "").trim();
+  return text.length === 0 ? `cleared the bike ${label}` : `changed the bike ${label} to "${truncate(text)}"`;
+}
+
+/** A measured field's new value with its unit, or a note that it was emptied. */
+function describeMeasure(label: string, value: number | null | undefined, unit: string): string {
+  return isUnset(value) ? `cleared the bike ${label}` : `changed the bike ${label} to ${value} ${unit}`;
+}
+
+/** A money field's new value, or a note that it was emptied. */
+function describeMoney(label: string, value: number | null | undefined): string {
+  return isUnset(value) ? `cleared the bike ${label}` : `changed the bike ${label} to ${formatDollars(value)}`;
+}
+
+/**
+ * The entries describing how a bike's details changed.
+ *
+ * Returns an empty array when an edit changed nothing, so saving a field
+ * without touching it does not clutter the history.
+ */
+export function diffBike(before: BikeSnapshot, after: BikeSnapshot): TransactionLogEntry[] {
+  const descriptions: string[] = [];
+
+  if (!sameValue(before.make, after.make)) {
+    descriptions.push(describeText("make", after.make));
+  }
+  if (!sameValue(before.model, after.model)) {
+    descriptions.push(describeText("model", after.model));
+  }
+  if (!sameValue(before.description, after.description)) {
+    descriptions.push(describeText("description", after.description));
+  }
+  if (!sameValue(before.bike_type, after.bike_type)) {
+    descriptions.push(describeText("type", after.bike_type));
+  }
+  if (!sameValue(before.condition, after.condition)) {
+    descriptions.push(describeText("condition", after.condition));
+  }
+  if (!sameValue(before.size_cm, after.size_cm)) {
+    descriptions.push(describeMeasure("size", after.size_cm, "cm"));
+  }
+  if (!sameValue(before.weight_kg, after.weight_kg)) {
+    descriptions.push(describeMeasure("weight", after.weight_kg, "kg"));
+  }
+  if (!sameValue(before.price, after.price)) {
+    descriptions.push(describeMoney("price", after.price));
+  }
+  if (!sameValue(before.deposit_amount, after.deposit_amount)) {
+    descriptions.push(describeMoney("deposit", after.deposit_amount));
+  }
+  if (!sameValue(before.is_available, after.is_available) && !isUnset(after.is_available)) {
+    descriptions.push(after.is_available ? "marked the bike available" : "marked the bike unavailable");
+  }
+  if (!sameValue(before.reservation_customer_id, after.reservation_customer_id)) {
+    // The customer's name is not on the bike, so the history says that a
+    // reservation changed rather than inventing who it is for.
+    descriptions.push(
+      isUnset(after.reservation_customer_id) ? "cleared the bike reservation" : "reserved the bike for a customer",
+    );
+  }
+
+  return descriptions.map((description) => ({ change_type: CHANGE_TYPE.bike, description }));
 }

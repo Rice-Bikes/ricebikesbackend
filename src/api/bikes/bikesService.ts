@@ -6,7 +6,9 @@ import type { BikesRepositoryDrizzle } from "@/api/bikes/bikesRepositoryDrizzle"
 import { createBikeRepository, createBikeRepositorySync } from "@/api/bikes/bikesRepositoryFactory";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { serviceLogger as logger } from "@/common/utils/logger";
+import { diffBike } from "@/common/utils/transactionLogging";
 import notificationTriggerService from "@/services/notificationTriggerService";
+import { transactionHistoryService } from "@/services/transactionHistoryService";
 
 export class BikesService {
   private BikesRepository: BikesRepositoryDrizzle;
@@ -114,7 +116,11 @@ export class BikesService {
   }
 
   // Updates a bike
-  async updateBike(bike_id: string, updateData: UpdateBikeInput): Promise<ServiceResponse<Bike | null>> {
+  async updateBike(
+    bike_id: string,
+    updateData: UpdateBikeInput,
+    changed_by?: string,
+  ): Promise<ServiceResponse<Bike | null>> {
     await this.ensureRepository();
     const oldBike = await this.BikesRepository.findByIdAsync(bike_id);
     if (!oldBike) {
@@ -125,6 +131,12 @@ export class BikesService {
       if (!updatedBike) {
         return ServiceResponse.failure("Bike not found", null, StatusCodes.NOT_FOUND);
       }
+
+      // The bike's details are what the shop is working from, so a change to
+      // them is recorded in the history of the transaction holding it.
+      // Comparing the stored rows means a field saved without being touched is
+      // not logged as a change.
+      await transactionHistoryService.recordByBikeId(bike_id, changed_by, diffBike(oldBike, updatedBike));
 
       return ServiceResponse.success<Bike>("Bike updated successfully", updatedBike);
     } catch (ex) {

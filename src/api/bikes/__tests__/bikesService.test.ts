@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BikesService } from "@/api/bikes/bikesService";
 import notificationTriggerService from "@/services/notificationTriggerService";
+import { transactionHistoryService } from "@/services/transactionHistoryService";
 
 function makeRepo() {
   return {
@@ -20,6 +21,9 @@ function makeRepo() {
 describe("BikesService", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    // updateBike records history, which would otherwise look up the bike's
+    // transactions in the real database.
+    vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
   });
 
   it("findAll returns 404 when no bikes found", async () => {
@@ -271,5 +275,136 @@ describe("BikesService", () => {
     const res = await svc.unreserveBike("u1");
     expect(res.success).toBe(false);
     expect(res.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe("bike history", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** A stored bike, with every field the history looks at populated. */
+  function bike(overrides: Record<string, unknown> = {}) {
+    return {
+      bike_id: "bike-1",
+      make: "Trek",
+      model: "FX 2",
+      description: "blue, slight scratch on the top tube",
+      bike_type: "hybrid",
+      size_cm: 56,
+      condition: "Used",
+      price: 450,
+      is_available: true,
+      weight_kg: 11.5,
+      reservation_customer_id: null,
+      deposit_amount: null,
+      ...overrides,
+    };
+  }
+
+  it("logs a changed model against the bike's transactions", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike({ model: "FX 3 Disc" }));
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    const res = await svc.updateBike("bike-1", { model: "FX 3 Disc" } as any, "user-1");
+
+    expect(res.success).toBe(true);
+    expect(history).toHaveBeenCalledWith("bike-1", "user-1", [
+      { change_type: "bike", description: 'changed the bike model to "FX 3 Disc"' },
+    ]);
+  });
+
+  it("logs each detail an edit changed", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike({ make: "Specialized", model: "Sirrus", price: 525.5 }));
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    await svc.updateBike("bike-1", {} as any, "user-1");
+
+    expect(history.mock.calls[0][2]).toEqual([
+      { change_type: "bike", description: 'changed the bike make to "Specialized"' },
+      { change_type: "bike", description: 'changed the bike model to "Sirrus"' },
+      { change_type: "bike", description: "changed the bike price to $525.50" },
+    ]);
+  });
+
+  it("writes nothing when an edit changed no detail", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike());
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    await svc.updateBike("bike-1", { model: "FX 2" } as any, "user-1");
+
+    expect(history).toHaveBeenCalledWith("bike-1", "user-1", []);
+  });
+
+  it("reports a detail that was emptied as cleared rather than as empty quotes", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike({ description: "", size_cm: null, price: null }));
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    await svc.updateBike("bike-1", {} as any, "user-1");
+
+    expect(history.mock.calls[0][2]).toEqual([
+      { change_type: "bike", description: "cleared the bike description" },
+      { change_type: "bike", description: "cleared the bike size" },
+      { change_type: "bike", description: "cleared the bike price" },
+    ]);
+  });
+
+  it("reports availability and reservation in words, not as raw values", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike({ is_available: false, reservation_customer_id: "cust-1" }));
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    await svc.updateBike("bike-1", {} as any, "user-1");
+
+    expect(history.mock.calls[0][2]).toEqual([
+      { change_type: "bike", description: "marked the bike unavailable" },
+      { change_type: "bike", description: "reserved the bike for a customer" },
+    ]);
+    // The customer's id is not a name, so it must not leak into the history.
+    for (const entry of history.mock.calls[0][2]) {
+      expect(entry.description).not.toContain("cust-1");
+    }
+  });
+
+  it("records size and weight with their units", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(bike({ size_cm: 58, weight_kg: 12.25 }));
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    await svc.updateBike("bike-1", {} as any, "user-1");
+
+    expect(history.mock.calls[0][2]).toEqual([
+      { change_type: "bike", description: "changed the bike size to 58 cm" },
+      { change_type: "bike", description: "changed the bike weight to 12.25 kg" },
+    ]);
+  });
+
+  it("does not write history when the bike was not updated", async () => {
+    const repo = makeRepo();
+    repo.findByIdAsync.mockResolvedValue(bike());
+    repo.update.mockResolvedValue(null);
+    const history = vi.spyOn(transactionHistoryService, "recordByBikeId").mockResolvedValue();
+
+    const svc = new BikesService(repo as any);
+    const res = await svc.updateBike("bike-1", { model: "FX 3" } as any, "user-1");
+
+    expect(res.success).toBe(false);
+    expect(history).not.toHaveBeenCalled();
   });
 });

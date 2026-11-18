@@ -5,6 +5,7 @@ import {
   detailAddedEntry,
   detailCompletionEntry,
   detailRemovedEntry,
+  diffBike,
   diffTransaction,
   partOrderRemovedEntry,
   partOrderRequestedEntry,
@@ -326,9 +327,32 @@ describe("order entries", () => {
   });
 });
 
+describe("diffBike", () => {
+  it("logs nothing when an edit changed nothing", () => {
+    const stored = { make: "Trek", model: "FX 2", price: 450 };
+    expect(diffBike(stored, { ...stored })).toEqual([]);
+  });
+
+  it("files bike details under the bike category", () => {
+    expect(diffBike({ model: "FX 2" }, { model: "FX 3" })).toEqual([
+      { change_type: "bike", description: 'changed the bike model to "FX 3"' },
+    ]);
+  });
+
+  it("treats a detail going from null to unset as unchanged", () => {
+    expect(diffBike({ price: null, model: "FX 2" }, { model: "FX 2" })).toEqual([]);
+  });
+
+  it("truncates a very long description", () => {
+    const [entry] = diffBike({ description: "" }, { description: "x".repeat(600) });
+    expect(entry.description).toBe(`changed the bike description to "${"x".repeat(500)}..."`);
+  });
+});
+
 describe("every entry builder", () => {
   it("writes a description that reads on its own, without its change type", () => {
     const entries = [
+      ...diffBike({ make: "Trek", is_available: true }, { make: "Specialized", is_available: false }),
       detailAddedEntry({ item_name: "Tube" }),
       detailRemovedEntry({ repair_name: "Flat repair" }),
       detailCompletionEntry({ repair_name: "Flat repair" }, true),
@@ -341,7 +365,7 @@ describe("every entry builder", () => {
     ];
     for (const entry of entries) {
       expect(entry.description).toMatch(
-        /^(added|removed|completed|uncompleted|requested|confirmed|reopened|created)\b/,
+        /^(added|removed|completed|uncompleted|requested|confirmed|reopened|created|changed|marked|cleared|reserved)\b/,
       );
       // The change type is a bare category, never a sentence fragment.
       expect(entry.change_type).toMatch(/^[a-z ]+$/);

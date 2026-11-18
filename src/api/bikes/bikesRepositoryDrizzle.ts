@@ -136,22 +136,35 @@ export class BikesRepositoryDrizzle {
    */
   async update(bike_id: string, updateData: UpdateBikeInput): Promise<Bike | null> {
     try {
-      // Helper function to convert empty strings to null and numbers to strings
-      const convertDecimalField = (value: any) => {
+      // A decimal column is written as a string, and an explicit null or empty
+      // string means it has no value.
+      const convertDecimalField = (value: unknown) => {
         if (value == null || value === "") return null;
         return String(value);
       };
 
-      // Build processed data with explicit null handling for decimal fields
-      const processedData = {
-        ...updateData,
-        bike_type: updateData.bike_type === "" ? null : updateData.bike_type,
-        size_cm: convertDecimalField(updateData.size_cm),
-        price: convertDecimalField(updateData.price),
-        weight_kg: convertDecimalField(updateData.weight_kg),
-        reservation_customer_id: updateData.reservation_customer_id === "" ? null : updateData.reservation_customer_id,
-        deposit_amount: convertDecimalField(updateData.deposit_amount),
-      };
+      // Only the fields the caller actually passed are written. A field that is
+      // absent is one this update says nothing about, so it has to be left out
+      // of the statement rather than written as null, which would erase a value
+      // the caller never asked to change.
+      const processedData: Record<string, unknown> = { ...updateData };
+
+      for (const field of ["size_cm", "price", "weight_kg", "deposit_amount"] as const) {
+        if (field in updateData) {
+          processedData[field] = convertDecimalField(updateData[field]);
+        }
+      }
+      for (const field of ["bike_type", "reservation_customer_id"] as const) {
+        if (field in updateData && updateData[field] === "") {
+          processedData[field] = null;
+        }
+      }
+
+      // An update with nothing in it is not a statement Postgres will accept,
+      // and there is nothing to change, so the bike is returned as it stands.
+      if (Object.keys(processedData).length === 0) {
+        return await this.findByIdAsync(bike_id);
+      }
 
       const result = await this.db.update(bikes).set(processedData).where(eq(bikes.bike_id, bike_id)).returning();
 

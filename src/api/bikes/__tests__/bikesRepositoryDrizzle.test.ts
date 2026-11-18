@@ -368,4 +368,63 @@ describe("BikesRepositoryDrizzle", () => {
     expect(results[0].price).toBe(1400);
     expect(results[0].is_available).toBe(true);
   });
+
+  it("writes only the fields an update passed, leaving absent ones alone", async () => {
+    // A PATCH that mentions only the model must not touch the bike's size,
+    // price or weight. Writing those as null erased values silently, and the
+    // transaction history then reported them as cleared.
+    const set = vi.fn().mockReturnValue({
+      where: () => ({ returning: () => Promise.resolve([{ bike_id: "b1", make: "Trek", model: "FX 3" }]) }),
+    });
+    const db: any = { update: () => ({ set }) };
+
+    const repo = new BikesRepositoryDrizzle(db);
+    await repo.update("b1", { model: "FX 3" } as any);
+
+    expect(set).toHaveBeenCalledWith({ model: "FX 3" });
+    const written = set.mock.calls[0][0];
+    for (const field of ["size_cm", "price", "weight_kg", "deposit_amount"]) {
+      expect(field in written).toBe(false);
+    }
+  });
+
+  it("writes an explicit null when an update clears a decimal field", async () => {
+    const set = vi.fn().mockReturnValue({
+      where: () => ({ returning: () => Promise.resolve([{ bike_id: "b1" }]) }),
+    });
+    const db: any = { update: () => ({ set }) };
+
+    const repo = new BikesRepositoryDrizzle(db);
+    await repo.update("b1", { price: null } as any);
+
+    expect(set).toHaveBeenCalledWith({ price: null });
+  });
+
+  it("sends decimal values as strings", async () => {
+    const set = vi.fn().mockReturnValue({
+      where: () => ({ returning: () => Promise.resolve([{ bike_id: "b1" }]) }),
+    });
+    const db: any = { update: () => ({ set }) };
+
+    const repo = new BikesRepositoryDrizzle(db);
+    await repo.update("b1", { size_cm: 58, weight_kg: 12.25 } as any);
+
+    expect(set).toHaveBeenCalledWith({ size_cm: "58", weight_kg: "12.25" });
+  });
+
+  it("does not send an empty update statement", async () => {
+    const set = vi.fn();
+    const db: any = {
+      update: () => ({ set }),
+      select: () => ({
+        from: () => ({ where: () => ({ limit: () => Promise.resolve([{ bike_id: "b1", make: "Trek" }]) }) }),
+      }),
+    };
+
+    const repo = new BikesRepositoryDrizzle(db);
+    const result = await repo.update("b1", {} as any);
+
+    expect(set).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ bike_id: "b1", make: "Trek" });
+  });
 });
